@@ -19,10 +19,10 @@ Status: `[ ]` belum, `[-]` berjalan, `[x]` selesai, `[!]` diblokir.
 
 ## Sprint 2 — Web root
 
-- [ ] Keluarkan utility/debug dari web root
-- [ ] Buat allowlist paket deployment
-- [ ] Terapkan production error handler
-- [ ] Lengkapi CP-01
+- [x] Keluarkan utility/debug dari web root
+- [x] Buat allowlist paket deployment
+- [x] Terapkan production error handler
+- [x] Lengkapi CP-01
 
 ## Sprint 3 — Test harness
 

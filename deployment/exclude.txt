@@ -1,0 +1,17 @@
+.agents/
+.git/
+.env
+.env.*
+!.env.example
+deployment/
+tasks/
+tests/
+database/
+cron/
+*.zip
+*.bak
+*.log
+*.md
+*.pdf
+*.py
+*.bat

@@ -2,6 +2,12 @@
 // config.php
 
 require_once __DIR__ . '/config/environment.php';
+require_once __DIR__ . '/config/error_handling.php';
+
+$appEnvironment = environmentValue('AKRAB_APP_ENV', 'production');
+if ($appEnvironment === 'production') {
+    configureProductionErrorHandling();
+}
 
 try {
     $dbHost = requireEnvironmentValue('AKRAB_DB_HOST');
@@ -23,7 +29,7 @@ try {
 } catch (Throwable $exception) {
     error_log('AKRAB bootstrap failed: ' . get_class($exception));
     http_response_code(500);
-    exit('Aplikasi belum dapat terhubung. Silakan hubungi administrator.');
+    exit(publicErrorMessage());
 }
 
 // Start Session if not already started and not running in CLI

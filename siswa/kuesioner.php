@@ -104,7 +104,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exit;
     } catch (Exception $e) {
         $pdo->rollBack();
-        $error = "Terjadi kesalahan: " . $e->getMessage();
+        error_log('AKRAB questionnaire submission failed: ' . get_class($e));
+        $error = publicErrorMessage();
     }
     }
 }

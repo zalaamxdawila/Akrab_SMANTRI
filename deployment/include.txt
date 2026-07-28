@@ -1,0 +1,21 @@
+# Public application entry points
+index.php
+login.php
+logout.php
+register.php
+manifest.json
+service-worker.js
+.htaccess
+
+# Include-only runtime
+config.php
+helpers.php
+config/
+
+# Role-specific application pages
+siswa/
+uks/
+orangtua/
+
+# Browser assets
+assets/

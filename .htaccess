@@ -1,0 +1,9 @@
+Options -Indexes
+
+# Internal application files are include-only and must not be served directly.
+<FilesMatch "^(config\.php|helpers\.php|Tech_Stack_Aplikasi_AKRAB\.md|Panduan_Instalasi_PWA_AKRAB\.pdf|.*\.(sql|md|py|bat|bak|log))$">
+    Require all denied
+</FilesMatch>
+
+# Internal directories are not part of the public HTTP surface.
+RedirectMatch 404 ^/(config|cron|database|deployment|tasks|tests)(/|$)
