@@ -16,4 +16,13 @@ final class ErrorHandlingTest extends TestCase
     {
         self::assertSame(0, productionDisplayErrorsValue());
     }
+
+    public function testCorrelationIdIsStableAndOpaque(): void
+    {
+        $first = requestCorrelationId();
+        $second = requestCorrelationId();
+
+        self::assertSame($first, $second);
+        self::assertMatchesRegularExpression('/^[a-f0-9]{32}$/', $first);
+    }
 }

@@ -132,8 +132,8 @@ Status: `[ ]` belum, `[-]` berjalan, `[x]` selesai, `[!]` diblokir.
 
 - [ ] Refactor kuesioner
 - [ ] Refactor dashboard queries
-- [ ] Global error handler
-- [ ] Request correlation ID
+- [x] Global error handler correlation context
+- [x] Request correlation ID
 - [ ] Lengkapi CP-08
 
 ## Sprint 18 — Performance
