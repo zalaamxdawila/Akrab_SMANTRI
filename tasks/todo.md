@@ -123,10 +123,10 @@ Status: `[ ]` belum, `[-]` berjalan, `[x]` selesai, `[!]` diblokir.
 
 ## Sprint 16 — Refactor konsultasi
 
-- [ ] Bootstrap aplikasi
-- [ ] Repository/service/controller boundaries
+- [x] Bootstrap aplikasi
+- [x] Repository/service/controller boundaries
 - [ ] Shared layout
-- [ ] Refactor vertical slice konsultasi
+- [x] Refactor vertical slice konsultasi
 
 ## Sprint 17 — Core flow
 

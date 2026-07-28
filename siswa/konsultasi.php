@@ -1,6 +1,5 @@
 <?php
-require_once '../config.php';
-require_once '../helpers.php';
+require_once '../bootstrap.php';
 
 check_role('siswa');
 $user_id = $_SESSION['user_id'];
@@ -10,11 +9,11 @@ $error = '';
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_POST['pertanyaan'])) {
     $pertanyaan = sanitize_input($_POST['pertanyaan']);
     
-    $stmt = $pdo->prepare("INSERT INTO konsultasi (siswa_id, pertanyaan) VALUES (?, ?)");
-    if ($stmt->execute([$user_id, $pertanyaan])) {
+    try {
+        (new ConsultationService($pdo))->ask($user_id, $pertanyaan);
         header('Location: konsultasi.php?sent=1');
         exit;
-    } else {
+    } catch (Throwable $exception) {
         $error = "Gagal mengirim pertanyaan.";
     }
 }

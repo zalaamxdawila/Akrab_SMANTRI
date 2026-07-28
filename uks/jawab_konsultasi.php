@@ -1,6 +1,5 @@
 <?php
-require_once '../config.php';
-require_once '../helpers.php';
+require_once '../bootstrap.php';
 
 check_role('uks');
 $user_id = $_SESSION['user_id'];
@@ -11,29 +10,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['konsultasi_id']) && !e
     $kons_id = (int)$_POST['konsultasi_id'];
     $balasan = sanitize_input($_POST['isi_balasan']);
     
-    $pdo->beginTransaction();
     try {
-        $claim = $pdo->prepare(
-            "SELECT k.id
-             FROM konsultasi k
-             JOIN users u ON u.id = k.siswa_id AND u.role = 'siswa'
-             WHERE k.id = ? AND k.status = 'menunggu'
-             FOR UPDATE"
-        );
-        $claim->execute([$kons_id]);
-        if (!$claim->fetch()) {
-            throw new DomainException('Consultation is unavailable.');
-        }
-
-        // Insert balasan
-        $stmt = $pdo->prepare("INSERT INTO balasan_konsultasi (konsultasi_id, isi_balasan) VALUES (?, ?)");
-        $stmt->execute([$kons_id, $balasan]);
-        
-        // Update status konsultasi
-        $stmt = $pdo->prepare("UPDATE konsultasi SET status = 'dijawab', ahli_id = ? WHERE id = ?");
-        $stmt->execute([$user_id, $kons_id]);
-        
-        $pdo->commit();
+        (new ConsultationService($pdo))->reply($user_id, $kons_id, $balasan);
         header('Location: jawab_konsultasi.php?replied=1');
         exit;
     } catch (Exception $e) {

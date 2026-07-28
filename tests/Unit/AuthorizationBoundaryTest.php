@@ -34,7 +34,7 @@ final class AuthorizationBoundaryTest extends TestCase
 
     public function testConsultationReplyLocksAndValidatesPendingStudentQuestion(): void
     {
-        $contents = file_get_contents(dirname(__DIR__, 2) . '/uks/jawab_konsultasi.php');
+        $contents = file_get_contents(dirname(__DIR__, 2) . '/app/Services/ConsultationService.php');
 
         self::assertStringContainsString("u.role = 'siswa'", $contents);
         self::assertStringContainsString("k.status = 'menunggu'", $contents);
