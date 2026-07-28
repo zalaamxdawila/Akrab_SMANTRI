@@ -108,10 +108,10 @@ Status: `[ ]` belum, `[-]` berjalan, `[x]` selesai, `[!]` diblokir.
 
 ## Sprint 14 — Model pipeline
 
-- [ ] Versioning dataset/provenance
-- [ ] Train/validation/test split
-- [ ] Ukur metrik dan calibration
-- [ ] Simpan artefak/checksum
+- [-] Versioning dataset/provenance
+- [x] Train/validation/test split
+- [x] Ukur metrik dan calibration
+- [x] Simpan artefak/checksum
 
 ## Sprint 15 — Model integration
 

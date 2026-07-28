@@ -15,5 +15,8 @@ Status: DRAFT — NO PRODUCTION APPROVAL
 - Clinical owner approval record: ____________________________
 - Security review approval record: ___________________________
 - Feature flag / kill switch tested: _________________________
+- Dataset split seed/version: `akrab-split-v1`
+- Test-set acceptance gate: sensitivity ______, specificity ______
+- Promotion approval environment record: ____________________
 
 Any missing approval record keeps the clinical feature disabled. Outputs must retain the screening disclaimer and emergency language.
