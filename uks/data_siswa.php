@@ -6,6 +6,22 @@ check_role('uks');
 
 $search = isset($_GET['search']) ? sanitize_input($_GET['search']) : '';
 $params = [];
+$page = max(1, filter_var($_GET['page'] ?? 1, FILTER_VALIDATE_INT) ?: 1);
+$perPage = 25;
+$where = " WHERE u.role = 'siswa'";
+
+if (!empty($search)) {
+    $where .= " AND (u.nama LIKE ? OR u.username LIKE ?)";
+    $params[] = "%$search%";
+    $params[] = "%$search%";
+}
+
+$countStmt = $pdo->prepare('SELECT COUNT(*) FROM users u' . $where);
+$countStmt->execute($params);
+$totalSiswa = (int) $countStmt->fetchColumn();
+$totalPages = max(1, (int) ceil($totalSiswa / $perPage));
+$page = min($page, $totalPages);
+$offset = ($page - 1) * $perPage;
 
 $query = "
     SELECT 
@@ -17,20 +33,19 @@ $query = "
         (SELECT tanggal FROM hasil_deteksi WHERE user_id = u.id ORDER BY tanggal DESC, id DESC LIMIT 1) as tanggal_cek,
         (SELECT COUNT(*) FROM konsumsi_ttd WHERE user_id = u.id AND status_konsumsi = 'sudah') as total_ttd
     FROM users u
-    WHERE u.role = 'siswa'
 ";
-
-if (!empty($search)) {
-    $query .= " AND (u.nama LIKE ? OR u.username LIKE ?)";
-    $params[] = "%$search%";
-    $params[] = "%$search%";
-}
-
-$query .= " ORDER BY u.kelas ASC, u.nama ASC";
+$query .= $where . " ORDER BY u.kelas ASC, u.nama ASC LIMIT ? OFFSET ?";
 
 $stmt = $pdo->prepare($query);
-$stmt->execute($params);
+$position = 1;
+foreach ($params as $value) {
+    $stmt->bindValue($position++, $value, PDO::PARAM_STR);
+}
+$stmt->bindValue($position++, $perPage, PDO::PARAM_INT);
+$stmt->bindValue($position, $offset, PDO::PARAM_INT);
+$stmt->execute();
 $siswa = $stmt->fetchAll();
+$pageQuery = $search !== '' ? '&amp;search=' . rawurlencode($search) : '';
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -104,7 +119,7 @@ $siswa = $stmt->fetchAll();
                         <?php if (empty($siswa)): ?>
                             <tr><td colspan="6" class="text-center py-4">Belum ada data siswa terdaftar.</td></tr>
                         <?php else: ?>
-                            <?php $no = 1; foreach ($siswa as $s): ?>
+                            <?php $no = $offset + 1; foreach ($siswa as $s): ?>
                                 <tr>
                                     <td><?= $no++ ?></td>
                                     <td><strong><?= htmlspecialchars($s['nama']) ?></strong><br><small class="text-muted">@<?= htmlspecialchars($s['username']) ?></small></td>
@@ -137,6 +152,15 @@ $siswa = $stmt->fetchAll();
                     </tbody>
                 </table>
             </div>
+            <?php if ($totalPages > 1): ?>
+                <nav aria-label="Halaman data siswa" class="mt-3">
+                    <ul class="pagination justify-content-center mb-0">
+                        <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>"><a class="page-link" href="?page=<?= max(1, $page - 1) ?><?= $pageQuery ?>">Sebelumnya</a></li>
+                        <li class="page-item disabled"><span class="page-link">Halaman <?= $page ?> dari <?= $totalPages ?></span></li>
+                        <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>"><a class="page-link" href="?page=<?= min($totalPages, $page + 1) ?><?= $pageQuery ?>">Berikutnya</a></li>
+                    </ul>
+                </nav>
+            <?php endif; ?>
         </div>
     </div>
 </div>
