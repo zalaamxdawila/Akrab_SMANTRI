@@ -26,17 +26,21 @@ function check_login() {
 /**
  * Check if the logged-in user has a specific role
  */
-function check_role($role) {
+function require_role($role) {
     check_login();
-    if ($_SESSION['role'] !== $role) {
-        // Redirect to their respective dashboard
-        if ($_SESSION['role'] === 'siswa') {
-            header("Location: " . BASE_URL . "siswa/dashboard.php");
-        } else {
-            header("Location: " . BASE_URL . "uks/dashboard.php");
-        }
+    $sessionRole = (string) ($_SESSION['role'] ?? '');
+    if (!isApplicationRole($sessionRole) || $sessionRole !== $role) {
+        http_response_code(403);
+        echo 'Akses ditolak.';
         exit;
     }
+}
+
+/**
+ * Backward-compatible alias while endpoint calls migrate to the clearer name.
+ */
+function check_role($role) {
+    require_role($role);
 }
 
 /**

@@ -55,19 +55,12 @@ check_role('uks');
             html5QrcodeScanner.clear();
             
             // Tampilkan pesan sukses
-            let displayText = decodedText.startsWith("http") ? "Tautan Kartu Siswa" : decodedText;
-            document.getElementById('scanned-nisn').innerText = displayText;
+            document.getElementById('scanned-nisn').innerText = decodedText;
             document.getElementById('result-box').classList.remove('d-none');
             
             // Redirect ke halaman detail atau pencarian
             setTimeout(() => {
-                if (decodedText.startsWith("http")) {
-                    // Jika QR adalah URL (dari id_card.php), langsung redirect ke URL tersebut
-                    window.location.href = decodedText;
-                } else {
-                    // Jika QR adalah NISN/ID biasa, redirect ke pencarian
-                    window.location.href = "data_siswa.php?search=" + encodeURIComponent(decodedText);
-                }
+                window.location.href = "data_siswa.php?search=" + encodeURIComponent(decodedText);
             }, 1000);
         }
         

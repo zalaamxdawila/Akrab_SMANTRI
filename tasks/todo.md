@@ -56,10 +56,10 @@ Status: `[ ]` belum, `[-]` berjalan, `[x]` selesai, `[!]` diblokir.
 
 ## Sprint 7 — Authorization
 
-- [ ] Buat role/action matrix
-- [ ] Tambahkan ownership checks
-- [ ] Batasi privilege DB runtime
-- [ ] Test horizontal/vertical escalation
+- [x] Buat role/action matrix
+- [x] Tambahkan ownership checks
+- [x] Batasi privilege DB runtime
+- [x] Test horizontal/vertical escalation
 
 ## Sprint 8 — Identity
 

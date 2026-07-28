@@ -15,8 +15,8 @@ $error = '';
 // Handle Delete
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
     $id = (int) $_POST['delete_id'];
-    $stmt = $pdo->prepare("DELETE FROM artikel_edukasi WHERE id = ?");
-    if ($id > 0 && $stmt->execute([$id])) {
+    $stmt = $pdo->prepare("DELETE FROM artikel_edukasi WHERE id = ? AND uks_id = ?");
+    if ($id > 0 && $stmt->execute([$id, $uks_id]) && $stmt->rowCount() === 1) {
         header("Location: kelola_artikel.php?success=deleted");
         exit;
     }
@@ -32,10 +32,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete_id'])) {
     } else {
         if (isset($_POST['id']) && !empty($_POST['id'])) {
             // Edit
-            $stmt = $pdo->prepare("UPDATE artikel_edukasi SET judul = ?, konten = ? WHERE id = ?");
-            $stmt->execute([$judul, $konten, $_POST['id']]);
-            header('Location: kelola_artikel.php?success=updated');
-            exit;
+            $articleId = (int) $_POST['id'];
+            $ownership = $pdo->prepare("SELECT id FROM artikel_edukasi WHERE id = ? AND uks_id = ?");
+            $ownership->execute([$articleId, $uks_id]);
+            if ($ownership->fetch()) {
+                $stmt = $pdo->prepare("UPDATE artikel_edukasi SET judul = ?, konten = ? WHERE id = ? AND uks_id = ?");
+                $stmt->execute([$judul, $konten, $articleId, $uks_id]);
+                header('Location: kelola_artikel.php?success=updated');
+                exit;
+            }
+            $error = 'Artikel tidak ditemukan atau tidak boleh diubah.';
         } else {
             // Add
             $stmt = $pdo->prepare("INSERT INTO artikel_edukasi (uks_id, judul, konten) VALUES (?, ?, ?)");
@@ -47,7 +53,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete_id'])) {
 }
 
 // Fetch all articles
-$stmt = $pdo->query("SELECT * FROM artikel_edukasi ORDER BY tanggal_publikasi DESC");
+$stmt = $pdo->prepare("SELECT * FROM artikel_edukasi WHERE uks_id = ? ORDER BY tanggal_publikasi DESC");
+$stmt->execute([$uks_id]);
 $articles = $stmt->fetchAll();
 
 ?>

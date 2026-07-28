@@ -12,19 +12,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt->execute([$username]);
         $user = $stmt->fetch();
         
-        if ($user && password_verify($password, $user['password_hash'])) {
+        if (
+            $user
+            && isApplicationRole((string) $user['role'])
+            && password_verify($password, $user['password_hash'])
+        ) {
             regenerateAuthenticatedSession();
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['nama'] = $user['nama'];
             $_SESSION['role'] = $user['role'];
             
-            if ($user['role'] === 'siswa') {
-                header("Location: " . BASE_URL . "siswa/dashboard.php");
-            } elseif ($user['role'] === 'orangtua') {
-                header("Location: " . BASE_URL . "orangtua/dashboard.php");
-            } else {
-                header("Location: " . BASE_URL . "uks/dashboard.php");
-            }
+            header('Location: ' . BASE_URL . dashboardForRole($user['role']));
             exit;
         } else {
             $error = "Username atau password salah!";

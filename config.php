@@ -5,6 +5,7 @@ require_once __DIR__ . '/config/environment.php';
 require_once __DIR__ . '/config/error_handling.php';
 require_once __DIR__ . '/config/session.php';
 require_once __DIR__ . '/config/csrf.php';
+require_once __DIR__ . '/config/authorization.php';
 
 $appEnvironment = environmentValue('AKRAB_APP_ENV', 'production');
 if ($appEnvironment === 'production') {

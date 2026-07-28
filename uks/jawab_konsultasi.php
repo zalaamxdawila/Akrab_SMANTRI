@@ -13,6 +13,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['konsultasi_id']) && !e
     
     $pdo->beginTransaction();
     try {
+        $claim = $pdo->prepare(
+            "SELECT k.id
+             FROM konsultasi k
+             JOIN users u ON u.id = k.siswa_id AND u.role = 'siswa'
+             WHERE k.id = ? AND k.status = 'menunggu'
+             FOR UPDATE"
+        );
+        $claim->execute([$kons_id]);
+        if (!$claim->fetch()) {
+            throw new DomainException('Consultation is unavailable.');
+        }
+
         // Insert balasan
         $stmt = $pdo->prepare("INSERT INTO balasan_konsultasi (konsultasi_id, isi_balasan) VALUES (?, ?)");
         $stmt->execute([$kons_id, $balasan]);
