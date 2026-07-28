@@ -138,6 +138,7 @@ Status: `[ ]` belum, `[-]` berjalan, `[x]` selesai, `[!]` diblokir.
 
 ## Sprint 18 — Performance
 
+- [x] Pagination konsultasi UKS dan eliminasi N+1 balasan
 - [ ] Pagination semua list
 - [ ] `EXPLAIN` query kritis
 - [ ] Tambahkan indeks berbasis bukti

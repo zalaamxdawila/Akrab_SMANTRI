@@ -20,14 +20,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['konsultasi_id']) && !e
     }
 }
 
-// Fetch all questions
+// Bounded list query: 20 records per page and no per-row answer query.
+$page = max(1, filter_var($_GET['page'] ?? 1, FILTER_VALIDATE_INT) ?: 1);
+$perPage = 20;
+$totalKonsultasi = (int) $pdo->query('SELECT COUNT(*) FROM konsultasi')->fetchColumn();
+$totalPages = max(1, (int) ceil($totalKonsultasi / $perPage));
+$page = min($page, $totalPages);
+$offset = ($page - 1) * $perPage;
 $query = "
-    SELECT k.*, u.nama as nama_siswa, u.kelas 
+    SELECT k.*, u.nama as nama_siswa, u.kelas,
+           b.isi_balasan, b.tanggal_balas
     FROM konsultasi k
     JOIN users u ON k.siswa_id = u.id
+    LEFT JOIN balasan_konsultasi b ON b.konsultasi_id = k.id
     ORDER BY k.status ASC, k.tanggal_kirim DESC
+    LIMIT :limit OFFSET :offset
 ";
-$stmt = $pdo->query($query);
+$stmt = $pdo->prepare($query);
+$stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+$stmt->execute();
 $konsultasi = $stmt->fetchAll();
 
 ?>
@@ -97,15 +109,9 @@ $konsultasi = $stmt->fetchAll();
                                     <button type="submit" class="btn btn-primary">Kirim Balasan</button>
                                 </form>
                             <?php else: ?>
-                                <?php 
-                                    // Fetch answer
-                                    $stmt = $pdo->prepare("SELECT isi_balasan, tanggal_balas FROM balasan_konsultasi WHERE konsultasi_id = ?");
-                                    $stmt->execute([$k['id']]);
-                                    $ans = $stmt->fetch();
-                                ?>
                                 <div class="bg-light p-3 rounded border">
-                                    <small class="text-muted d-block mb-2">Dibalas pada: <?= date('d M Y, H:i', strtotime($ans['tanggal_balas'])) ?></small>
-                                    <p class="mb-0 text-success fw-bold">Jawaban: <span class="text-dark fw-normal"><?= nl2br(htmlspecialchars($ans['isi_balasan'])) ?></span></p>
+                                    <small class="text-muted d-block mb-2">Dibalas pada: <?= date('d M Y, H:i', strtotime($k['tanggal_balas'])) ?></small>
+                                    <p class="mb-0 text-success fw-bold">Jawaban: <span class="text-dark fw-normal"><?= nl2br(htmlspecialchars($k['isi_balasan'])) ?></span></p>
                                 </div>
                             <?php endif; ?>
                         </div>
@@ -114,6 +120,15 @@ $konsultasi = $stmt->fetchAll();
             <?php endif; ?>
         </div>
     </div>
+    <?php if ($totalPages > 1): ?>
+        <nav aria-label="Halaman konsultasi">
+            <ul class="pagination justify-content-center">
+                <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>"><a class="page-link" href="?page=<?= max(1, $page - 1) ?>">Sebelumnya</a></li>
+                <li class="page-item disabled"><span class="page-link">Halaman <?= $page ?> dari <?= $totalPages ?></span></li>
+                <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>"><a class="page-link" href="?page=<?= min($totalPages, $page + 1) ?>">Berikutnya</a></li>
+            </ul>
+        </nav>
+    <?php endif; ?>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
