@@ -24,4 +24,4 @@ Hasil risiko tinggi harus memberi jalur rujukan ke UKS/puskesmas sesuai SOP seko
 
 ## Approval gate
 
-Aktivasi mensyaratkan `CLINICAL_OWNER_APPROVED=true`, `CLINICAL_MODEL_APPROVED=true`, dan `CLINICAL_SPEC_VERSION` terisi. Tanpa ketiganya sistem tetap fail-closed walaupun `CLINICAL_RISK_ENABLED=true`.
+Aktivasi mensyaratkan `CLINICAL_OWNER_APPROVED=true`, `CLINICAL_MODEL_APPROVED=true`, `CLINICAL_SPEC_VERSION`, `CLINICAL_MODEL_VERSION`, dan `CLINICAL_MODEL_CHECKSUM` terisi. Tanpa semuanya sistem tetap fail-closed walaupun `CLINICAL_RISK_ENABLED=true`.

@@ -100,6 +100,8 @@ CREATE TABLE IF NOT EXISTS hasil_deteksi (
     user_id INT NOT NULL,
     probabilitas_risiko DECIMAL(5,4) NOT NULL,
     kategori_risiko ENUM('rendah', 'sedang', 'tinggi') NOT NULL,
+    model_version VARCHAR(80) NULL,
+    model_checksum CHAR(64) NULL,
     tanggal DATE NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

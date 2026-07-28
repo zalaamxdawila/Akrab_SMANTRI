@@ -115,10 +115,10 @@ Status: `[ ]` belum, `[-]` berjalan, `[x]` selesai, `[!]` diblokir.
 
 ## Sprint 15 — Model integration
 
-- [ ] Buat `AnemiaRiskService`
-- [ ] Simpan model version pada hasil
-- [ ] Golden parity tests
-- [ ] Kill switch dan fail-closed
+- [x] Buat `AnemiaRiskService`
+- [x] Simpan model version pada hasil
+- [x] Golden parity tests
+- [x] Kill switch dan fail-closed
 - [ ] Lengkapi CP-07
 
 ## Sprint 16 — Refactor konsultasi

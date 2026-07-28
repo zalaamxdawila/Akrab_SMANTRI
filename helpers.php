@@ -1,6 +1,8 @@
 <?php
 // helpers.php
 
+require_once __DIR__ . '/app/Services/AnemiaRiskService.php';
+
 /**
  * Clinical risk output is disabled unless production explicitly opts in.
  */
@@ -45,7 +47,11 @@ function check_role($role) {
  * Otherwise, falls back to a heuristic based on the questionnaire scores.
  */
 function prediksiRisikoAnemia($input_data) {
-    // Check if Lab Data is provided (Hemoglobin is the primary indicator)
+    if (clinicalApprovalGatePassed()) {
+        return (new AnemiaRiskService())->evaluate($input_data)['probability'];
+    }
+    /* Legacy calculation retained only for offline comparison; web callers must
+       use AnemiaRiskService and the approval gate. */
     if (!empty($input_data['kadar_hb'])) {
         // Mock coefficients trained from Kaggle anemia-dataset (biswaranjanrao)
         // You can update these after running train_model.py

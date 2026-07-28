@@ -10,6 +10,8 @@ final class ClinicalRiskFeatureFlagTest extends TestCase
         putenv('CLINICAL_OWNER_APPROVED');
         putenv('CLINICAL_MODEL_APPROVED');
         putenv('CLINICAL_SPEC_VERSION');
+        putenv('CLINICAL_MODEL_VERSION');
+        putenv('CLINICAL_MODEL_CHECKSUM');
     }
 
     public function testClinicalRiskDefaultsToDisabled(): void
@@ -32,6 +34,8 @@ final class ClinicalRiskFeatureFlagTest extends TestCase
         putenv('CLINICAL_OWNER_APPROVED=true');
         putenv('CLINICAL_MODEL_APPROVED=true');
         putenv('CLINICAL_SPEC_VERSION=spec-v1');
+        putenv('CLINICAL_MODEL_VERSION=model-v1');
+        putenv('CLINICAL_MODEL_CHECKSUM=' . str_repeat('a', 64));
 
         self::assertTrue(isClinicalRiskEnabled());
     }

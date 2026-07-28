@@ -46,4 +46,11 @@ final class SchemaSnapshotTest extends TestCase
 
         self::assertDoesNotMatchRegularExpression('/INSERT\s+INTO\s+users/i', $schema);
     }
+
+    public function testSnapshotStoresModelMetadata(): void
+    {
+        $schema = file_get_contents(dirname(__DIR__, 2) . '/database/schema.sql');
+        self::assertStringContainsString('model_version VARCHAR(80)', $schema);
+        self::assertStringContainsString('model_checksum CHAR(64)', $schema);
+    }
 }

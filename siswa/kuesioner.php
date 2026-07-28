@@ -79,12 +79,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             'mens_teratur' => $mens_teratur
         ];
         
-        $probabilitas = prediksiRisikoAnemia($input_data);
-        $kategori = getKategoriRisiko($probabilitas);
+        $risk = (new AnemiaRiskService())->evaluate($input_data);
+        $probabilitas = $risk['probability'];
+        $kategori = $risk['category'];
         
         // Simpan Hasil Deteksi
-        $stmt2 = $pdo->prepare("INSERT INTO hasil_deteksi (user_id, probabilitas_risiko, kategori_risiko, tanggal) VALUES (?, ?, ?, CURDATE())");
-        $stmt2->execute([$user_id, $probabilitas, $kategori]);
+        $stmt2 = $pdo->prepare("INSERT INTO hasil_deteksi (user_id, probabilitas_risiko, kategori_risiko, model_version, model_checksum, tanggal) VALUES (?, ?, ?, ?, ?, CURDATE())");
+        $stmt2->execute([$user_id, $probabilitas, $kategori, $risk['model_version'], $risk['model_checksum']]);
         
         $pdo->commit();
         header("Location: hasil_deteksi.php");

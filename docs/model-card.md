@@ -18,5 +18,7 @@ Status: DRAFT — NO PRODUCTION APPROVAL
 - Dataset split seed/version: `akrab-split-v1`
 - Test-set acceptance gate: sensitivity ______, specificity ______
 - Promotion approval environment record: ____________________
+- Runtime integration service: `AnemiaRiskService`
+- Result metadata fields: model version + SHA-256 checksum
 
 Any missing approval record keeps the clinical feature disabled. Outputs must retain the screening disclaimer and emergency language.
