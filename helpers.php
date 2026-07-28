@@ -6,11 +6,7 @@
  */
 function isClinicalRiskEnabled()
 {
-    return filter_var(
-        getenv('CLINICAL_RISK_ENABLED') ?: 'false',
-        FILTER_VALIDATE_BOOLEAN,
-        FILTER_NULL_ON_FAILURE
-    ) === true;
+    return clinicalApprovalGatePassed();
 }
 
 /**

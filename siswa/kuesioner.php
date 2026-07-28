@@ -177,7 +177,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <div class="container py-4" style="max-width: 800px;">
     <div class="text-center mb-4">
         <h3 class="fw-bold text-primary">Kuesioner Skrining Anemia</h3>
-        <p class="text-muted">Jawablah pertanyaan berikut dengan jujur untuk mengetahui tingkat risiko Anda.</p>
+        <p class="text-muted">Jawablah pertanyaan berikut dengan jujur untuk screening risiko. Hasil ini bukan diagnosis dan tidak menggantikan pemeriksaan tenaga kesehatan.</p>
     </div>
 
     <div class="progress-wizard shadow-sm">

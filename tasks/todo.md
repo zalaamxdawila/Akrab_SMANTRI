@@ -101,10 +101,10 @@ Status: `[ ]` belum, `[-]` berjalan, `[x]` selesai, `[!]` diblokir.
 
 ## Sprint 13 — Clinical specification
 
-- [ ] Tetapkan clinical owner
-- [ ] Definisikan scope screening
-- [ ] Definisikan threshold dan rujukan
-- [ ] Buat model card draft
+- [-] Tetapkan clinical owner
+- [-] Definisikan scope screening
+- [-] Definisikan threshold dan rujukan
+- [x] Buat model card draft
 
 ## Sprint 14 — Model pipeline
 
