@@ -6,6 +6,8 @@
 deployment/
 tasks/
 tests/
+tools/
+vendor/
 database/
 cron/
 *.zip

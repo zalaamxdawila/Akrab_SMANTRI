@@ -6,4 +6,4 @@ Options -Indexes
 </FilesMatch>
 
 # Internal directories are not part of the public HTTP surface.
-RedirectMatch 404 ^/(config|cron|database|deployment|tasks|tests)(/|$)
+RedirectMatch 404 ^/(config|cron|database|deployment|tasks|tests|tools|vendor)(/|$)

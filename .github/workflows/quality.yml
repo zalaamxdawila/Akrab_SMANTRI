@@ -1,0 +1,33 @@
+name: Quality
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  php:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          coverage: none
+
+      - run: composer install --no-interaction --no-progress --prefer-dist
+      - run: composer quality
+      - name: Secret assignment scan
+        run: |
+          if grep -RInE \
+            --exclude='.env.example' \
+            --exclude='.env.testing.example' \
+            --exclude-dir=.git \
+            --exclude-dir=vendor \
+            '(DB_PASS|PASSWORD|SECRET|TOKEN)[[:space:]]*=[[:space:]]*[^$<{[:space:]][^[:space:]]{7,}' .; then
+            echo "Possible hard-coded secret assignment detected."
+            exit 1
+          fi

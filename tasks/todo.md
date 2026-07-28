@@ -26,10 +26,10 @@ Status: `[ ]` belum, `[-]` berjalan, `[x]` selesai, `[!]` diblokir.
 
 ## Sprint 3 — Test harness
 
-- [ ] Tambahkan Composer dan PHPUnit
-- [ ] Buat database/fixtures test
-- [ ] Tambahkan lint/unit/integration scripts
-- [ ] Tambahkan CI dan secret scan
+- [x] Tambahkan Composer dan PHPUnit
+- [x] Buat database/fixtures test
+- [x] Tambahkan lint/unit/integration scripts
+- [x] Tambahkan CI dan secret scan
 
 ## Sprint 4 — Schema
 
