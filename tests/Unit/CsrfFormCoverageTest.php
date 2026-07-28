@@ -22,6 +22,7 @@ final class CsrfFormCoverageTest extends TestCase
                 'uks/import_siswa.php',
                 'uks/jawab_konsultasi.php',
                 'uks/kelola_artikel.php',
+                'uks/kelola_tautan.php',
                 'uks/profil.php',
             ]
         );

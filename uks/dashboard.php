@@ -73,6 +73,7 @@ for ($i = 6; $i >= 0; $i--) {
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item"><a class="nav-link text-white active fw-bold" href="dashboard.php">Dashboard</a></li>
                 <li class="nav-item"><a class="nav-link text-white" href="data_siswa.php">Data Siswa</a></li>
+                <li class="nav-item"><a class="nav-link text-white" href="kelola_tautan.php">Verifikasi Wali</a></li>
                 <li class="nav-item"><a class="nav-link text-white" href="kelola_artikel.php">Berita</a></li>
                 <li class="nav-item"><a class="nav-link text-white" href="edukasi.php">SOP Penanganan</a></li>
                 <li class="nav-item"><a class="nav-link text-white" href="jawab_konsultasi.php">Konsultasi</a></li>

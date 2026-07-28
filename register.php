@@ -8,10 +8,28 @@ $success = isset($_GET['registered'])
     : '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $nama = sanitize_input($_POST['nama']);
-    $username = sanitize_input($_POST['username']);
-    $password = trim($_POST['password']);
-    $role = sanitize_input($_POST['role']);
+    $clientHash = hash_hmac(
+        'sha256',
+        (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown'),
+        requireEnvironmentValue('AKRAB_RATE_LIMIT_KEY')
+    );
+    $attemptCount = $pdo->prepare(
+        'SELECT COUNT(*) FROM registration_attempts
+         WHERE client_hash = ? AND attempted_at >= (CURRENT_TIMESTAMP - INTERVAL 15 MINUTE)'
+    );
+    $attemptCount->execute([$clientHash]);
+    if ((int) $attemptCount->fetchColumn() >= 5) {
+        http_response_code(429);
+        $error = 'Terlalu banyak percobaan. Silakan coba lagi nanti.';
+    } else {
+        $attempt = $pdo->prepare('INSERT INTO registration_attempts (client_hash) VALUES (?)');
+        $attempt->execute([$clientHash]);
+    }
+
+    $nama = sanitize_input($_POST['nama'] ?? '');
+    $username = sanitize_input($_POST['username'] ?? '');
+    $password = trim($_POST['password'] ?? '');
+    $role = sanitize_input($_POST['role'] ?? '');
     $kelas_tingkat = isset($_POST['kelas']) ? sanitize_input($_POST['kelas']) : '';
     $jurusan = isset($_POST['jurusan']) ? sanitize_input($_POST['jurusan']) : '';
     $kelas = $kelas_tingkat;
@@ -19,34 +37,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $kelas .= ' ' . $jurusan;
     }
     $anak_username = isset($_POST['anak_username']) ? sanitize_input($_POST['anak_username']) : null;
-    $kode_rahasia = isset($_POST['kode_rahasia']) ? sanitize_input($_POST['kode_rahasia']) : null;
     
-    if (!empty($nama) && !empty($username) && !empty($password) && !empty($role)) {
+    if (empty($error) && !in_array($role, ['siswa', 'orangtua'], true)) {
+        $error = 'Jenis akun tidak diizinkan untuk pendaftaran publik.';
+    }
+
+    if (empty($error) && !empty($nama) && !empty($username) && !empty($password) && !empty($role)) {
         // Validate if Orang Tua
         if ($role === 'orangtua') {
             if (empty($anak_username)) {
                 $error = "NISN Anak wajib diisi untuk pendaftaran Orang Tua.";
-            } else {
-                // Check if anak exists and is a siswa
-                $stmt_anak = $pdo->prepare("SELECT id FROM users WHERE username = ? AND role = 'siswa'");
-                $stmt_anak->execute([$anak_username]);
-                if (!$stmt_anak->fetch()) {
-                    $error = "NISN Anak tidak ditemukan. Pastikan anak Anda sudah terdaftar sebagai Siswa.";
-                }
             }
         } 
         // Validate if Siswa
         elseif ($role === 'siswa' && empty($kelas)) {
             $error = "Kelas wajib dipilih untuk pendaftaran Siswa.";
         }
-        // Validate if UKS
-        elseif ($role === 'uks') {
-            $expectedCode = environmentValue('AKRAB_UKS_REGISTRATION_CODE', '');
-            if ($expectedCode === '' || !hash_equals($expectedCode, (string)$kode_rahasia)) {
-                $error = "Kode Rahasia UKS salah! Anda tidak diizinkan mendaftar sebagai Petugas UKS.";
-            }
-        } 
-        
         // If no validation errors, proceed to insert
         if (empty($error)) {
             // Check if username exists
@@ -57,16 +63,47 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             } else {
                 $password_hash = password_hash($password, PASSWORD_DEFAULT);
                 
-                $stmt = $pdo->prepare("INSERT INTO users (nama, role, username, password_hash, kelas, anak_username) VALUES (?, ?, ?, ?, ?, ?)");
-                if ($stmt->execute([$nama, $role, $username, $password_hash, $kelas, $anak_username])) {
+                $pdo->beginTransaction();
+                try {
+                    $stmt = $pdo->prepare(
+                        "INSERT INTO users (nama, role, username, password_hash, kelas)
+                         VALUES (?, ?, ?, ?, ?)"
+                    );
+                    $stmt->execute([$nama, $role, $username, $password_hash, $kelas]);
+                    $newUserId = (int) $pdo->lastInsertId();
+
+                    if ($role === 'orangtua') {
+                        $link = $pdo->prepare(
+                            "INSERT INTO parent_student_links
+                                (parent_id, requested_student_username, status)
+                             VALUES (?, ?, 'pending')"
+                        );
+                        $link->execute([$newUserId, $anak_username]);
+
+                        $audit = $pdo->prepare(
+                            'INSERT INTO audit_log
+                                (actor_id, action, target_type, target_id, metadata_json)
+                             VALUES (?, ?, ?, ?, ?)'
+                        );
+                        $audit->execute([
+                            $newUserId,
+                            'parent_link.requested',
+                            'parent_student_link',
+                            (int) $pdo->lastInsertId(),
+                            json_encode(['status' => 'pending'], JSON_THROW_ON_ERROR),
+                        ]);
+                    }
+
+                    $pdo->commit();
                     header('Location: register.php?registered=1');
                     exit;
-                } else {
+                } catch (Throwable $exception) {
+                    $pdo->rollBack();
                     $error = "Terjadi kesalahan sistem saat mendaftar.";
                 }
             }
         }
-    } else {
+    } elseif (empty($error)) {
         $error = "Semua kolom wajib diisi!";
     }
 }
@@ -130,7 +167,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <select class="form-select rounded-3 border-0 bg-light" id="role" name="role" required onchange="toggleFields()">
                     <option value="siswa">Siswa</option>
                     <option value="orangtua">Orang Tua / Wali Murid</option>
-                    <option value="uks">Petugas UKS</option>
                 </select>
             </div>
             <div class="mb-3">
@@ -170,11 +206,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <input type="text" class="form-control rounded-3 border-0 bg-light" id="anak_username" name="anak_username" placeholder="Masukkan NISN Anak Anda">
                 <small class="text-primary mt-1 d-block"><i data-lucide="info" style="width: 14px; margin-right: 4px;"></i>Pastikan anak Anda sudah terdaftar terlebih dahulu.</small>
             </div>
-            <div class="mb-4 p-3 bg-danger bg-opacity-10 rounded-3" id="field-kode-uks" style="display: none;">
-                <label for="kode_rahasia" class="form-label text-danger fw-bold small">Kode Rahasia UKS</label>
-                <input type="password" class="form-control border-danger" id="kode_rahasia" name="kode_rahasia" placeholder="Masukkan Kode dari Kepala Sekolah">
-                <small class="text-danger mt-1 d-block">Hanya untuk pendaftaran petugas medis sekolah.</small>
-            </div>
             <button class="w-100 btn btn-lg btn-primary rounded-pill fw-bold shadow-sm mb-3" type="submit">Daftar Sekarang</button>
         </form>
         
@@ -191,17 +222,14 @@ function toggleFields() {
     const role = document.getElementById('role').value;
     const fieldKelas = document.getElementById('field-kelas');
     const fieldAnak = document.getElementById('field-anak');
-    const fieldKodeUks = document.getElementById('field-kode-uks');
     
     // Reset all displays
     fieldKelas.style.display = 'none';
     fieldAnak.style.display = 'none';
-    fieldKodeUks.style.display = 'none';
     
     // Reset all required flags
     document.getElementById('kelas').required = false;
     document.getElementById('anak_username').required = false;
-    document.getElementById('kode_rahasia').required = false;
     
     if (role === 'siswa') {
         fieldKelas.style.display = 'block';
@@ -209,9 +237,6 @@ function toggleFields() {
     } else if (role === 'orangtua') {
         fieldAnak.style.display = 'block';
         document.getElementById('anak_username').required = true;
-    } else if (role === 'uks') {
-        fieldKodeUks.style.display = 'block';
-        document.getElementById('kode_rahasia').required = true;
     }
 }
 lucide.createIcons();

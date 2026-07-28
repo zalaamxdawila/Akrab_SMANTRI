@@ -63,11 +63,11 @@ Status: `[ ]` belum, `[-]` berjalan, `[x]` selesai, `[!]` diblokir.
 
 ## Sprint 8 — Identity
 
-- [ ] Tutup registrasi UKS publik
-- [ ] Buat provisioning UKS
-- [ ] Buat verified parent-student link
-- [ ] Tambahkan approval dan audit
-- [ ] Lengkapi CP-04
+- [x] Tutup registrasi UKS publik
+- [x] Buat provisioning UKS
+- [x] Buat verified parent-student link
+- [x] Tambahkan approval dan audit
+- [x] Lengkapi CP-04
 
 ## Sprint 9 — Validation
 

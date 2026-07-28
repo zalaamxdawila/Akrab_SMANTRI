@@ -5,41 +5,38 @@ require_once '../helpers.php';
 check_role('orangtua');
 $parent_id = $_SESSION['user_id'];
 
-// Get Parent info to find out anak_username
-$stmt = $pdo->prepare("SELECT anak_username FROM users WHERE id = ?");
-$stmt->execute([$parent_id]);
-$parent_info = $stmt->fetch();
-$anak_username = $parent_info['anak_username'];
-
 $anak = null;
 $kuesioner = null;
 $hasil = null;
 $kepatuhan = [];
 
-if ($anak_username) {
-    // Get Child Info
-    $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ? AND role = 'siswa'");
-    $stmt->execute([$anak_username]);
-    $anak = $stmt->fetch();
+$stmt = $pdo->prepare(
+    "SELECT u.*
+     FROM parent_student_links psl
+     JOIN users u ON u.id = psl.student_id AND u.role = 'siswa'
+     WHERE psl.parent_id = ? AND psl.status = 'approved'
+     LIMIT 1"
+);
+$stmt->execute([$parent_id]);
+$anak = $stmt->fetch();
     
-    if ($anak) {
-        $anak_id = $anak['id'];
+if ($anak) {
+    $anak_id = $anak['id'];
         
-        // Latest Kuesioner
-        $stmt = $pdo->prepare("SELECT * FROM kuesioner WHERE user_id = ? ORDER BY created_at DESC LIMIT 1");
-        $stmt->execute([$anak_id]);
-        $kuesioner = $stmt->fetch();
+    // Latest Kuesioner
+    $stmt = $pdo->prepare("SELECT * FROM kuesioner WHERE user_id = ? ORDER BY created_at DESC LIMIT 1");
+    $stmt->execute([$anak_id]);
+    $kuesioner = $stmt->fetch();
         
-        // Latest Risk Detection
-        $stmt = $pdo->prepare("SELECT * FROM hasil_deteksi WHERE user_id = ? ORDER BY tanggal DESC LIMIT 1");
-        $stmt->execute([$anak_id]);
-        $hasil = $stmt->fetch();
+    // Latest Risk Detection
+    $stmt = $pdo->prepare("SELECT * FROM hasil_deteksi WHERE user_id = ? ORDER BY tanggal DESC LIMIT 1");
+    $stmt->execute([$anak_id]);
+    $hasil = $stmt->fetch();
         
-        // TTD History (Last 5)
-        $stmt = $pdo->prepare("SELECT * FROM konsumsi_ttd WHERE user_id = ? ORDER BY tanggal DESC LIMIT 5");
-        $stmt->execute([$anak_id]);
-        $kepatuhan = $stmt->fetchAll();
-    }
+    // TTD History (Last 5)
+    $stmt = $pdo->prepare("SELECT * FROM konsumsi_ttd WHERE user_id = ? ORDER BY tanggal DESC LIMIT 5");
+    $stmt->execute([$anak_id]);
+    $kepatuhan = $stmt->fetchAll();
 }
 
 ?>
@@ -84,8 +81,8 @@ if ($anak_username) {
         <div class="alert alert-warning d-flex align-items-center gap-3 shadow-sm border-0">
             <i data-lucide="alert-triangle" style="width: 32px; height: 32px;"></i>
             <div>
-                <h5 class="fw-bold mb-1">Data Anak Tidak Ditemukan</h5>
-                <p class="mb-0">NISN (<?= htmlspecialchars($anak_username) ?>) yang Anda masukkan saat mendaftar tidak cocok dengan data siswa mana pun. Pastikan anak Anda sudah mendaftar terlebih dahulu.</p>
+                <h5 class="fw-bold mb-1">Tautan Belum Disetujui</h5>
+                <p class="mb-0">Data kesehatan anak baru tersedia setelah petugas UKS memverifikasi hubungan orang tua atau wali dengan siswa.</p>
             </div>
         </div>
     <?php else: ?>

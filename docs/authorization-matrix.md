@@ -5,7 +5,7 @@ Semua aksi yang tidak tercantum ditolak secara default. Role yang sah hanya `sis
 | Resource / aksi | Siswa | Orang tua | UKS | Batas objek |
 |---|---:|---:|---:|---|
 | Data kesehatan sendiri | Kelola | Tidak | Baca | Siswa memakai `user_id` dari session |
-| Data anak tertaut | Tidak | Baca | Baca | Orang tua hanya melalui `anak_username` miliknya |
+| Data anak tertaut | Tidak | Baca | Baca | Orang tua hanya melalui relasi database berstatus `approved` |
 | Konsultasi | Buat dan baca sendiri | Tidak | Baca dan jawab | Balasan hanya untuk konsultasi siswa berstatus menunggu |
 | Artikel edukasi | Baca | Tidak | Kelola | UKS hanya mengubah/menghapus artikel dengan `uks_id` sendiri |
 | Surat rujukan | Tidak | Tidak | Cetak | Target wajib user dengan role siswa |

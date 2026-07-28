@@ -10,6 +10,9 @@ final class SchemaSnapshotTest extends TestCase
 
         foreach ([
             'users',
+            'parent_student_links',
+            'audit_log',
+            'registration_attempts',
             'kuesioner',
             'hasil_deteksi',
             'konsumsi_ttd',
@@ -26,12 +29,14 @@ final class SchemaSnapshotTest extends TestCase
         }
     }
 
-    public function testSnapshotContainsParentRoleAndLink(): void
+    public function testSnapshotContainsVerifiedParentLinkWorkflow(): void
     {
         $schema = file_get_contents(dirname(__DIR__, 2) . '/database/schema.sql');
 
         self::assertStringContainsString("'orangtua'", $schema);
-        self::assertStringContainsString('anak_username VARCHAR(50)', $schema);
+        self::assertStringContainsString("status ENUM('pending', 'approved', 'rejected')", $schema);
+        self::assertStringContainsString('requested_student_username VARCHAR(50)', $schema);
+        self::assertStringContainsString('reviewed_by INT', $schema);
     }
 
     public function testSnapshotDoesNotCreateApplicationUsers(): void
