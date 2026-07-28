@@ -119,7 +119,7 @@ Status: `[ ]` belum, `[-]` berjalan, `[x]` selesai, `[!]` diblokir.
 - [x] Simpan model version pada hasil
 - [x] Golden parity tests
 - [x] Kill switch dan fail-closed
-- [ ] Lengkapi CP-07
+- [x] Lengkapi CP-07
 
 ## Sprint 16 — Refactor konsultasi
 
