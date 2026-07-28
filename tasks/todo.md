@@ -71,10 +71,10 @@ Status: `[ ]` belum, `[-]` berjalan, `[x]` selesai, `[!]` diblokir.
 
 ## Sprint 9 — Validation
 
-- [ ] Validator field dan enum
-- [ ] Batas nilai kesehatan
-- [ ] Validasi skor server-side
-- [ ] Pisahkan normalization dan output encoding
+- [x] Validator field dan enum
+- [x] Batas nilai kesehatan
+- [x] Validasi skor server-side
+- [x] Pisahkan normalization dan output encoding
 
 ## Sprint 10 — CSV
 

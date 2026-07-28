@@ -13,60 +13,47 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $error = "Skrining risiko sedang dinonaktifkan sampai model selesai divalidasi. Tidak ada data yang disimpan.";
     } else {
     try {
+        $validated = validateQuestionnaireInput($_POST);
+        if (!$validated['valid']) {
+            throw new InvalidArgumentException(implode(' ', $validated['errors']));
+        }
+        $values = $validated['values'];
         $pdo->beginTransaction();
         
         // I. Karakteristik
-        $tgl_wawancara = $_POST['tanggal_wawancara'] ?? null;
+        $tgl_wawancara = $values['tanggal_wawancara'];
         $no_resp = "AKRAB-" . date("Ym") . "-" . str_pad($user_id, 4, "0", STR_PAD_LEFT) . "-" . strtoupper(substr(md5(uniqid()), 0, 5));
-        $inisial = $_POST['inisial'] ?? null;
-        $tgl_lahir = $_POST['tanggal_lahir'] ?? null;
-        $tmp_lahir = $_POST['tempat_lahir'] ?? null;
-        $alamat = $_POST['alamat'] ?? null;
-        $pendidikan_tingkat = $_POST['pendidikan'] ?? '';
-        $jurusan = $_POST['jurusan'] ?? '';
+        $inisial = $values['inisial_responden'];
+        $tgl_lahir = $values['tanggal_lahir'];
+        $tmp_lahir = $values['tempat_lahir'];
+        $alamat = $values['alamat'];
+        $pendidikan_tingkat = $values['pendidikan'] ?? '';
+        $jurusan = $values['jurusan'];
         $pendidikan = $pendidikan_tingkat . (!empty($jurusan) ? ' ' . $jurusan : '');
         
         // II. Lab (Kaggle features)
-        $hb = !empty($_POST['kadar_hb']) ? (float)$_POST['kadar_hb'] : null;
-        $mchc = !empty($_POST['kadar_mchc']) ? (float)$_POST['kadar_mchc'] : null;
-        $mcv = !empty($_POST['kadar_mcv']) ? (float)$_POST['kadar_mcv'] : null;
-        $mch = !empty($_POST['kadar_mch']) ? (float)$_POST['kadar_mch'] : null;
+        $hb = $values['kadar_hb'];
+        $mchc = $values['kadar_mchc'];
+        $mcv = $values['kadar_mcv'];
+        $mch = $values['kadar_mch'];
         
         // III. Gejala
-        $skor_gejala = 0;
-        for ($i=1; $i<=10; $i++) {
-            $skor_gejala += (int)($_POST['gejala_'.$i] ?? 0);
-        }
+        $skor_gejala = $values['skor_gejala'];
         
         // IV. Sikap
-        $skor_sikap = 0;
-        for ($i=1; $i<=10; $i++) {
-            $skor_sikap += (int)($_POST['sikap_'.$i] ?? 0);
-        }
+        $skor_sikap = $values['skor_sikap'];
         
         // V. Pengetahuan (Simple scoring: 1 point per correct answer roughly)
-        $skor_pengetahuan = 0;
-        for ($i=1; $i<=10; $i++) {
-            if (!empty($_POST['pengetahuan_'.$i])) {
-                $skor_pengetahuan += count((array)$_POST['pengetahuan_'.$i]); // Count checked items
-            }
-        }
+        $skor_pengetahuan = $values['skor_pengetahuan'];
         
         // VI. Menstruasi
-        $mens_sudah = $_POST['mens_sudah'] ?? null;
-        $mens_usia_th = !empty($_POST['mens_usia_th']) ? (int)$_POST['mens_usia_th'] : null;
-        $mens_teratur = $_POST['mens_teratur'] ?? null;
-        $mens_lama = !empty($_POST['mens_lama']) ? (int)$_POST['mens_lama'] : null;
+        $mens_sudah = $values['mens_sudah'];
+        $mens_usia_th = $values['mens_usia_th'];
+        $mens_teratur = $values['mens_teratur'];
+        $mens_lama = $values['mens_lama_hari'];
         
         // VII. Pola Makan (selalu=3, kadang=2, tidak=1)
-        $skor_makan = 0;
-        $makan_fields = ['makan_1', 'makan_2', 'makan_3', 'makan_4', 'makan_5', 'makan_6'];
-        foreach ($makan_fields as $mf) {
-            $val = $_POST[$mf] ?? '';
-            if ($val == 'selalu') $skor_makan += 3;
-            elseif ($val == 'kadang') $skor_makan += 2;
-            else $skor_makan += 1;
-        }
+        $skor_makan = $values['skor_makan'];
 
         // Insert Kuesioner
         $stmt = $pdo->prepare("INSERT INTO kuesioner 
@@ -103,9 +90,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         header("Location: hasil_deteksi.php");
         exit;
     } catch (Exception $e) {
-        $pdo->rollBack();
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
         error_log('AKRAB questionnaire submission failed: ' . get_class($e));
-        $error = publicErrorMessage();
+        $error = $e instanceof InvalidArgumentException ? $e->getMessage() : publicErrorMessage();
     }
     }
 }

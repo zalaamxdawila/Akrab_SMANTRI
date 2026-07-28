@@ -8,12 +8,15 @@ $bmi = null;
 $status = '';
 $color = '';
 $saran = '';
+$error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['berat']) && isset($_POST['tinggi'])) {
-    $berat = floatval($_POST['berat']);
-    $tinggi = floatval($_POST['tinggi']) / 100; // convert cm to m
+    $validated = validateBmiInput($_POST['berat'], $_POST['tinggi']);
+    $berat = $validated['weight'];
+    $tinggi = $validated['height'] !== null ? $validated['height'] / 100 : null;
+    $error = $validated['error'] ?? '';
     
-    if ($tinggi > 0 && $berat > 0) {
+    if ($validated['valid']) {
         $bmi = $berat / ($tinggi * $tinggi);
         
         if ($bmi < 18.5) {
@@ -73,6 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['berat']) && isset($_P
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-6">
+            <?php if ($error): ?><div class="alert alert-danger"><?= htmlspecialchars($error) ?></div><?php endif; ?>
             <div class="card shadow-sm border-0 mb-4">
                 <div class="card-body p-5">
                     <div class="text-center mb-4">

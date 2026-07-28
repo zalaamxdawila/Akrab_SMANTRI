@@ -115,5 +115,14 @@ function getKategoriRisiko($probabilitas) {
  * Sanitize input data
  */
 function sanitize_input($data) {
-    return htmlspecialchars(strip_tags(trim($data)));
+    if (is_array($data) || is_object($data)) {
+        return '';
+    }
+    // Normalize for storage/querying. Escape only at the HTML output boundary.
+    return trim(strip_tags((string) $data));
+}
+
+function escape_output(mixed $value): string
+{
+    return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
