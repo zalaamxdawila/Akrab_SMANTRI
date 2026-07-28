@@ -29,15 +29,6 @@ fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
 if ($type === 'siswa') {
     fputcsv($output, ['ID', 'Nama', 'Kelas', 'NISN', 'Status Haid', 'Total Minum TTD', 'Kategori Risiko']);
 
-    // Ensure table exists to prevent PDOException
-    $pdo->exec("CREATE TABLE IF NOT EXISTS riwayat_haid (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        tanggal_mulai DATE NOT NULL,
-        tanggal_selesai DATE NULL,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-    )");
-
     // Fetch data
     $stmt = $pdo->query("
         SELECT 

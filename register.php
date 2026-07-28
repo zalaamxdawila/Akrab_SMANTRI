@@ -5,14 +5,6 @@ require_once 'helpers.php';
 $error = '';
 $success = '';
 
-// Auto-Alter DB for new role and parent linking
-try {
-    $pdo->exec("ALTER TABLE users MODIFY COLUMN role ENUM('siswa', 'uks', 'orangtua') NOT NULL DEFAULT 'siswa'");
-    $pdo->exec("ALTER TABLE users ADD COLUMN anak_username VARCHAR(50) NULL");
-} catch (Exception $e) {
-    // Ignore if already exists
-}
-
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $nama = sanitize_input($_POST['nama']);
     $username = sanitize_input($_POST['username']);

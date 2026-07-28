@@ -11,6 +11,8 @@ service-worker.js
 config.php
 helpers.php
 config/
+database/
+tools/migrate.php
 
 # Role-specific application pages
 siswa/

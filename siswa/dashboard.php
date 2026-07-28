@@ -5,15 +5,6 @@ require_once '../helpers.php';
 check_role('siswa');
 $user_id = $_SESSION['user_id'];
 
-// Auto-create Menstrual Tracker table if not exists
-$pdo->exec("CREATE TABLE IF NOT EXISTS riwayat_haid (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    tanggal_mulai DATE NOT NULL,
-    tanggal_selesai DATE NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-)");
-
 // Handle Menstrual Toggle
 if (isset($_POST['toggle_haid'])) {
     // Check if currently menstruating

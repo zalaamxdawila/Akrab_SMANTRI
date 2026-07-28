@@ -7,16 +7,6 @@ $uks_id = $_SESSION['user_id'];
 $success = '';
 $error = '';
 
-// Auto-create table
-$pdo->exec("CREATE TABLE IF NOT EXISTS artikel_edukasi (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    uks_id INT NOT NULL,
-    judul VARCHAR(255) NOT NULL,
-    konten TEXT NOT NULL,
-    tanggal_publikasi TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (uks_id) REFERENCES users(id) ON DELETE CASCADE
-)");
-
 // Handle Delete
 if (isset($_GET['delete'])) {
     $id = (int)$_GET['delete'];

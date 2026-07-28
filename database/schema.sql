@@ -1,10 +1,11 @@
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nama VARCHAR(100) NOT NULL,
-    role ENUM('siswa', 'uks') NOT NULL,
+    role ENUM('siswa', 'uks', 'orangtua') NOT NULL DEFAULT 'siswa',
     username VARCHAR(50) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     kelas VARCHAR(20) NULL,
+    anak_username VARCHAR(50) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -82,7 +83,8 @@ CREATE TABLE IF NOT EXISTS saran_edukasi (
     judul_saran VARCHAR(100) NOT NULL,
     isi_saran TEXT NOT NULL,
     rekomendasi_makanan TEXT NOT NULL,
-    kapan_rujuk_ke_ahli TEXT NULL
+    kapan_rujuk_ke_ahli TEXT NULL,
+    UNIQUE KEY uq_saran_edukasi_kategori (kategori_anemia)
 );
 
 CREATE TABLE IF NOT EXISTS konsultasi (
@@ -122,15 +124,25 @@ CREATE TABLE IF NOT EXISTS log_notifikasi (
     FOREIGN KEY (siswa_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Insert dummy data for saran_edukasi
-INSERT INTO saran_edukasi (kategori_anemia, judul_saran, isi_saran, rekomendasi_makanan, kapan_rujuk_ke_ahli) VALUES
-('tidak_anemia', 'Kondisi Sehat', 'Pertahankan pola hidup sehat Anda saat ini.', 'Makan sayur, daging tanpa lemak, dan buah-buahan.', 'Tidak perlu rujukan.'),
-('ringan', 'Anemia Ringan', 'Anda memiliki tanda-tanda anemia ringan. Jangan khawatir, tingkatkan asupan zat besi.', 'Bayam, hati ayam, daging merah matang, dan makanan kaya vitamin C.', 'Jika gejala pusing dan lemas memburuk.'),
-('sedang', 'Anemia Sedang', 'Anda terdeteksi anemia sedang. Disarankan untuk mulai mengonsumsi TTD secara rutin dan memperbaiki pola makan.', 'Daging merah, hati ayam/sapi, sayuran hijau gelap, dan kurangi kafein setelah makan.', 'Segera hubungi petugas UKS atau puskesmas untuk pemeriksaan darah (Hb).'),
-('berat', 'Anemia Berat', 'PERHATIAN: Indikasi anemia berat. Tubuh Anda mungkin sangat kekurangan zat besi atau oksigen.', 'Segera perbanyak makanan tinggi zat besi dan WAJIB konsumsi TTD.', 'SEGERA konsultasikan dengan ahli atau rujuk ke Puskesmas/Rumah Sakit terdekat.');
+CREATE TABLE IF NOT EXISTS riwayat_haid (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    tanggal_mulai DATE NOT NULL,
+    tanggal_selesai DATE NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
 
--- Insert dummy users for testing (password: password123)
--- Siswa
-INSERT INTO users (nama, role, username, password_hash, kelas) VALUES ('Budi Santoso', 'siswa', 'budi', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'X-MIPA-1');
--- UKS
-INSERT INTO users (nama, role, username, password_hash, kelas) VALUES ('Bu Ani (UKS)', 'uks', 'uks_ani', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NULL);
+CREATE TABLE IF NOT EXISTS artikel_edukasi (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    uks_id INT NOT NULL,
+    judul VARCHAR(255) NOT NULL,
+    konten TEXT NOT NULL,
+    tanggal_publikasi TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (uks_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS schema_migrations (
+    version VARCHAR(100) PRIMARY KEY,
+    description VARCHAR(255) NOT NULL,
+    applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

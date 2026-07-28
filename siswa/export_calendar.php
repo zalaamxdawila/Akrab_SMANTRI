@@ -13,15 +13,6 @@ if (ob_get_length()) {
 header('Content-Type: text/calendar; charset=utf-8');
 header('Content-Disposition: attachment; filename="jadwal_minum_ttd_akrab.ics"');
 
-// Ensure table exists to prevent PDOException if this is the first ever access
-$pdo->exec("CREATE TABLE IF NOT EXISTS riwayat_haid (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    tanggal_mulai DATE NOT NULL,
-    tanggal_selesai DATE NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-)");
-
 // The event will start on the upcoming Friday at 19:00:00
 $next_friday = strtotime('next friday 19:00:00');
 // Convert to UTC for iCal (assuming Asia/Jakarta is UTC+7)

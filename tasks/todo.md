@@ -33,11 +33,11 @@ Status: `[ ]` belum, `[-]` berjalan, `[x]` selesai, `[!]` diblokir.
 
 ## Sprint 4 — Schema
 
-- [ ] Rekonsiliasi schema aktual
-- [ ] Buat migration runner
-- [ ] Pindahkan DDL runtime ke migration
-- [ ] Uji fresh/existing migration
-- [ ] Lengkapi CP-02
+- [x] Rekonsiliasi schema aktual
+- [x] Buat migration runner
+- [x] Pindahkan DDL runtime ke migration
+- [-] Uji fresh/existing migration
+- [x] Lengkapi CP-02
 
 ## Sprint 5 — Session
 
