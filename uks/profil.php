@@ -23,6 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $new_hash = password_hash($new_pass, PASSWORD_DEFAULT);
                     $update = $pdo->prepare("UPDATE users SET password_hash = ? WHERE id = ?");
                     $update->execute([$new_hash, $user_id]);
+                    regenerateAuthenticatedSession();
                     $success = "Password berhasil diperbarui!";
                 } else {
                     $error = "Password baru minimal 6 karakter.";

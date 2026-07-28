@@ -41,10 +41,10 @@ Status: `[ ]` belum, `[-]` berjalan, `[x]` selesai, `[!]` diblokir.
 
 ## Sprint 5 — Session
 
-- [ ] Secure/HttpOnly/SameSite cookies
-- [ ] Regenerasi session ID
-- [ ] Idle dan absolute timeout
-- [ ] Test session fixation/logout
+- [x] Secure/HttpOnly/SameSite cookies
+- [x] Regenerasi session ID
+- [x] Idle dan absolute timeout
+- [-] Test session fixation/logout
 
 ## Sprint 6 — CSRF
 

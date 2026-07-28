@@ -3,6 +3,7 @@
 
 require_once __DIR__ . '/config/environment.php';
 require_once __DIR__ . '/config/error_handling.php';
+require_once __DIR__ . '/config/session.php';
 
 $appEnvironment = environmentValue('AKRAB_APP_ENV', 'production');
 if ($appEnvironment === 'production') {
@@ -34,7 +35,12 @@ try {
 
 // Start Session if not already started and not running in CLI
 if (session_status() === PHP_SESSION_NONE && php_sapi_name() !== 'cli') {
-    session_start();
+    $idleTimeout = max(300, (int)environmentValue('AKRAB_SESSION_IDLE_SECONDS', '1800'));
+    $absoluteTimeout = max(
+        $idleTimeout,
+        (int)environmentValue('AKRAB_SESSION_ABSOLUTE_SECONDS', '28800')
+    );
+    startSecureSession($appEnvironment, $idleTimeout, $absoluteTimeout);
 }
 
 define('BASE_URL', $baseUrl);

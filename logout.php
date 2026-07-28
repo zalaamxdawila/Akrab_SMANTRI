@@ -1,7 +1,6 @@
 <?php
 require_once 'config.php';
-session_unset();
-session_destroy();
+destroySessionCompletely($appEnvironment);
 header("Location: " . BASE_URL . "login.php");
 exit;
 ?>
