@@ -3,7 +3,9 @@ require_once 'config.php';
 require_once 'helpers.php';
 
 $error = '';
-$success = '';
+$success = isset($_GET['registered'])
+    ? "Pendaftaran berhasil! Silakan login ke akun Anda."
+    : '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $nama = sanitize_input($_POST['nama']);
@@ -57,7 +59,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 
                 $stmt = $pdo->prepare("INSERT INTO users (nama, role, username, password_hash, kelas, anak_username) VALUES (?, ?, ?, ?, ?, ?)");
                 if ($stmt->execute([$nama, $role, $username, $password_hash, $kelas, $anak_username])) {
-                    $success = "Pendaftaran berhasil! Silakan login ke akun Anda.";
+                    header('Location: register.php?registered=1');
+                    exit;
                 } else {
                     $error = "Terjadi kesalahan sistem saat mendaftar.";
                 }
@@ -121,6 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <?php else: ?>
         
         <form action="register.php" method="POST">
+            <?= csrfInput() ?>
             <div class="mb-3">
                 <label for="role" class="form-label small text-muted fw-semibold">Daftar Sebagai</label>
                 <select class="form-select rounded-3 border-0 bg-light" id="role" name="role" required onchange="toggleFields()">

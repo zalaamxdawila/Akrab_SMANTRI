@@ -4,7 +4,7 @@ require_once '../helpers.php';
 
 check_role('uks');
 $user_id = $_SESSION['user_id'];
-$success = false;
+$success = isset($_GET['replied']);
 
 // Handle reply
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['konsultasi_id']) && !empty($_POST['isi_balasan'])) {
@@ -22,7 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['konsultasi_id']) && !e
         $stmt->execute([$user_id, $kons_id]);
         
         $pdo->commit();
-        $success = true;
+        header('Location: jawab_konsultasi.php?replied=1');
+        exit;
     } catch (Exception $e) {
         $pdo->rollBack();
     }
@@ -98,6 +99,7 @@ $konsultasi = $stmt->fetchAll();
                             
                             <?php if ($k['status'] == 'menunggu'): ?>
                                 <form method="POST">
+                                    <?= csrfInput() ?>
                                     <input type="hidden" name="konsultasi_id" value="<?= $k['id'] ?>">
                                     <div class="mb-3">
                                         <label class="form-label text-primary fw-bold">Tulis Balasan:</label>

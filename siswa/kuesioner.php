@@ -207,6 +207,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <?php endif; ?>
     
     <form method="POST" action="" id="kuesionerForm">
+        <?= csrfInput() ?>
         
         <!-- STEP 1: Karakteristik -->
         <div class="step-container active" id="step1">

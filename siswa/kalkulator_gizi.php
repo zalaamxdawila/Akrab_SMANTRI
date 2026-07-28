@@ -82,6 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['berat']) && isset($_P
                     </div>
 
                     <form method="POST">
+                        <?= csrfInput() ?>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Berat Badan (kg)</label>
                             <input type="number" step="0.1" name="berat" class="form-control form-control-lg" required placeholder="Contoh: 50" value="<?= isset($_POST['berat']) ? htmlspecialchars($_POST['berat']) : '' ?>">

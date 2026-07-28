@@ -4,7 +4,7 @@ require_once '../helpers.php';
 
 check_role('siswa');
 $user_id = $_SESSION['user_id'];
-$success = false;
+$success = isset($_GET['sent']);
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_POST['pertanyaan'])) {
@@ -12,7 +12,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_POST['pertanyaan'])) {
     
     $stmt = $pdo->prepare("INSERT INTO konsultasi (siswa_id, pertanyaan) VALUES (?, ?)");
     if ($stmt->execute([$user_id, $pertanyaan])) {
-        $success = true;
+        header('Location: konsultasi.php?sent=1');
+        exit;
     } else {
         $error = "Gagal mengirim pertanyaan.";
     }
@@ -68,6 +69,7 @@ $riwayat = $stmt->fetchAll();
                 <?php endif; ?>
                 
                 <form method="POST">
+                    <?= csrfInput() ?>
                     <div class="mb-3">
                         <label class="form-label">Tulis pertanyaan atau keluhan Anda:</label>
                         <textarea class="form-control" name="pertanyaan" rows="5" required placeholder="Misal: Saya sering pusing setelah olahraga, apakah itu bahaya?"></textarea>

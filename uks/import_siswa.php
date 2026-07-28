@@ -3,7 +3,13 @@ require_once '../config.php';
 require_once '../helpers.php';
 
 check_role('uks');
-$success = '';
+$success = isset($_GET['imported'], $_GET['skipped'])
+    ? sprintf(
+        'Berhasil import %d siswa. (Dilewati/Duplikat: %d)',
+        max(0, (int) $_GET['imported']),
+        max(0, (int) $_GET['skipped'])
+    )
+    : '';
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file_csv'])) {
@@ -50,7 +56,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file_csv'])) {
                 }
             }
             fclose($handle);
-            $success = "Berhasil import $imported siswa. (Dilewati/Duplikat: $skipped)";
+            $query = http_build_query(['imported' => $imported, 'skipped' => $skipped]);
+            header("Location: import_siswa.php?{$query}");
+            exit;
         } else {
             $error = "Harap unggah file dengan format .csv";
         }
@@ -117,6 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file_csv'])) {
                     </div>
 
                     <form method="POST" enctype="multipart/form-data">
+                        <?= csrfInput() ?>
                         <div class="mb-4">
                             <label class="form-label">Pilih File CSV</label>
                             <input class="form-control" type="file" name="file_csv" accept=".csv" required>

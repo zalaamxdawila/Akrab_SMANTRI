@@ -52,6 +52,7 @@ function startSecureSession(
 function regenerateAuthenticatedSession(): void
 {
     session_regenerate_id(true);
+    unset($_SESSION['_csrf_token']);
     $_SESSION['_created_at'] = time();
     $_SESSION['_last_activity'] = time();
 }

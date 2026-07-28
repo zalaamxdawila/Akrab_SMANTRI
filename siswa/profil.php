@@ -4,7 +4,7 @@ require_once '../helpers.php';
 
 check_role('siswa');
 $user_id = $_SESSION['user_id'];
-$success = '';
+$success = isset($_GET['password_updated']) ? "Password berhasil diperbarui!" : '';
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -24,7 +24,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $update = $pdo->prepare("UPDATE users SET password_hash = ? WHERE id = ?");
                     $update->execute([$new_hash, $user_id]);
                     regenerateAuthenticatedSession();
-                    $success = "Password berhasil diperbarui!";
+                    header('Location: profil.php?password_updated=1');
+                    exit;
                 } else {
                     $error = "Password baru minimal 6 karakter.";
                 }
@@ -84,6 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <div class="card-body p-4">
                     <h5 class="card-title text-primary border-bottom pb-2 mb-3">Ubah Password</h5>
                     <form method="POST">
+                        <?= csrfInput() ?>
                         <input type="hidden" name="update_password" value="1">
                         <div class="mb-3">
                             <label class="form-label">Password Lama</label>

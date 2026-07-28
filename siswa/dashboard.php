@@ -41,7 +41,7 @@ $stmt->execute([$user_id]);
 $hasil_deteksi = $stmt->fetch();
 
 // Handle TTD consumption confirmation
-if (isset($_GET['minum_ttd'])) {
+if (isset($_POST['confirm_ttd'])) {
     $stmt = $pdo->prepare("INSERT INTO konsumsi_ttd (user_id, tanggal, status_konsumsi) VALUES (?, CURDATE(), 'sudah')");
     $stmt->execute([$user_id]);
     
@@ -193,7 +193,10 @@ if (empty($news)) {
                             <p class="mb-2 text-muted">Jangan lupa minum Tablet Tambah Darah (TTD) hari ini.</p>
                         <?php endif; ?>
                         <div class="d-flex gap-2 flex-wrap mt-2">
-                            <a href="dashboard.php?minum_ttd=1" class="btn btn-primary shadow-sm">Saya Sudah Minum</a>
+                            <form method="POST">
+                                <?= csrfInput() ?>
+                                <button type="submit" name="confirm_ttd" class="btn btn-primary shadow-sm">Saya Sudah Minum</button>
+                            </form>
                             <a href="export_calendar.php" class="btn btn-outline-dark shadow-sm d-flex align-items-center gap-1">
                                 <i data-lucide="calendar-clock" style="width: 18px; height: 18px;"></i> Set Alarm HP
                             </a>
@@ -215,6 +218,7 @@ if (empty($news)) {
                         <h5 class="mb-1 text-dark">Pelacak Siklus Haid</h5>
                         <p class="mb-2 text-muted">Tandai jika kamu sedang haid agar pengingat TTD disesuaikan.</p>
                         <form method="POST">
+                            <?= csrfInput() ?>
                             <button type="submit" name="toggle_haid" class="btn <?= $sedang_haid ? 'btn-danger' : 'btn-outline-danger' ?> mt-2 shadow-sm">
                                 <?= $sedang_haid ? 'Haid Selesai' : 'Saya Sedang Haid Hari Ini' ?>
                             </button>

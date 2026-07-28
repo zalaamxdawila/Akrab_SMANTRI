@@ -48,11 +48,11 @@ Status: `[ ]` belum, `[-]` berjalan, `[x]` selesai, `[!]` diblokir.
 
 ## Sprint 6 — CSRF
 
-- [ ] Buat CSRF helper
-- [ ] Lindungi seluruh mutasi
-- [ ] Ubah mutasi GET menjadi POST
-- [ ] Terapkan Post/Redirect/Get
-- [ ] Lengkapi CP-03
+- [x] Buat CSRF helper
+- [x] Lindungi seluruh mutasi
+- [x] Ubah mutasi GET menjadi POST
+- [x] Terapkan Post/Redirect/Get
+- [x] Lengkapi CP-03
 
 ## Sprint 7 — Authorization
 

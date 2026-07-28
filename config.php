@@ -4,6 +4,7 @@
 require_once __DIR__ . '/config/environment.php';
 require_once __DIR__ . '/config/error_handling.php';
 require_once __DIR__ . '/config/session.php';
+require_once __DIR__ . '/config/csrf.php';
 
 $appEnvironment = environmentValue('AKRAB_APP_ENV', 'production');
 if ($appEnvironment === 'production') {
@@ -41,6 +42,13 @@ if (session_status() === PHP_SESSION_NONE && php_sapi_name() !== 'cli') {
         (int)environmentValue('AKRAB_SESSION_ABSOLUTE_SECONDS', '28800')
     );
     startSecureSession($appEnvironment, $idleTimeout, $absoluteTimeout);
+}
+
+if (
+    php_sapi_name() !== 'cli'
+    && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST'
+) {
+    verifyCsrfOrFail($_POST['_csrf'] ?? null);
 }
 
 define('BASE_URL', $baseUrl);

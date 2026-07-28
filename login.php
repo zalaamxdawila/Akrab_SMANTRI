@@ -79,6 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <?php endif; ?>
         
         <form method="POST" action="login.php" class="mt-4">
+            <?= csrfInput() ?>
             <div class="form-floating mb-3">
                 <input type="text" class="form-control rounded-3 border-0 bg-light" id="floatingInput" name="username" placeholder="Username" required>
                 <label for="floatingInput" class="text-muted"><i data-lucide="user" style="width: 16px;" class="me-1"></i> Username</label>

@@ -4,21 +4,26 @@ require_once '../helpers.php';
 
 check_role('uks');
 $uks_id = $_SESSION['user_id'];
-$success = '';
+$successMessages = [
+    'created' => 'Artikel berhasil diterbitkan.',
+    'updated' => 'Artikel berhasil diperbarui.',
+    'deleted' => 'Artikel berhasil dihapus.',
+];
+$success = $successMessages[$_GET['success'] ?? ''] ?? '';
 $error = '';
 
 // Handle Delete
-if (isset($_GET['delete'])) {
-    $id = (int)$_GET['delete'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
+    $id = (int) $_POST['delete_id'];
     $stmt = $pdo->prepare("DELETE FROM artikel_edukasi WHERE id = ?");
-    if ($stmt->execute([$id])) {
+    if ($id > 0 && $stmt->execute([$id])) {
         header("Location: kelola_artikel.php?success=deleted");
         exit;
     }
 }
 
 // Handle Add/Edit
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete_id'])) {
     $judul = trim($_POST['judul']);
     $konten = trim($_POST['konten']);
     
@@ -29,12 +34,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Edit
             $stmt = $pdo->prepare("UPDATE artikel_edukasi SET judul = ?, konten = ? WHERE id = ?");
             $stmt->execute([$judul, $konten, $_POST['id']]);
-            $success = "Artikel berhasil diperbarui.";
+            header('Location: kelola_artikel.php?success=updated');
+            exit;
         } else {
             // Add
             $stmt = $pdo->prepare("INSERT INTO artikel_edukasi (uks_id, judul, konten) VALUES (?, ?, ?)");
             $stmt->execute([$uks_id, $judul, $konten]);
-            $success = "Artikel berhasil diterbitkan.";
+            header('Location: kelola_artikel.php?success=created');
+            exit;
         }
     }
 }
@@ -42,10 +49,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Fetch all articles
 $stmt = $pdo->query("SELECT * FROM artikel_edukasi ORDER BY tanggal_publikasi DESC");
 $articles = $stmt->fetchAll();
-
-if (isset($_GET['success']) && $_GET['success'] === 'deleted') {
-    $success = "Artikel berhasil dihapus.";
-}
 
 ?>
 <!DOCTYPE html>
@@ -115,9 +118,13 @@ if (isset($_GET['success']) && $_GET['success'] === 'deleted') {
                         <td class="px-4 align-middle"><?= date('d M Y, H:i', strtotime($a['tanggal_publikasi'])) ?></td>
                         <td class="align-middle fw-bold"><?= htmlspecialchars($a['judul']) ?></td>
                         <td class="text-end px-4">
-                            <a href="?delete=<?= $a['id'] ?>" onclick="return confirm('Yakin ingin menghapus artikel ini?')" class="btn btn-sm btn-outline-danger">
-                                <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i> Hapus
-                            </a>
+                            <form method="POST" class="d-inline" onsubmit="return confirm('Yakin ingin menghapus artikel ini?')">
+                                <?= csrfInput() ?>
+                                <input type="hidden" name="delete_id" value="<?= (int) $a['id'] ?>">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i> Hapus
+                                </button>
+                            </form>
                         </td>
                     </tr>
                     <?php endforeach; ?>
@@ -132,6 +139,7 @@ if (isset($_GET['success']) && $_GET['success'] === 'deleted') {
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <form method="POST">
+          <?= csrfInput() ?>
           <div class="modal-header">
             <h5 class="modal-title fw-bold">Tulis Artikel Baru</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
