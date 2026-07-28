@@ -7,19 +7,26 @@ $user_id = $_SESSION['user_id'];
 
 // Handle Menstrual Toggle
 if (isset($_POST['toggle_haid'])) {
-    // Check if currently menstruating
-    $stmt = $pdo->prepare("SELECT id FROM riwayat_haid WHERE user_id = ? AND tanggal_selesai IS NULL");
-    $stmt->execute([$user_id]);
-    $active_haid = $stmt->fetch();
-    
-    if ($active_haid) {
-        // End haid
-        $stmt = $pdo->prepare("UPDATE riwayat_haid SET tanggal_selesai = CURDATE() WHERE id = ?");
-        $stmt->execute([$active_haid['id']]);
-    } else {
-        // Start haid
-        $stmt = $pdo->prepare("INSERT INTO riwayat_haid (user_id, tanggal_mulai) VALUES (?, CURDATE())");
+    try {
+        $pdo->beginTransaction();
+        $stmt = $pdo->prepare("SELECT id FROM riwayat_haid WHERE user_id = ? AND tanggal_selesai IS NULL FOR UPDATE");
         $stmt->execute([$user_id]);
+        $active_haid = $stmt->fetch();
+
+        if ($active_haid) {
+            $stmt = $pdo->prepare("UPDATE riwayat_haid SET tanggal_selesai = CURDATE() WHERE id = ? AND tanggal_selesai IS NULL");
+            $stmt->execute([$active_haid['id']]);
+        } else {
+            $stmt = $pdo->prepare("INSERT INTO riwayat_haid (user_id, tanggal_mulai) VALUES (?, CURDATE())");
+            $stmt->execute([$user_id]);
+        }
+        $pdo->commit();
+    } catch (Throwable $exception) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        http_response_code(409);
+        exit('Status siklus tidak dapat diperbarui.');
     }
     header("Location: dashboard.php?haid_updated=1");
     exit;
@@ -42,7 +49,7 @@ $hasil_deteksi = $stmt->fetch();
 
 // Handle TTD consumption confirmation
 if (isset($_POST['confirm_ttd'])) {
-    $stmt = $pdo->prepare("INSERT INTO konsumsi_ttd (user_id, tanggal, status_konsumsi) VALUES (?, CURDATE(), 'sudah')");
+    $stmt = $pdo->prepare("INSERT INTO konsumsi_ttd (user_id, tanggal, status_konsumsi) VALUES (?, CURDATE(), 'sudah') ON DUPLICATE KEY UPDATE status_konsumsi = VALUES(status_konsumsi)");
     $stmt->execute([$user_id]);
     
     // Update notification log if exists

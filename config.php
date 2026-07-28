@@ -8,6 +8,7 @@ require_once __DIR__ . '/config/csrf.php';
 require_once __DIR__ . '/config/authorization.php';
 require_once __DIR__ . '/config/validation.php';
 require_once __DIR__ . '/config/csv.php';
+require_once __DIR__ . '/config/integrity.php';
 
 $appEnvironment = environmentValue('AKRAB_APP_ENV', 'production');
 if ($appEnvironment === 'production') {

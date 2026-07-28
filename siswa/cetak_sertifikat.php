@@ -6,13 +6,18 @@ check_role('siswa');
 $user_id = $_SESSION['user_id'];
 $nama = $_SESSION['nama'];
 
-// Periksa kelayakan (Harus 12+ TTD)
-$stmt = $pdo->prepare("SELECT COUNT(*) FROM konsumsi_ttd WHERE user_id = ? AND status_konsumsi = 'sudah'");
+// Periksa kelayakan: 12 hari unik dalam 90 hari terakhir.
+$stmt = $pdo->prepare(
+    "SELECT COUNT(DISTINCT tanggal)
+     FROM konsumsi_ttd
+     WHERE user_id = ? AND status_konsumsi = 'sudah'
+       AND tanggal >= DATE_SUB(CURDATE(), INTERVAL " . AKRAB_CERTIFICATE_WINDOW_DAYS . " DAY)"
+);
 $stmt->execute([$user_id]);
-$total_minum = $stmt->fetchColumn();
+$total_minum = (int) $stmt->fetchColumn();
 
-if ($total_minum < 12) {
-    echo '<!DOCTYPE html><html lang="id"><head><title>Akses Ditolak - AKRAB</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><script src="https://unpkg.com/lucide@latest"></script></head><body class="bg-light d-flex align-items-center justify-content-center" style="min-height: 100vh;"><div class="card shadow-sm border-0 p-5 text-center" style="max-width: 500px;"><div class="mb-4 text-warning d-flex justify-content-center"><i data-lucide="alert-triangle" style="width: 64px; height: 64px;"></i></div><h3 class="fw-bold text-dark mb-3">Belum Memenuhi Syarat</h3><p class="text-muted mb-4">Maaf, Anda belum dapat mengunduh Sertifikat Duta Anemia. Tingkatkan terus kepatuhan minum TTD Anda hingga mencapai minimal 12 kali (Saat ini: '.$total_minum.' kali).</p><a href="dashboard.php" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">Kembali ke Dasbor</a></div><script>lucide.createIcons();</script></body></html>';
+if (!isCertificateEligible($total_minum)) {
+    echo '<!DOCTYPE html><html lang="id"><head><title>Akses Ditolak - AKRAB</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><script src="https://unpkg.com/lucide@latest"></script></head><body class="bg-light d-flex align-items-center justify-content-center" style="min-height: 100vh;"><div class="card shadow-sm border-0 p-5 text-center" style="max-width: 500px;"><div class="mb-4 text-warning d-flex justify-content-center"><i data-lucide="alert-triangle" style="width: 64px; height: 64px;"></i></div><h3 class="fw-bold text-dark mb-3">Belum Memenuhi Syarat</h3><p class="text-muted mb-4">Diperlukan minimal 12 hari unik konsumsi TTD dalam 90 hari terakhir (Saat ini: '.$total_minum.' hari).</p><a href="dashboard.php" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">Kembali ke Dasbor</a></div><script>lucide.createIcons();</script></body></html>';
     exit;
 }
 

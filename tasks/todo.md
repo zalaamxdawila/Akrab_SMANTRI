@@ -86,10 +86,10 @@ Status: `[ ]` belum, `[-]` berjalan, `[x]` selesai, `[!]` diblokir.
 
 ## Sprint 11 — Integritas TTD/haid
 
-- [ ] Unique konsumsi per hari
-- [ ] Idempotent TTD write
-- [ ] State machine menstruasi
-- [ ] Koreksi syarat sertifikat
+- [x] Unique konsumsi per hari
+- [x] Idempotent TTD write
+- [x] State machine menstruasi
+- [x] Koreksi syarat sertifikat
 
 ## Sprint 12 — Query/kategori
 

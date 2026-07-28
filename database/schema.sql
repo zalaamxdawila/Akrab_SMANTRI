@@ -111,6 +111,7 @@ CREATE TABLE IF NOT EXISTS konsumsi_ttd (
     tanggal DATE NOT NULL,
     status_konsumsi ENUM('sudah', 'belum') NOT NULL,
     waktu_input TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_konsumsi_ttd_user_date (user_id, tanggal),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -175,6 +176,8 @@ CREATE TABLE IF NOT EXISTS riwayat_haid (
     user_id INT NOT NULL,
     tanggal_mulai DATE NOT NULL,
     tanggal_selesai DATE NULL,
+    active_key INT GENERATED ALWAYS AS (IF(tanggal_selesai IS NULL, 1, id)) STORED,
+    UNIQUE KEY uq_haid_one_active (user_id, active_key),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
