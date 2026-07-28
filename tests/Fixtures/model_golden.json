@@ -1,0 +1,12 @@
+{
+  "model_version": "model-v1",
+  "input": {
+    "kadar_hb": null,
+    "skor_gejala": 10,
+    "skor_makan": 12,
+    "mens_teratur": "ya"
+  },
+  "expected_probability": 0.2,
+  "expected_category": "rendah",
+  "tolerance": 0.000001
+}
