@@ -65,6 +65,6 @@ final class AnemiaRiskServiceTest extends TestCase
         $contents = file_get_contents(dirname(__DIR__, 2) . '/siswa/kuesioner.php');
         self::assertStringContainsString('model_version', $contents);
         self::assertStringContainsString('model_checksum', $contents);
-        self::assertStringContainsString('AnemiaRiskService', $contents);
+        self::assertStringContainsString('QuestionnaireService', $contents);
     }
 }

@@ -130,7 +130,7 @@ Status: `[ ]` belum, `[-]` berjalan, `[x]` selesai, `[!]` diblokir.
 
 ## Sprint 17 — Core flow
 
-- [ ] Refactor kuesioner
+- [x] Refactor kuesioner scoring/persistence boundary
 - [ ] Refactor dashboard queries
 - [x] Global error handler correlation context
 - [x] Request correlation ID

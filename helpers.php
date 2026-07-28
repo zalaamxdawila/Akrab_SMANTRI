@@ -2,6 +2,7 @@
 // helpers.php
 
 require_once __DIR__ . '/app/Services/AnemiaRiskService.php';
+require_once __DIR__ . '/app/Services/QuestionnaireService.php';
 
 /**
  * Clinical risk output is disabled unless production explicitly opts in.
