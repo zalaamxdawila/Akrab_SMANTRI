@@ -27,7 +27,7 @@ $output = fopen('php://output', 'w');
 fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
 
 if ($type === 'siswa') {
-    fputcsv($output, ['ID', 'Nama', 'Kelas', 'NISN', 'Status Haid', 'Total Minum TTD', 'Kategori Risiko']);
+    fputcsv($output, array_map('csvSafeCell', ['ID', 'Nama', 'Kelas', 'NISN', 'Status Haid', 'Total Minum TTD', 'Kategori Risiko']));
 
     // Fetch data
     $stmt = $pdo->query("
@@ -45,7 +45,7 @@ if ($type === 'siswa') {
         $status_haid = $row['is_haid'] > 0 ? 'Sedang Haid' : 'Tidak';
         $risiko = $row['risiko'] ? strtoupper($row['risiko']) : 'BELUM SCREENING';
         
-        fputcsv($output, [
+        fputcsv($output, array_map('csvSafeCell', [
             $row['id'],
             $row['nama'],
             $row['kelas'],
@@ -53,10 +53,10 @@ if ($type === 'siswa') {
             $status_haid,
             $row['total_ttd'],
             $risiko
-        ]);
+        ]));
     }
 } elseif ($type === 'log') {
-    fputcsv($output, ['Tanggal', 'Nama Siswa', 'Kelas', 'Status Konsumsi']);
+    fputcsv($output, array_map('csvSafeCell', ['Tanggal', 'Nama Siswa', 'Kelas', 'Status Konsumsi']));
 
     $stmt = $pdo->query("
         SELECT k.tanggal, u.nama, u.kelas, k.status_konsumsi
@@ -66,12 +66,12 @@ if ($type === 'siswa') {
     ");
 
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        fputcsv($output, [
+        fputcsv($output, array_map('csvSafeCell', [
             $row['tanggal'],
             $row['nama'],
             $row['kelas'],
             strtoupper($row['status_konsumsi'])
-        ]);
+        ]));
     }
 }
 

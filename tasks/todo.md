@@ -78,11 +78,11 @@ Status: `[ ]` belum, `[-]` berjalan, `[x]` selesai, `[!]` diblokir.
 
 ## Sprint 10 — CSV
 
-- [ ] Validasi type/size/header/row
-- [ ] Batasi jumlah baris dan waktu
-- [ ] Transaksi batch
-- [ ] Mitigasi formula injection
-- [ ] Lengkapi CP-05
+- [x] Validasi type/size/header/row
+- [x] Batasi jumlah baris dan waktu
+- [x] Transaksi batch
+- [x] Mitigasi formula injection
+- [x] Lengkapi CP-05
 
 ## Sprint 11 — Integritas TTD/haid
 

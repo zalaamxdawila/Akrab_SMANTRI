@@ -13,6 +13,7 @@ final class SchemaSnapshotTest extends TestCase
             'parent_student_links',
             'audit_log',
             'registration_attempts',
+            'csv_import_batches',
             'kuesioner',
             'hasil_deteksi',
             'konsumsi_ttd',

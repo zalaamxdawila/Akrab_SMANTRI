@@ -14,56 +14,80 @@ $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file_csv'])) {
     $file = $_FILES['file_csv'];
-    
-    if ($file['error'] === UPLOAD_ERR_OK) {
-        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-        
-        if (strtolower($ext) === 'csv') {
-            $handle = fopen($file['tmp_name'], 'r');
+
+    $mime = is_file($file['tmp_name']) ? (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']) : '';
+    if ($file['error'] !== UPLOAD_ERR_OK || (int) $file['size'] > AKRAB_CSV_MAX_BYTES) {
+        $error = 'File tidak valid atau melebihi batas ukuran 2 MB.';
+    } elseif (
+        strtolower(pathinfo($file['name'], PATHINFO_EXTENSION)) !== 'csv'
+        || !in_array($mime, ['text/plain', 'text/csv', 'application/vnd.ms-excel'], true)
+    ) {
+        $error = 'Harap unggah file dengan format .csv.';
+    } else {
+        $batchHash = hash_file('sha256', $file['tmp_name']);
+        $duplicate = $pdo->prepare('SELECT id FROM csv_import_batches WHERE batch_hash = ?');
+        $duplicate->execute([$batchHash]);
+        if ($duplicate->fetch()) {
+            $error = 'File ini sudah pernah diproses.';
+        } else {
+            $handle = fopen($file['tmp_name'], 'rb');
             $imported = 0;
             $skipped = 0;
-            
-            // Skip header if first row looks like header
-            $first_row = fgetcsv($handle, 1000, ",");
-            if (strtolower(trim($first_row[0])) !== 'nama') {
-                // If it's not header, rewind
-                rewind($handle);
-            }
-            
-            while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
-                // Format: Nama, Kelas, Username, Password
-                if (count($data) >= 4) {
-                    $nama = trim($data[0]);
-                    $kelas = trim($data[1]);
-                    $username = trim($data[2]);
-                    $password = trim($data[3]);
-                    
-                    // Check if username exists
-                    $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
-                    $stmt->execute([$username]);
-                    if (!$stmt->fetch()) {
-                        // Insert
-                        $hash = password_hash($password, PASSWORD_DEFAULT);
-                        $insert = $pdo->prepare("INSERT INTO users (username, password_hash, nama, kelas, role) VALUES (?, ?, ?, ?, 'siswa')");
-                        if ($insert->execute([$username, $hash, $nama, $kelas])) {
-                            $imported++;
-                        } else {
-                            $skipped++;
-                        }
-                    } else {
-                        $skipped++;
-                    }
+            $rowNumber = 0;
+            $startedAt = microtime(true);
+            try {
+                $header = fgetcsv($handle, AKRAB_CSV_MAX_LINE_LENGTH, ',');
+                if (!is_array($header) || !csvHeaderIsValid($header)) {
+                    throw new InvalidArgumentException('Header CSV harus: Nama,Kelas,Username,Password.');
                 }
+
+                $pdo->beginTransaction();
+                $exists = $pdo->prepare('SELECT id FROM users WHERE username = ? LIMIT 1');
+                $insert = $pdo->prepare(
+                    "INSERT INTO users (username, password_hash, nama, kelas, role)
+                     VALUES (?, ?, ?, ?, 'siswa')"
+                );
+                while (($data = fgetcsv($handle, AKRAB_CSV_MAX_LINE_LENGTH, ',')) !== false) {
+                    $rowNumber++;
+                    if ($rowNumber > AKRAB_CSV_MAX_ROWS || microtime(true) - $startedAt > 10) {
+                        throw new RuntimeException('Import melebihi batas waktu atau jumlah baris.');
+                    }
+                    try {
+                        [$nama, $kelas, $username, $password] = csvStudentRow($data);
+                    } catch (InvalidArgumentException) {
+                        $skipped++;
+                        continue;
+                    }
+                    $exists->execute([$username]);
+                    if ($exists->fetch()) {
+                        $skipped++;
+                        continue;
+                    }
+                    $insert->execute([$username, password_hash($password, PASSWORD_DEFAULT), $nama, $kelas]);
+                    $imported++;
+                }
+                $batch = $pdo->prepare(
+                    'INSERT INTO csv_import_batches (batch_hash, created_by, imported_count, skipped_count)
+                     VALUES (?, ?, ?, ?)'
+                );
+                $batch->execute([$batchHash, (int) $_SESSION['user_id'], $imported, $skipped]);
+                $pdo->commit();
+                fclose($handle);
+                $query = http_build_query(['imported' => $imported, 'skipped' => $skipped]);
+                header("Location: import_siswa.php?{$query}");
+                exit;
+            } catch (Throwable $exception) {
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+                if (is_resource($handle)) {
+                    fclose($handle);
+                }
+                $error = $exception instanceof InvalidArgumentException
+                    ? $exception->getMessage()
+                    : 'Import gagal dan tidak ada perubahan yang disimpan.';
             }
-            fclose($handle);
-            $query = http_build_query(['imported' => $imported, 'skipped' => $skipped]);
-            header("Location: import_siswa.php?{$query}");
-            exit;
-        } else {
-            $error = "Harap unggah file dengan format .csv";
         }
-    } else {
-        $error = "Terjadi kesalahan saat mengunggah file.";
     }
 }
 ?>
