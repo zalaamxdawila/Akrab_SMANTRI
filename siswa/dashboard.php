@@ -43,7 +43,7 @@ $stmt->execute([$user_id]);
 $kuesioner = $stmt->fetch();
 
 // Check latest risk detection
-$stmt = $pdo->prepare("SELECT * FROM hasil_deteksi WHERE user_id = ? ORDER BY tanggal DESC LIMIT 1");
+$stmt = $pdo->prepare("SELECT * FROM hasil_deteksi WHERE user_id = ? ORDER BY tanggal DESC, id DESC LIMIT 1");
 $stmt->execute([$user_id]);
 $hasil_deteksi = $stmt->fetch();
 

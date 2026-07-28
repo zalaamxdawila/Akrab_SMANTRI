@@ -10,14 +10,14 @@ $stmt = $pdo->query("SELECT COUNT(*) as total FROM users WHERE role = 'siswa'");
 $total_siswa = $stmt->fetch()['total'];
 
 // 2. High Risk Students
-$stmt = $pdo->query("SELECT COUNT(DISTINCT user_id) as total FROM hasil_deteksi WHERE kategori_risiko = 'tinggi' AND tanggal = (SELECT MAX(tanggal) FROM hasil_deteksi h2 WHERE h2.user_id = hasil_deteksi.user_id)");
+$stmt = $pdo->query("SELECT COUNT(*) as total FROM hasil_deteksi h WHERE h.kategori_risiko = 'tinggi' AND NOT EXISTS (SELECT 1 FROM hasil_deteksi newer WHERE newer.user_id = h.user_id AND (newer.tanggal > h.tanggal OR (newer.tanggal = h.tanggal AND newer.id > h.id)))");
 $risiko_tinggi = $stmt->fetch()['total'];
 
 // 2b. Risk Distribution (Tinggi, Sedang, Rendah)
 $stmt = $pdo->query("
     SELECT kategori_risiko, COUNT(DISTINCT user_id) as total 
     FROM hasil_deteksi 
-    WHERE (user_id, tanggal) IN (SELECT user_id, MAX(tanggal) FROM hasil_deteksi GROUP BY user_id)
+    WHERE NOT EXISTS (SELECT 1 FROM hasil_deteksi newer WHERE newer.user_id = hasil_deteksi.user_id AND (newer.tanggal > hasil_deteksi.tanggal OR (newer.tanggal = hasil_deteksi.tanggal AND newer.id > hasil_deteksi.id)))
     GROUP BY kategori_risiko
 ");
 $risk_distribution = ['tinggi' => 0, 'sedang' => 0, 'rendah' => 0];

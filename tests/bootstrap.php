@@ -10,3 +10,4 @@ require_once dirname(__DIR__) . '/config/authorization.php';
 require_once dirname(__DIR__) . '/config/validation.php';
 require_once dirname(__DIR__) . '/config/csv.php';
 require_once dirname(__DIR__) . '/config/integrity.php';
+require_once dirname(__DIR__) . '/config/risk.php';

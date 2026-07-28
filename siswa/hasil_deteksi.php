@@ -16,12 +16,8 @@ if (!$hasil) {
 }
 
 // Get advice based on risk category
-$kategori = $hasil['kategori_risiko'];
-// Map risk to anemia category for advice lookup
-$kat_anemia = 'tidak_anemia';
-if ($kategori == 'sedang') $kat_anemia = 'sedang';
-if ($kategori == 'tinggi') $kat_anemia = 'berat';
-if ($kategori == 'rendah') $kat_anemia = 'ringan';
+$kategori = canonicalRiskCategory((string) $hasil['kategori_risiko']);
+$kat_anemia = adviceCategoryForRisk($kategori);
 
 $stmt = $pdo->prepare("SELECT * FROM saran_edukasi WHERE kategori_anemia = ?");
 $stmt->execute([$kat_anemia]);

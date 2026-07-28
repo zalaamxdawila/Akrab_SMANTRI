@@ -93,11 +93,11 @@ Status: `[ ]` belum, `[-]` berjalan, `[x]` selesai, `[!]` diblokir.
 
 ## Sprint 12 — Query/kategori
 
-- [ ] Satukan kategori kanonis
-- [ ] Mapping saran eksplisit
-- [ ] Deterministic latest record
-- [ ] Rekonsiliasi dashboard/laporan
-- [ ] Lengkapi CP-06
+- [x] Satukan kategori kanonis
+- [x] Mapping saran eksplisit
+- [x] Deterministic latest record
+- [x] Rekonsiliasi dashboard/laporan
+- [x] Lengkapi CP-06
 
 ## Sprint 13 — Clinical specification
 

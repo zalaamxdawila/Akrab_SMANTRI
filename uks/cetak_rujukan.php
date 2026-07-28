@@ -15,7 +15,7 @@ $stmt = $pdo->prepare("SELECT u.*, h.kategori_risiko, h.probabilitas_risiko, h.t
                        FROM users u 
                        LEFT JOIN hasil_deteksi h ON u.id = h.user_id 
                        LEFT JOIN kuesioner k ON u.id = k.user_id
-                       WHERE u.id = ? AND u.role = 'siswa' ORDER BY h.id DESC, k.id DESC LIMIT 1");
+                       WHERE u.id = ? AND u.role = 'siswa' ORDER BY h.tanggal DESC, h.id DESC, k.created_at DESC, k.id DESC LIMIT 1");
 $stmt->execute([$siswa_id]);
 $data = $stmt->fetch();
 
