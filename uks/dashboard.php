@@ -4,50 +4,25 @@ require_once '../helpers.php';
 
 check_role('uks');
 
-// Statistics for Dashboard
-// 1. Total Students
-$stmt = $pdo->query("SELECT COUNT(*) as total FROM users WHERE role = 'siswa'");
-$total_siswa = $stmt->fetch()['total'];
+/* Dashboard read model is kept out of the page so query changes are testable. */
+$dashboardRepository = new DashboardRepository($pdo);
+$summary = $dashboardRepository->uksSummary();
+$total_siswa = $summary['total_students'];
 
 // 2. High Risk Students
-$stmt = $pdo->query("SELECT COUNT(*) as total FROM hasil_deteksi h WHERE h.kategori_risiko = 'tinggi' AND NOT EXISTS (SELECT 1 FROM hasil_deteksi newer WHERE newer.user_id = h.user_id AND (newer.tanggal > h.tanggal OR (newer.tanggal = h.tanggal AND newer.id > h.id)))");
-$risiko_tinggi = $stmt->fetch()['total'];
+$risiko_tinggi = $summary['high_risk'];
 
 // 2b. Risk Distribution (Tinggi, Sedang, Rendah)
-$stmt = $pdo->query("
-    SELECT kategori_risiko, COUNT(DISTINCT user_id) as total 
-    FROM hasil_deteksi 
-    WHERE NOT EXISTS (SELECT 1 FROM hasil_deteksi newer WHERE newer.user_id = hasil_deteksi.user_id AND (newer.tanggal > hasil_deteksi.tanggal OR (newer.tanggal = hasil_deteksi.tanggal AND newer.id > hasil_deteksi.id)))
-    GROUP BY kategori_risiko
-");
-$risk_distribution = ['tinggi' => 0, 'sedang' => 0, 'rendah' => 0];
-while ($row = $stmt->fetch()) {
-    $risk_distribution[$row['kategori_risiko']] = (int)$row['total'];
-}
+$risk_distribution = $summary['risk_distribution'];
 
 // 3. Unanswered Consultations
-$stmt = $pdo->query("SELECT COUNT(*) as total FROM konsultasi WHERE status = 'menunggu'");
-$konsultasi_menunggu = $stmt->fetch()['total'];
+$konsultasi_menunggu = $summary['pending_consultations'];
 
 // 4. Data for Chart.js (TTD Compliance last 7 days)
-$chart_labels = [];
-$data_patuh = [];
-$data_tidak_patuh = [];
-
-for ($i = 6; $i >= 0; $i--) {
-    $date = date('Y-m-d', strtotime("-$i days"));
-    $chart_labels[] = date('d M', strtotime($date));
-    
-    // Count 'sudah'
-    $stmt = $pdo->prepare("SELECT COUNT(*) as patuh FROM konsumsi_ttd WHERE tanggal = ? AND status_konsumsi = 'sudah'");
-    $stmt->execute([$date]);
-    $patuh = $stmt->fetch()['patuh'];
-    $data_patuh[] = $patuh;
-    
-    // Count 'tidak patuh' (Total siswa - patuh)
-    $tidak_patuh = max(0, $total_siswa - $patuh);
-    $data_tidak_patuh[] = $tidak_patuh;
-}
+$compliance = $dashboardRepository->ttdComplianceLastSevenDays($total_siswa);
+$chart_labels = $compliance['labels'];
+$data_patuh = $compliance['compliant'];
+$data_tidak_patuh = $compliance['non_compliant'];
 
 ?>
 <!DOCTYPE html>
