@@ -4,6 +4,7 @@ require_once '../bootstrap.php';
 check_role('siswa');
 $user_id = $_SESSION['user_id'];
 $success = isset($_GET['sent']);
+$successMessage = $success ? 'Pertanyaan berhasil dikirim! Petugas akan segera membalas.' : '';
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_POST['pertanyaan'])) {
@@ -60,9 +61,7 @@ $riwayat = $stmt->fetchAll();
             <div class="card p-4 shadow-sm h-100">
                 <h4 class="mb-3">Tanya Petugas UKS</h4>
                 
-                <?php if ($success): ?>
-                    <div class="alert alert-success alert-auto-dismiss">Pertanyaan berhasil dikirim! Petugas akan segera membalas.</div>
-                <?php endif; ?>
+                <?php require __DIR__ . '/../views/partials/flash.php'; ?>
                 <?php if ($error): ?>
                     <div class="alert alert-danger"><?= $error ?></div>
                 <?php endif; ?>

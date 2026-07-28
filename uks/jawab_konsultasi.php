@@ -4,6 +4,7 @@ require_once '../bootstrap.php';
 check_role('uks');
 $user_id = $_SESSION['user_id'];
 $success = isset($_GET['replied']);
+$successMessage = $success ? 'Balasan berhasil dikirim!' : '';
 
 // Handle reply
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['konsultasi_id']) && !empty($_POST['isi_balasan'])) {
@@ -15,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['konsultasi_id']) && !e
         header('Location: jawab_konsultasi.php?replied=1');
         exit;
     } catch (Exception $e) {
-        $pdo->rollBack();
+        $error = 'Gagal mengirim balasan. Silakan coba lagi.';
     }
 }
 
@@ -61,9 +62,7 @@ $konsultasi = $stmt->fetchAll();
 <div class="container py-4">
     <h3 class="mb-4">Panel Konsultasi Siswa</h3>
     
-    <?php if ($success): ?>
-        <div class="alert alert-success alert-auto-dismiss">Balasan berhasil dikirim!</div>
-    <?php endif; ?>
+    <?php require __DIR__ . '/../views/partials/flash.php'; ?>
     
     <div class="row">
         <div class="col-12">
