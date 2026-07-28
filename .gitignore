@@ -1,0 +1,33 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+config.local.php
+*.key
+*.pem
+
+# Runtime output
+*.log
+logs/
+cache/
+tmp/
+
+# Local database and backups
+*.sql.gz
+*.bak
+backups/
+
+# Generated deployment archives
+*.zip
+
+# Dependencies and test output
+vendor/
+.phpunit.cache/
+coverage/
+
+# Editor and OS metadata
+.agents/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

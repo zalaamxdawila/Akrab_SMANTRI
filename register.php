@@ -1,0 +1,228 @@
+<?php
+require_once 'config.php';
+require_once 'helpers.php';
+
+$error = '';
+$success = '';
+
+// Auto-Alter DB for new role and parent linking
+try {
+    $pdo->exec("ALTER TABLE users MODIFY COLUMN role ENUM('siswa', 'uks', 'orangtua') NOT NULL DEFAULT 'siswa'");
+    $pdo->exec("ALTER TABLE users ADD COLUMN anak_username VARCHAR(50) NULL");
+} catch (Exception $e) {
+    // Ignore if already exists
+}
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $nama = sanitize_input($_POST['nama']);
+    $username = sanitize_input($_POST['username']);
+    $password = trim($_POST['password']);
+    $role = sanitize_input($_POST['role']);
+    $kelas_tingkat = isset($_POST['kelas']) ? sanitize_input($_POST['kelas']) : '';
+    $jurusan = isset($_POST['jurusan']) ? sanitize_input($_POST['jurusan']) : '';
+    $kelas = $kelas_tingkat;
+    if (!empty($jurusan)) {
+        $kelas .= ' ' . $jurusan;
+    }
+    $anak_username = isset($_POST['anak_username']) ? sanitize_input($_POST['anak_username']) : null;
+    $kode_rahasia = isset($_POST['kode_rahasia']) ? sanitize_input($_POST['kode_rahasia']) : null;
+    
+    if (!empty($nama) && !empty($username) && !empty($password) && !empty($role)) {
+        // Validate if Orang Tua
+        if ($role === 'orangtua') {
+            if (empty($anak_username)) {
+                $error = "NISN Anak wajib diisi untuk pendaftaran Orang Tua.";
+            } else {
+                // Check if anak exists and is a siswa
+                $stmt_anak = $pdo->prepare("SELECT id FROM users WHERE username = ? AND role = 'siswa'");
+                $stmt_anak->execute([$anak_username]);
+                if (!$stmt_anak->fetch()) {
+                    $error = "NISN Anak tidak ditemukan. Pastikan anak Anda sudah terdaftar sebagai Siswa.";
+                }
+            }
+        } 
+        // Validate if Siswa
+        elseif ($role === 'siswa' && empty($kelas)) {
+            $error = "Kelas wajib dipilih untuk pendaftaran Siswa.";
+        }
+        // Validate if UKS
+        elseif ($role === 'uks') {
+            $expectedCode = environmentValue('AKRAB_UKS_REGISTRATION_CODE', '');
+            if ($expectedCode === '' || !hash_equals($expectedCode, (string)$kode_rahasia)) {
+                $error = "Kode Rahasia UKS salah! Anda tidak diizinkan mendaftar sebagai Petugas UKS.";
+            }
+        } 
+        
+        // If no validation errors, proceed to insert
+        if (empty($error)) {
+            // Check if username exists
+            $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
+            $stmt->execute([$username]);
+            if ($stmt->fetch()) {
+                $error = "Username/NISN sudah digunakan!";
+            } else {
+                $password_hash = password_hash($password, PASSWORD_DEFAULT);
+                
+                $stmt = $pdo->prepare("INSERT INTO users (nama, role, username, password_hash, kelas, anak_username) VALUES (?, ?, ?, ?, ?, ?)");
+                if ($stmt->execute([$nama, $role, $username, $password_hash, $kelas, $anak_username])) {
+                    $success = "Pendaftaran berhasil! Silakan login ke akun Anda.";
+                } else {
+                    $error = "Terjadi kesalahan sistem saat mendaftar.";
+                }
+            }
+        }
+    } else {
+        $error = "Semua kolom wajib diisi!";
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar - Aplikasi AKRAB</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="assets/css/style.css?v=<?= time() ?>" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .login-bg {
+            background: url('assets/img/bg.png') no-repeat center center fixed;
+            background-size: cover;
+        }
+        .login-card {
+            background: var(--bg-white);
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            border: 1px solid rgba(255,255,255,0.8);
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body class="d-flex align-items-center py-4 login-bg" style="min-height: 100vh;">
+    
+<main class="form-signin w-100 m-auto animate-fade-in-up" style="max-width: 450px; padding: 15px;">
+    <div class="login-card p-4 p-md-5">
+        <div class="text-center mb-4">
+            <div class="mb-3">
+                <img src="assets/img/logo.png" alt="AKRAB Logo" style="width: 80px; height: 80px; object-fit: contain; border-radius: 16px; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25);">
+            </div>
+            <h2 class="h3 mb-2 fw-bold" style="color: var(--primary-color);">Daftar Akun Baru</h2>
+            <p class="text-muted small">Aplikasi Kesehatan Remaja Bebas Anemia</p>
+        </div>
+        
+        <?php if ($error): ?>
+            <div class="alert alert-danger alert-auto-dismiss border-0 shadow-sm rounded-3 py-2 text-center small fw-medium d-flex align-items-center justify-content-center gap-2" role="alert">
+                <i data-lucide="alert-circle" style="width: 18px;"></i> <?= htmlspecialchars($error) ?>
+            </div>
+        <?php endif; ?>
+        
+        <?php if ($success): ?>
+            <div class="alert alert-success border-0 shadow-sm rounded-3 text-center" role="alert">
+                <div class="mb-2"><i data-lucide="check-circle" class="text-success" style="width: 40px; height: 40px;"></i></div>
+                <p class="mb-3 fw-medium"><?= htmlspecialchars($success) ?></p>
+                <a href="login.php" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm">Menuju Login</a>
+            </div>
+        <?php else: ?>
+        
+        <form action="register.php" method="POST">
+            <div class="mb-3">
+                <label for="role" class="form-label small text-muted fw-semibold">Daftar Sebagai</label>
+                <select class="form-select rounded-3 border-0 bg-light" id="role" name="role" required onchange="toggleFields()">
+                    <option value="siswa">Siswa</option>
+                    <option value="orangtua">Orang Tua / Wali Murid</option>
+                    <option value="uks">Petugas UKS</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="nama" class="form-label small text-muted fw-semibold">Nama Lengkap</label>
+                <input type="text" class="form-control rounded-3 border-0 bg-light" id="nama" name="nama" required>
+            </div>
+            <div class="mb-3">
+                <label for="username" class="form-label small text-muted fw-semibold">Username / NISN</label>
+                <input type="text" class="form-control rounded-3 border-0 bg-light" id="username" name="username" required>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label small text-muted fw-semibold">Password</label>
+                <input type="password" class="form-control rounded-3 border-0 bg-light" id="password" name="password" required>
+            </div>
+            <div class="mb-4" id="field-kelas">
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <label for="kelas" class="form-label small text-muted fw-semibold">Tingkat Kelas</label>
+                        <select class="form-select rounded-3 border-0 bg-light" id="kelas" name="kelas">
+                            <option value="">Pilih Tingkat</option>
+                            <option value="Kelas VII">Kelas VII (SMP)</option>
+                            <option value="Kelas VIII">Kelas VIII (SMP)</option>
+                            <option value="Kelas IX">Kelas IX (SMP)</option>
+                            <option value="Kelas X">Kelas X (SMA)</option>
+                            <option value="Kelas XI">Kelas XI (SMA)</option>
+                            <option value="Kelas XII">Kelas XII (SMA)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="jurusan" class="form-label small text-muted fw-semibold">Jurusan/Nama Opsional</label>
+                        <input type="text" class="form-control rounded-3 border-0 bg-light" id="jurusan" name="jurusan" placeholder="Cth: MIPA 1, A, dll">
+                    </div>
+                </div>
+            </div>
+            <div class="mb-4" id="field-anak" style="display: none;">
+                <label for="anak_username" class="form-label small text-muted fw-semibold">NISN Anak (Untuk ditautkan)</label>
+                <input type="text" class="form-control rounded-3 border-0 bg-light" id="anak_username" name="anak_username" placeholder="Masukkan NISN Anak Anda">
+                <small class="text-primary mt-1 d-block"><i data-lucide="info" style="width: 14px; margin-right: 4px;"></i>Pastikan anak Anda sudah terdaftar terlebih dahulu.</small>
+            </div>
+            <div class="mb-4 p-3 bg-danger bg-opacity-10 rounded-3" id="field-kode-uks" style="display: none;">
+                <label for="kode_rahasia" class="form-label text-danger fw-bold small">Kode Rahasia UKS</label>
+                <input type="password" class="form-control border-danger" id="kode_rahasia" name="kode_rahasia" placeholder="Masukkan Kode dari Kepala Sekolah">
+                <small class="text-danger mt-1 d-block">Hanya untuk pendaftaran petugas medis sekolah.</small>
+            </div>
+            <button class="w-100 btn btn-lg btn-primary rounded-pill fw-bold shadow-sm mb-3" type="submit">Daftar Sekarang</button>
+        </form>
+        
+        <div class="text-center mt-3 pt-3 border-top">
+            <p class="text-muted small mb-0">Sudah punya akun? <a href="login.php" class="text-decoration-none fw-semibold" style="color: var(--primary-color);">Login di sini</a></p>
+        </div>
+        <?php endif; ?>
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function toggleFields() {
+    const role = document.getElementById('role').value;
+    const fieldKelas = document.getElementById('field-kelas');
+    const fieldAnak = document.getElementById('field-anak');
+    const fieldKodeUks = document.getElementById('field-kode-uks');
+    
+    // Reset all displays
+    fieldKelas.style.display = 'none';
+    fieldAnak.style.display = 'none';
+    fieldKodeUks.style.display = 'none';
+    
+    // Reset all required flags
+    document.getElementById('kelas').required = false;
+    document.getElementById('anak_username').required = false;
+    document.getElementById('kode_rahasia').required = false;
+    
+    if (role === 'siswa') {
+        fieldKelas.style.display = 'block';
+        document.getElementById('kelas').required = true;
+    } else if (role === 'orangtua') {
+        fieldAnak.style.display = 'block';
+        document.getElementById('anak_username').required = true;
+    } else if (role === 'uks') {
+        fieldKodeUks.style.display = 'block';
+        document.getElementById('kode_rahasia').required = true;
+    }
+}
+lucide.createIcons();
+// Initialize fields on load just in case (e.g. browser back button caching form values)
+window.addEventListener('load', toggleFields);
+</script>
+<script src="assets/js/main.js"></script>
+<script src="assets/js/app-init.js"></script>
+</body>
+</html>
