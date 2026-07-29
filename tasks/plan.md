@@ -672,6 +672,290 @@ Baseline
 
 **Checkpoint CP-12:** produksi dinyatakan stabil setelah 7 hari tanpa blocker.
 
+## Program Lanjutan — Superadmin Master Dashboard
+
+Specification:
+`docs/specs/superadmin-master-dashboard.md`
+
+Status awal: SPEC APPROVED; implementation plan menunggu persetujuan.
+
+### Dependency graph
+
+```text
+Role/schema invariant + provisioning
+              │
+              ├── Authorization policy + feature flag
+              │                 │
+              │                 └── Superadmin shell/dashboard
+              │
+              └── Two-identity audit model
+                                │
+                                └── Login As security kernel
+                                      │
+                                      ├── Read-only master views
+                                      ├── User/link management
+                                      ├── Health record management
+                                      └── Content/operational management
+                                                   │
+                                                   └── Reports, UAT, release
+```
+
+Implementasi mengikuti dependency graph. Feature flag superadmin tetap OFF
+sampai security kernel, route coverage, dan browser UAT lulus.
+
+### Architecture decisions
+
+- `superadmin` menjadi role aplikasi eksplisit, tetapi database menjamin hanya
+  satu row superadmin.
+- Provisioning dan recovery superadmin hanya melalui CLI.
+- Dashboard memakai repository/service/route tipis; tidak ada raw SQL editor.
+- Login As menyimpan authenticated actor dan effective actor secara terpisah.
+- Audit dua identitas menjadi fondasi sebelum mutasi master dibuka.
+- Login As memakai step-up password, reason wajib, expiry 15 menit, session ID
+  regeneration, dan central deny policy untuk aksi kritis.
+- Tidak ada hard delete. Arsip/koreksi ditambahkan per domain melalui migration
+  additive.
+- Rollback utama sebelum full release adalah feature flag OFF; migration tidak
+  di-rollback secara destructive.
+- Seluruh query daftar memakai pagination dan seluruh mutasi memakai CSRF,
+  prepared statement, transaction, PRG, confirmation, dan audit.
+
+## Sprint 25 — Superadmin identity and authorization foundation
+
+**Tujuan:** Menambahkan invariant satu-superadmin tanpa membuka dashboard.
+
+**Pekerjaan:**
+
+- Migration role `superadmin`, account status, dan unique singleton constraint.
+- Permission matrix serta dashboard mapping superadmin yang fail-closed.
+- Feature flag `AKRAB_SUPERADMIN_ENABLED` default OFF.
+- CLI provisioning/recovery yang idempotent dan tidak mencetak secret.
+- Test fresh/existing/idempotent migration dan penolakan superadmin kedua.
+
+**Acceptance criteria:**
+
+- Tepat satu akun superadmin dapat diprovision melalui CLI.
+- Registrasi publik tidak dapat membuat atau memilih role superadmin.
+- Role lama tidak memperoleh permission baru.
+- Saat flag OFF, route/login superadmin tetap tidak dapat digunakan.
+
+**Verifikasi:** focused unit/integration tests, migration rehearsal, lint,
+secret scan, dan review schema.
+
+**Checkpoint CP-13:** identity foundation GREEN sebelum route dashboard dibuat.
+
+## Sprint 26 — Two-identity audit and Login As security kernel
+
+**Tujuan:** Membangun lifecycle Login As yang aman sebelum modul master
+memiliki mutasi.
+
+**Pekerjaan:**
+
+- Migration `impersonation_sessions` dan perluasan audit dua identitas.
+- Service start/end/expire dengan step-up authentication dan reason wajib.
+- Session state authenticated/effective actor yang tidak dapat dipalsukan.
+- Central deny policy untuk credential, role/status, archive/delete, export
+  massal, konfigurasi, clinical gate, dan nested impersonation.
+- Audit otomatis untuk setiap request mutasi selama Login As.
+
+**Acceptance criteria:**
+
+- Login As hanya dapat dimulai oleh session superadmin asli.
+- Target hanya akun aktif dengan role siswa, UKS, atau orang tua.
+- Expiry maksimal 15 menit diperiksa pada setiap request.
+- Mutasi operasional menyimpan dua identitas; aksi kritis selalu 403.
+- Start/end/expiry meregenerasi session ID dan tercatat di audit.
+
+**Verifikasi:** session fixation, CSRF, nested impersonation, expiry bypass,
+forged actor/target, audit integrity, dan transaction tests.
+
+**Checkpoint CP-14:** security kernel GREEN sebelum Login As ditampilkan.
+
+## Sprint 27 — Superadmin shell and read-only master dashboard
+
+**Tujuan:** Memberikan visibilitas terpusat tanpa mutasi bisnis.
+
+**Pekerjaan:**
+
+- Layout accessible/responsive khusus superadmin.
+- Overview repository untuk metrik akun, relasi, konsultasi, artikel, TTD,
+  health, migration, dan clinical flag read-only.
+- Daftar/detail pengguna dengan search, filter, pagination, dan status.
+- Audit viewer dengan filter actor/effective actor/action/outcome/request ID.
+- Feature flag dan route guard di seluruh halaman superadmin.
+
+**Acceptance criteria:**
+
+- Hanya superadmin asli yang dapat membuka dashboard.
+- Semua list terpaginate dan tidak memuat password hash/secret.
+- Metrik tidak menghitung row yang kelak diarsip.
+- Clinical flag terlihat tetapi tidak dapat diubah.
+- Tidak ada query N+1 pada critical dashboard paths.
+
+**Verifikasi:** authorization tests, repository integration tests, EXPLAIN,
+accessibility/keyboard check, responsive browser smoke, dan console/network
+check.
+
+**Checkpoint CP-15:** read-only dashboard GREEN sebelum mutasi master dibuka.
+
+## Sprint 28 — User and parent-link management
+
+**Tujuan:** Mengelola lifecycle akun dan relasi tanpa hard delete.
+
+**Pekerjaan:**
+
+- Create siswa/UKS/orang tua dengan validation dan password hash.
+- Koreksi field allowlisted; password tidak ditampilkan/dihasilkan dashboard.
+- Aktif/nonaktif/arsip akun dengan confirmation dan reason.
+- Approve/reject/koreksi/arsip relasi orang tua–siswa.
+- Proteksi akun superadmin dan akun yang memiliki dependensi data.
+
+**Acceptance criteria:**
+
+- Tidak ada route yang dapat menghapus row pengguna secara permanen.
+- Role conversion akun berdata ditolak.
+- Superadmin tidak dapat mengubah status/role dirinya.
+- Seluruh perubahan user/link transactional dan tercatat di audit.
+- Login As tidak dapat menjalankan aksi lifecycle akun.
+
+**Verifikasi:** validation, CSRF, IDOR, privilege escalation, FK/data-integrity,
+audit, dan browser UAT user/link.
+
+**Checkpoint CP-16:** account lifecycle GREEN.
+
+## Sprint 29 — Student health master data
+
+**Tujuan:** Meninjau, mengoreksi, dan mengarsip data kesehatan secara aman.
+
+**Pekerjaan:**
+
+- Migration metadata correction/archive untuk kuesioner, hasil existing,
+  kadar Hb, konsumsi TTD, dan riwayat menstruasi.
+- Read-only detail history dan pagination/filter.
+- Koreksi field allowlisted dengan before/after audit tanpa menyimpan PII
+  mentah di metadata.
+- Archive/restore sesuai policy, tanpa hard delete.
+- Rekonsiliasi agregat agar row archived tidak dihitung.
+
+**Acceptance criteria:**
+
+- Foreign key dan histori existing tetap utuh.
+- Koreksi memakai validasi domain existing dan transaction.
+- Audit mencatat field name/outcome, bukan nilai kesehatan sensitif mentah.
+- Login As boleh melakukan mutasi operasional target tetapi tidak
+  correction/archive master.
+- Clinical model/flag tetap tidak berubah.
+
+**Verifikasi:** migration rehearsal, validation boundary, ownership/IDOR,
+aggregate consistency, audit redaction, dan browser UAT.
+
+**Checkpoint CP-17:** health master data GREEN dengan clinical feature OFF.
+
+## Sprint 30 — Consultation, education, and notification management
+
+**Tujuan:** Mengelola modul operasional non-akun dari dashboard master.
+
+**Pekerjaan:**
+
+- Tinjau/koreksi status/arsip konsultasi dan balasan.
+- Kelola artikel edukasi dan saran edukasi lintas UKS dengan audit ownership.
+- Tinjau jadwal/log notifikasi dan koreksi status yang diizinkan.
+- Tambahkan metadata archive/correction additive per tabel terkait.
+- Pastikan seluruh daftar search/filter/pagination.
+
+**Acceptance criteria:**
+
+- Tidak ada hard delete atau silent ownership bypass.
+- Perubahan konsultasi menjaga state consistency.
+- Konten tetap di-output dengan encoding aman.
+- Login As hanya mendapat aksi operasional role target.
+- Setiap master correction/archive memiliki reason dan audit.
+
+**Verifikasi:** state transition tests, XSS/output encoding, IDOR, CSRF,
+pagination, transaction rollback, audit, dan browser UAT.
+
+**Checkpoint CP-18:** operational master modules GREEN.
+
+## Sprint 31 — Login As user experience and route coverage
+
+**Tujuan:** Membuka Login As setelah security kernel dan seluruh route siap.
+
+**Pekerjaan:**
+
+- Target picker terpaginate dari dashboard superadmin.
+- Re-authentication form dan reason validation.
+- Banner permanen/countdown/tombol kembali pada seluruh halaman tiga role.
+- Route coverage matrix untuk semua GET/POST/export/profile endpoints.
+- Browser journey siswa, UKS, dan orang tua termasuk mutasi allowed/blocked.
+
+**Acceptance criteria:**
+
+- Tidak ada protected page yang kehilangan banner saat impersonating.
+- Back/refresh/direct URL tidak melewati expiry atau blocked-action policy.
+- End Login As selalu kembali ke dashboard superadmin asli.
+- Console/network bersih dan focus/keyboard order benar.
+- Audit dapat menelusuri setiap journey dari request ID.
+
+**Verifikasi:** route coverage unit test, Selenium/Chrome isolated-profile UAT,
+accessibility tree, network/console inspection, dan session regression.
+
+**Checkpoint CP-19:** Login As GREEN.
+
+## Sprint 32 — Reports, hardening, UAT, and controlled release
+
+**Tujuan:** Menutup seluruh gate sebelum feature flag dinyalakan.
+
+**Pekerjaan:**
+
+- Laporan agregat dan export superadmin dengan confirmation/audit.
+- Security review lima sumbu, performance baseline, dan dependency audit.
+- Full unit/integration/security/browser regression.
+- Fresh/existing migration rehearsal, backup, rollback drill, dan release
+  artifact checksum.
+- Human UAT superadmin plus Login As tiga role.
+- Deploy terkontrol hanya ke `akrab.portodq.com` dengan flag OFF, smoke test,
+  lalu enable setelah approval.
+
+**Acceptance criteria:**
+
+- Tidak ada critical/high unresolved finding.
+- Tidak ada secret/PII mentah pada source, log, audit, atau release package.
+- P95 critical dashboard queries memenuhi budget yang disepakati dari baseline.
+- Rollback flag OFF dan package sebelumnya siap.
+- Existing siswa/UKS/orang tua journeys tidak regresi.
+- Product/security owner memberi GO tertulis.
+
+**Verifikasi:** composer quality pada PHP lengkap, Python model tests, migration
+rehearsal, security suite, browser UAT, HTTP/headers/health smoke, log/error
+review, dan rollback drill.
+
+**Checkpoint CP-20:** superadmin release GREEN.
+
+### Program risks and mitigations
+
+| Risiko | Dampak | Mitigasi |
+|---|---|---|
+| Login As menyamarkan pelaku asli | Kritis | Dua identitas immutable dan audit request-level |
+| Superadmin kedua tercipta | Kritis | Unique DB invariant plus idempotent CLI |
+| Aksi kritis lolos saat impersonation | Kritis | Central deny policy plus route coverage test |
+| Data kesehatan bocor di audit/export | Kritis | Field allowlist, redaction, export gate |
+| Hard delete merusak integritas | Kritis | Archive-only UI dan tidak ada delete endpoint |
+| Migration enum/status gagal pada MariaDB | Tinggi | Clone rehearsal dan idempotent migration |
+| Dashboard membuat query berat | Tinggi | Pagination, aggregate query, EXPLAIN, P95 budget |
+| Role lama memperoleh akses | Tinggi | Fail-closed policy dan vertical escalation suite |
+| Clinical feature aktif tanpa owner | Kritis | Read-only status dan gate tetap di config |
+| Deploy menyentuh domain lain | Kritis | Exact-domain/root guard dan artifact allowlist |
+
+### Release order
+
+1. CP-13 sampai CP-19 harus GREEN secara berurutan.
+2. Build release dengan feature flag superadmin OFF.
+3. Backup dan migration rehearsal pada clone.
+4. Deploy hanya ke AKRAB, jalankan migration dan smoke.
+5. Jalankan human UAT dan audit verification.
+6. Enable flag setelah CP-20 GO.
+7. Pantau error, latency, session, dan audit selama stabilization window.
+
 ## Strategi pengujian minimum
 
 | Lapisan | Cakupan |
@@ -711,4 +995,3 @@ Baseline
 - Data owner/sekolah: kebijakan akses orang tua, retensi, audit.
 - Technical reviewer: schema, security, migration, rollback.
 - Deployment owner: akses hosting, secret, backup, dan Go/No-Go.
-
