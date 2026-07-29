@@ -12,7 +12,6 @@ $user = $stmt->fetch();
 
 // The QR code will contain only the Student's NISN (Username) so it can be easily searched
 $qr_data = $user['username'];
-$qr_api = "https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=" . urlencode($qr_data);
 
 ?>
 <!DOCTYPE html>
@@ -151,7 +150,7 @@ $qr_api = "https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=" . urlenco
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script src="../assets/js/app-init.js?v=20260729"></script>
 <script>
     // Generate QR Code locally to avoid AdBlocker/Network issues

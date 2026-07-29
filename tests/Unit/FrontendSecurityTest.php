@@ -33,6 +33,20 @@ final class FrontendSecurityTest extends TestCase
         self::assertStringNotContainsString('Dokter AI', $contents);
     }
 
+    public function testStudentQrCodeUsesCspAllowedPinnedAsset(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $contents = file_get_contents($root . '/siswa/id_card.php');
+        $headers = file_get_contents($root . '/.htaccess');
+
+        self::assertStringContainsString(
+            'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js',
+            $contents
+        );
+        self::assertStringContainsString('https://cdn.jsdelivr.net', $headers);
+        self::assertStringNotContainsString('cdnjs.cloudflare.com', $contents);
+    }
+
     public function testDynamicTimestampCacheBustingWasRemoved(): void
     {
         $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(dirname(__DIR__, 2), FilesystemIterator::SKIP_DOTS));
