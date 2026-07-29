@@ -198,16 +198,17 @@ Status: `[ ]` belum, `[-]` berjalan, `[x]` selesai, `[!]` diblokir.
 
 ## Sprint 24 — Production deployment
 
-- [ ] Catat baseline metrics
-- [ ] Backup final
-- [ ] Upload versioned release
-- [ ] Inject production secrets
-- [ ] Preflight, lint, dan migration
-- [ ] Switch release
-- [ ] Health dan smoke tests
-- [ ] Monitor 60 menit dan 7 hari
-- [ ] Rotasi password database setelah stabil
-- [ ] Lengkapi CP-12
+- [x] Catat baseline HTTP/health dan konfigurasi hosting
+- [x] Backup database dan catat checksum paket rollback
+- [x] Upload release hanya ke `akrab.portodq.com`
+- [x] Inject production secrets melalui `.env` yang dilindungi
+- [x] Preflight, lint, migration, dan idempotent rerun
+- [x] Aktifkan release final dan tombstone endpoint migrasi
+- [x] Health, public route, PWA, secret denial, dan header smoke
+- [x] Lengkapi CP-12 sebagai LIVE/YELLOW
+- [ ] UAT browser manusia tiga role
+- [ ] Selesaikan monitoring tujuh hari
+- [ ] Rotasi password database dan SSH setelah stabil
 
 ## Global release blockers
 

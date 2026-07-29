@@ -25,6 +25,8 @@ backups/
 vendor/
 .phpunit.cache/
 coverage/
+__pycache__/
+*.pyc
 
 # Editor and OS metadata
 .agents/
