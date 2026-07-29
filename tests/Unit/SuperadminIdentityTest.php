@@ -43,4 +43,16 @@ final class SuperadminIdentityTest extends TestCase
         self::assertStringNotContainsString("'role:'", $contents);
         self::assertStringNotContainsString('echo $password', $contents);
     }
+
+    public function testProductionReleaseIncludesSuperadminProvisioningTool(): void
+    {
+        $include = file_get_contents(
+            dirname(__DIR__, 2) . '/deployment/include.txt'
+        );
+
+        self::assertStringContainsString(
+            'tools/provision_superadmin.php',
+            $include
+        );
+    }
 }

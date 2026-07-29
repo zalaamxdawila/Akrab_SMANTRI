@@ -18,6 +18,7 @@ app/
 config/
 database/
 tools/migrate.php
+tools/provision_superadmin.php
 tools/seed_staging.php
 tools/preflight.php
 tools/verify_backup.php
