@@ -5,12 +5,17 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(50) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     status ENUM('active', 'inactive', 'archived') NOT NULL DEFAULT 'active',
+    status_changed_at TIMESTAMP NULL,
+    status_changed_by INT NULL,
+    status_reason VARCHAR(500) NULL,
     superadmin_key TINYINT GENERATED ALWAYS AS
         (IF(role = 'superadmin', 1, NULL)) STORED,
     kelas VARCHAR(20) NULL,
     anak_username VARCHAR(50) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY uq_users_single_superadmin (superadmin_key)
+    UNIQUE KEY uq_users_single_superadmin (superadmin_key),
+    KEY idx_users_status_changed (status, status_changed_at),
+    FOREIGN KEY (status_changed_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS impersonation_sessions (
@@ -40,11 +45,16 @@ CREATE TABLE IF NOT EXISTS parent_student_links (
     reviewed_by INT NULL,
     requested_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     reviewed_at TIMESTAMP NULL,
+    archived_at TIMESTAMP NULL,
+    archived_by INT NULL,
+    archive_reason VARCHAR(500) NULL,
     UNIQUE KEY uq_parent_student_link (parent_id),
     KEY idx_parent_links_status (status),
+    KEY idx_parent_links_archive_status (archived_at, status),
     FOREIGN KEY (parent_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL
+    ,FOREIGN KEY (archived_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS audit_log (
