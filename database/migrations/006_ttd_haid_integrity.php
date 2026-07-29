@@ -35,7 +35,7 @@ return [
             $pdo->exec(
                 "ALTER TABLE riwayat_haid
                  ADD COLUMN active_key INT GENERATED ALWAYS AS
-                    (IF(tanggal_selesai IS NULL, 1, id)) STORED"
+                    (IF(tanggal_selesai IS NULL, user_id, NULL)) STORED"
             );
         }
 
@@ -44,7 +44,7 @@ return [
         )->fetch();
         if (!$haidIndex) {
             $pdo->exec(
-                'ALTER TABLE riwayat_haid ADD UNIQUE KEY uq_haid_one_active (user_id, active_key)'
+                'ALTER TABLE riwayat_haid ADD UNIQUE KEY uq_haid_one_active (active_key)'
             );
         }
     },

@@ -178,8 +178,8 @@ CREATE TABLE IF NOT EXISTS riwayat_haid (
     user_id INT NOT NULL,
     tanggal_mulai DATE NOT NULL,
     tanggal_selesai DATE NULL,
-    active_key INT GENERATED ALWAYS AS (IF(tanggal_selesai IS NULL, 1, id)) STORED,
-    UNIQUE KEY uq_haid_one_active (user_id, active_key),
+    active_key INT GENERATED ALWAYS AS (IF(tanggal_selesai IS NULL, user_id, NULL)) STORED,
+    UNIQUE KEY uq_haid_one_active (active_key),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
