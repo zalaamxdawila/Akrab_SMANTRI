@@ -37,7 +37,7 @@ $dashboard_url = $is_logged_in ? ($_SESSION['role'] === 'siswa' ? 'siswa/dashboa
         <a class="navbar-brand text-primary fw-bold fs-4 d-flex align-items-center gap-2" href="index.php">
             <i data-lucide="heart-pulse" class="text-danger"></i> AKRAB
         </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-toggle="target" data-bs-target="#navbarNav">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">

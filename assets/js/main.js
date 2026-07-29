@@ -43,15 +43,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Navbar scroll interaction
     const navbar = document.querySelector('.navbar');
     if (navbar) {
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 10) {
-                navbar.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
-                navbar.style.background = 'rgba(255, 255, 255, 0.98)';
-            } else {
-                navbar.style.boxShadow = '0 1px 2px 0 rgba(0, 0, 0, 0.05)';
-                navbar.style.background = 'rgba(255, 255, 255, 0.85)';
-            }
-        });
+        const updateNavbarState = () => {
+            navbar.classList.toggle('is-scrolled', window.scrollY > 10);
+        };
+        window.addEventListener('scroll', updateNavbarState, { passive: true });
+        updateNavbarState();
     }
 });
 
