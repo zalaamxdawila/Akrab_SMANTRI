@@ -1,12 +1,16 @@
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nama VARCHAR(100) NOT NULL,
-    role ENUM('siswa', 'uks', 'orangtua') NOT NULL DEFAULT 'siswa',
+    role ENUM('siswa', 'uks', 'orangtua', 'superadmin') NOT NULL DEFAULT 'siswa',
     username VARCHAR(50) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
+    status ENUM('active', 'inactive', 'archived') NOT NULL DEFAULT 'active',
+    superadmin_key TINYINT GENERATED ALWAYS AS
+        (IF(role = 'superadmin', 1, NULL)) STORED,
     kelas VARCHAR(20) NULL,
     anak_username VARCHAR(50) NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_users_single_superadmin (superadmin_key)
 );
 
 CREATE TABLE IF NOT EXISTS parent_student_links (

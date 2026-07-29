@@ -11,6 +11,7 @@ final class AuthorizationPolicyTest extends TestCase
         self::assertTrue(isApplicationRole('siswa'));
         self::assertTrue(isApplicationRole('orangtua'));
         self::assertTrue(isApplicationRole('uks'));
+        self::assertTrue(isApplicationRole('superadmin'));
         self::assertFalse(isApplicationRole('admin'));
         self::assertFalse(isApplicationRole(''));
     }
@@ -20,6 +21,7 @@ final class AuthorizationPolicyTest extends TestCase
         self::assertSame('siswa/dashboard.php', dashboardForRole('siswa'));
         self::assertSame('orangtua/dashboard.php', dashboardForRole('orangtua'));
         self::assertSame('uks/dashboard.php', dashboardForRole('uks'));
+        self::assertSame('superadmin/dashboard.php', dashboardForRole('superadmin'));
     }
 
     public function testUnknownRoleHasNoFallbackDashboard(): void
@@ -33,8 +35,10 @@ final class AuthorizationPolicyTest extends TestCase
         self::assertTrue(roleCan('siswa', 'manage_own_health'));
         self::assertTrue(roleCan('orangtua', 'view_linked_child'));
         self::assertTrue(roleCan('uks', 'manage_school_health'));
+        self::assertTrue(roleCan('superadmin', 'view_master_dashboard'));
         self::assertFalse(roleCan('siswa', 'manage_school_health'));
         self::assertFalse(roleCan('uks', 'unknown_action'));
+        self::assertFalse(roleCan('superadmin', 'unknown_action'));
         self::assertFalse(roleCan('unknown', 'manage_own_health'));
     }
 }

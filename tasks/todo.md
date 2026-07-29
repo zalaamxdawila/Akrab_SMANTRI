@@ -237,7 +237,7 @@ Aturan eksekusi:
 
 ### Sprint 25 — Identity and authorization foundation
 
-- [ ] **SA25.1 — Tambahkan schema singleton superadmin dan status akun**
+- [!] **SA25.1 — Tambahkan schema singleton superadmin dan status akun**
   - Acceptance: role enum memuat `superadmin`; status akun tersedia; unique
     generated key menolak superadmin kedua; migration existing/fresh aman.
   - Verify: focused migration/schema test, idempotent rerun, MariaDB rehearsal.
@@ -246,7 +246,7 @@ Aturan eksekusi:
     `database/schema.sql`, `tests/Unit/SchemaSnapshotTest.php`,
     `tests/Unit/MigrationRunnerTest.php`.
 
-- [ ] **SA25.2 — Tambahkan policy role dan feature flag fail-closed**
+- [x] **SA25.2 — Tambahkan policy role dan feature flag fail-closed**
   - Acceptance: permission superadmin eksplisit; role lama tidak berubah; flag
     default OFF; dashboard mapping tidak menerima role palsu.
   - Verify: authorization/feature-flag unit tests dan config bootstrap tests.
@@ -255,7 +255,7 @@ Aturan eksekusi:
     `.env.example`, `tests/Unit/AuthorizationPolicyTest.php`,
     `tests/Unit/EnvironmentConfigTest.php`.
 
-- [ ] **SA25.3 — Buat provisioning CLI satu-superadmin**
+- [x] **SA25.3 — Buat provisioning CLI satu-superadmin**
   - Acceptance: CLI-only; password dari environment/secure prompt; tidak
     mencetak credential; idempotent recovery; menolak akun kedua.
   - Verify: success/failure integration tests dan known-secret scan.
@@ -265,7 +265,7 @@ Aturan eksekusi:
     `tests/Integration/SuperadminProvisioningTest.php`,
     `docs/operations/superadmin-runbook.md`.
 
-- [ ] **SA25.4 — Hubungkan login superadmin dengan gate OFF**
+- [x] **SA25.4 — Hubungkan login superadmin dengan gate OFF**
   - Acceptance: superadmin hanya dapat login saat flag ON; session
     diregenerasi; akun nonaktif ditolak; role lama tetap masuk seperti semula.
   - Verify: login/session characterization tests, lint, full auth regression.
@@ -274,7 +274,7 @@ Aturan eksekusi:
     `tests/Unit/SessionSecurityTest.php`,
     `tests/Unit/SuperadminAuthenticationTest.php`.
 
-- [ ] **SA25.5 — Tutup CP-13**
+- [!] **SA25.5 — Tutup CP-13**
   - Acceptance: seluruh gate Sprint 25 lulus dan tidak ada perubahan produksi.
   - Verify: lint, unit/integration, migration rehearsal, diff/secret review.
   - Depends: SA25.1–SA25.4.

@@ -8,14 +8,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $password = trim($_POST['password']);
     
     if (!empty($username) && !empty($password)) {
-        $stmt = $pdo->prepare("SELECT id, nama, role, password_hash FROM users WHERE username = ?");
+        $stmt = $pdo->prepare(
+            'SELECT id, nama, role, status, password_hash
+             FROM users
+             WHERE username = ?'
+        );
         $stmt->execute([$username]);
         $user = $stmt->fetch();
         
         if (
             $user
-            && isApplicationRole((string) $user['role'])
             && password_verify($password, $user['password_hash'])
+            && userCanAuthenticate($user)
         ) {
             regenerateAuthenticatedSession();
             $_SESSION['user_id'] = $user['id'];

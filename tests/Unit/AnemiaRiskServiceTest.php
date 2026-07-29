@@ -62,9 +62,12 @@ final class AnemiaRiskServiceTest extends TestCase
 
     public function testQuestionnairePersistsModelMetadata(): void
     {
-        $contents = file_get_contents(dirname(__DIR__, 2) . '/siswa/kuesioner.php');
-        self::assertStringContainsString('model_version', $contents);
-        self::assertStringContainsString('model_checksum', $contents);
-        self::assertStringContainsString('QuestionnaireService', $contents);
+        $root = dirname(__DIR__, 2);
+        $route = file_get_contents($root . '/siswa/kuesioner.php');
+        $service = file_get_contents($root . '/app/Services/QuestionnaireService.php');
+
+        self::assertStringContainsString('model_version', $service);
+        self::assertStringContainsString('model_checksum', $service);
+        self::assertStringContainsString('QuestionnaireService', $route);
     }
 }

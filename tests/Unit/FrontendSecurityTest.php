@@ -49,10 +49,11 @@ final class FrontendSecurityTest extends TestCase
 
     public function testDynamicTimestampCacheBustingWasRemoved(): void
     {
+        $dynamicCacheBuster = '?v=<?=' . ' time() ?>';
         $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(dirname(__DIR__, 2), FilesystemIterator::SKIP_DOTS));
         foreach ($iterator as $file) {
             if ($file->getExtension() === 'php') {
-                self::assertStringNotContainsString('?v=<?= time() ?>', file_get_contents($file->getPathname()), $file->getPathname());
+                self::assertStringNotContainsString($dynamicCacheBuster, file_get_contents($file->getPathname()), $file->getPathname());
             }
         }
     }

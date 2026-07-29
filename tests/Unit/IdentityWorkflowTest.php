@@ -42,7 +42,7 @@ final class IdentityWorkflowTest extends TestCase
         $contents = file_get_contents(dirname(__DIR__, 2) . '/uks/kelola_tautan.php');
 
         self::assertStringContainsString("check_role('uks')", $contents);
-        self::assertStringContainsString('audit_log', $contents);
+        self::assertStringContainsString('recordAuditEvent', $contents);
         self::assertStringContainsString('FOR UPDATE', $contents);
         self::assertStringContainsString("['approved', 'rejected']", $contents);
     }
@@ -55,5 +55,13 @@ final class IdentityWorkflowTest extends TestCase
         self::assertStringContainsString("'uks'", $contents);
         self::assertStringContainsString('AKRAB_PROVISION_UKS_PASSWORD', $contents);
         self::assertStringContainsString('audit_log', $contents);
+    }
+
+    public function testPublicRegistrationCannotCreateSuperadmin(): void
+    {
+        $contents = file_get_contents(dirname(__DIR__, 2) . '/register.php');
+
+        self::assertStringNotContainsString('value="superadmin"', $contents);
+        self::assertStringNotContainsString('AKRAB_PROVISION_SUPERADMIN_PASSWORD', $contents);
     }
 }

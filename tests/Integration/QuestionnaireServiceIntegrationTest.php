@@ -21,8 +21,21 @@ final class QuestionnaireServiceIntegrationTest extends TestCase
         putenv('CLINICAL_MODEL_VERSION=model-v1');
         putenv('CLINICAL_MODEL_CHECKSUM=' . str_repeat('a', 64));
 
-        $this->pdo = new PDO('sqlite::memory:');
+        $this->pdo = class_exists(\Pdo\Sqlite::class)
+            ? new \Pdo\Sqlite('sqlite::memory:')
+            : new PDO('sqlite::memory:');
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        if ($this->pdo instanceof \Pdo\Sqlite) {
+            $this->pdo->createFunction(
+                'CURDATE',
+                static fn (): string => date('Y-m-d')
+            );
+        } else {
+            $this->pdo->sqliteCreateFunction(
+                'CURDATE',
+                static fn (): string => date('Y-m-d')
+            );
+        }
         $this->pdo->exec('CREATE TABLE kuesioner (user_id INTEGER, tanggal_wawancara TEXT, nomor_responden TEXT, inisial_responden TEXT, tanggal_lahir TEXT, tempat_lahir TEXT, alamat TEXT, pendidikan TEXT, kadar_hb REAL, kadar_mchc REAL, kadar_mcv REAL, kadar_mch REAL, skor_gejala INTEGER, skor_sikap INTEGER, skor_pengetahuan INTEGER, mens_sudah TEXT, mens_usia_th INTEGER, mens_teratur TEXT, mens_lama_hari INTEGER, skor_makan INTEGER)');
         $this->pdo->exec('CREATE TABLE hasil_deteksi (user_id INTEGER, probabilitas_risiko REAL, kategori_risiko TEXT, model_version TEXT, model_checksum TEXT, tanggal TEXT)');
     }
