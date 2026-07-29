@@ -185,13 +185,16 @@ Status: `[ ]` belum, `[-]` berjalan, `[x]` selesai, `[!]` diblokir.
 
 ## Sprint 23 — Production readiness
 
-- [ ] Verifikasi hosting, SSL, PHP, cron, permission
-- [ ] Backup file dan database
-- [ ] Configure `u602402025_akrab`
-- [ ] Inject DB password sebagai secret, bukan source
-- [ ] Dry-run migration pada clone
-- [ ] Siapkan release lama dan maintenance mode
-- [ ] Lengkapi CP-11
+- [x] Siapkan preflight hosting, SSL, PHP, cron, quota, dan permission
+- [x] Siapkan verifikator backup file/database dan restore drill
+- [x] Dokumentasikan least-privilege `u602402025_akrab`
+- [x] Dokumentasikan injeksi/rotasi DB password melalui hosting secret
+- [x] Siapkan prosedur dry-run migration pada clone
+- [x] Siapkan release lama, maintenance page, dan rollback
+- [x] Lengkapi CP-11 sebagai YELLOW/NO-GO hingga bukti hosting tersedia
+- [ ] Jalankan production preflight pada hosting
+- [ ] Ambil backup dan lakukan restore/migration rehearsal
+- [ ] Dapatkan persetujuan eksplisit GO pada CP-11
 
 ## Sprint 24 — Production deployment
 

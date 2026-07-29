@@ -6,6 +6,7 @@ register.php
 manifest.json
 service-worker.js
 offline.html
+maintenance.html
 health.php
 .htaccess
 
@@ -18,6 +19,8 @@ config/
 database/
 tools/migrate.php
 tools/seed_staging.php
+tools/preflight.php
+tools/verify_backup.php
 cron/
 views/
 
