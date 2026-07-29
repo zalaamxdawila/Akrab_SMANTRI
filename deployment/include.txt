@@ -2,6 +2,7 @@
 index.php
 login.php
 logout.php
+end_impersonation.php
 register.php
 manifest.json
 service-worker.js
@@ -29,6 +30,7 @@ views/
 siswa/
 uks/
 orangtua/
+superadmin/
 
 # Browser assets
 assets/

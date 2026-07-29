@@ -55,4 +55,14 @@ final class SuperadminIdentityTest extends TestCase
             $include
         );
     }
+
+    public function testProductionReleaseIncludesCompleteSuperadminHttpSurface(): void
+    {
+        $include = file_get_contents(
+            dirname(__DIR__, 2) . '/deployment/include.txt'
+        );
+
+        self::assertStringContainsString('superadmin/', $include);
+        self::assertStringContainsString('end_impersonation.php', $include);
+    }
 }
