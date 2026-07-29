@@ -213,7 +213,16 @@ CREATE TABLE IF NOT EXISTS saran_edukasi (
     isi_saran TEXT NOT NULL,
     rekomendasi_makanan TEXT NOT NULL,
     kapan_rujuk_ke_ahli TEXT NULL,
-    UNIQUE KEY uq_saran_edukasi_kategori (kategori_anemia)
+    corrected_at TIMESTAMP NULL,
+    corrected_by INT NULL,
+    correction_reason VARCHAR(500) NULL,
+    archived_at TIMESTAMP NULL,
+    archived_by INT NULL,
+    archive_reason VARCHAR(500) NULL,
+    UNIQUE KEY uq_saran_edukasi_kategori (kategori_anemia),
+    KEY idx_saran_edukasi_archive (archived_at, id),
+    FOREIGN KEY (corrected_by) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (archived_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS konsultasi (
@@ -223,8 +232,17 @@ CREATE TABLE IF NOT EXISTS konsultasi (
     pertanyaan TEXT NOT NULL,
     status ENUM('menunggu', 'dijawab') DEFAULT 'menunggu',
     tanggal_kirim TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    corrected_at TIMESTAMP NULL,
+    corrected_by INT NULL,
+    correction_reason VARCHAR(500) NULL,
+    archived_at TIMESTAMP NULL,
+    archived_by INT NULL,
+    archive_reason VARCHAR(500) NULL,
+    KEY idx_konsultasi_archive (archived_at, id),
     FOREIGN KEY (siswa_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (ahli_id) REFERENCES users(id) ON DELETE SET NULL
+    FOREIGN KEY (ahli_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (corrected_by) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (archived_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS balasan_konsultasi (
@@ -232,7 +250,16 @@ CREATE TABLE IF NOT EXISTS balasan_konsultasi (
     konsultasi_id INT NOT NULL,
     isi_balasan TEXT NOT NULL,
     tanggal_balas TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (konsultasi_id) REFERENCES konsultasi(id) ON DELETE CASCADE
+    corrected_at TIMESTAMP NULL,
+    corrected_by INT NULL,
+    correction_reason VARCHAR(500) NULL,
+    archived_at TIMESTAMP NULL,
+    archived_by INT NULL,
+    archive_reason VARCHAR(500) NULL,
+    KEY idx_balasan_konsultasi_archive (archived_at, id),
+    FOREIGN KEY (konsultasi_id) REFERENCES konsultasi(id) ON DELETE CASCADE,
+    FOREIGN KEY (corrected_by) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (archived_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS jadwal_notifikasi (
@@ -241,7 +268,16 @@ CREATE TABLE IF NOT EXISTS jadwal_notifikasi (
     jam_pengingat TIME NOT NULL,
     hari ENUM('harian', 'mingguan', 'saat_menstruasi') NOT NULL,
     aktif BOOLEAN DEFAULT 1,
-    FOREIGN KEY (siswa_id) REFERENCES users(id) ON DELETE CASCADE
+    corrected_at TIMESTAMP NULL,
+    corrected_by INT NULL,
+    correction_reason VARCHAR(500) NULL,
+    archived_at TIMESTAMP NULL,
+    archived_by INT NULL,
+    archive_reason VARCHAR(500) NULL,
+    KEY idx_jadwal_notifikasi_archive (archived_at, id),
+    FOREIGN KEY (siswa_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (corrected_by) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (archived_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS log_notifikasi (
@@ -250,7 +286,16 @@ CREATE TABLE IF NOT EXISTS log_notifikasi (
     tanggal_kirim TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     status_terkirim ENUM('sukses', 'gagal') NOT NULL,
     sudah_dikonfirmasi BOOLEAN DEFAULT 0,
-    FOREIGN KEY (siswa_id) REFERENCES users(id) ON DELETE CASCADE
+    corrected_at TIMESTAMP NULL,
+    corrected_by INT NULL,
+    correction_reason VARCHAR(500) NULL,
+    archived_at TIMESTAMP NULL,
+    archived_by INT NULL,
+    archive_reason VARCHAR(500) NULL,
+    KEY idx_log_notifikasi_archive (archived_at, id),
+    FOREIGN KEY (siswa_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (corrected_by) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (archived_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS riwayat_haid (
@@ -279,7 +324,16 @@ CREATE TABLE IF NOT EXISTS artikel_edukasi (
     judul VARCHAR(255) NOT NULL,
     konten TEXT NOT NULL,
     tanggal_publikasi TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (uks_id) REFERENCES users(id) ON DELETE CASCADE
+    corrected_at TIMESTAMP NULL,
+    corrected_by INT NULL,
+    correction_reason VARCHAR(500) NULL,
+    archived_at TIMESTAMP NULL,
+    archived_by INT NULL,
+    archive_reason VARCHAR(500) NULL,
+    KEY idx_artikel_edukasi_archive (archived_at, id),
+    FOREIGN KEY (uks_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (corrected_by) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (archived_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS schema_migrations (
