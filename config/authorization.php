@@ -39,6 +39,7 @@ function roleCan(string $role, string $action): bool
             'manage_users',
             'manage_parent_links',
             'manage_health_records',
+            'manage_operations',
         ],
     ];
 

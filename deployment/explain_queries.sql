@@ -73,3 +73,17 @@ WHERE h.archived_at IS NULL
           OR (newer.tanggal = h.tanggal AND newer.id > h.id))
   )
 GROUP BY kategori_risiko;
+
+-- Sprint 30 superadmin operational list evidence.
+EXPLAIN SELECT r.id, r.tanggal_kirim, u.nama, r.status
+FROM konsultasi r
+JOIN users u ON u.id = r.siswa_id
+WHERE r.archived_at IS NULL AND (u.nama LIKE '%uat%' OR r.pertanyaan LIKE '%uat%')
+ORDER BY r.tanggal_kirim DESC, r.id DESC
+LIMIT 25 OFFSET 0;
+
+EXPLAIN SELECT r.id, r.tanggal_publikasi, r.judul
+FROM artikel_edukasi r
+WHERE r.archived_at IS NULL
+ORDER BY r.tanggal_publikasi DESC, r.id DESC
+LIMIT 25 OFFSET 0;
