@@ -71,14 +71,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$pending = $pdo->query(
+$page = max(1, filter_var($_GET['page'] ?? 1, FILTER_VALIDATE_INT) ?: 1);
+$perPage = 25;
+$totalPending = (int) $pdo->query("SELECT COUNT(*) FROM parent_student_links WHERE status = 'pending'")->fetchColumn();
+$totalPages = max(1, (int) ceil($totalPending / $perPage));
+$page = min($page, $totalPages);
+$offset = ($page - 1) * $perPage;
+$pendingStmt = $pdo->prepare(
     "SELECT psl.id, psl.requested_student_username, psl.requested_at,
             p.nama AS parent_name, p.username AS parent_username
      FROM parent_student_links psl
      JOIN users p ON p.id = psl.parent_id AND p.role = 'orangtua'
      WHERE psl.status = 'pending'
-     ORDER BY psl.requested_at ASC"
-)->fetchAll();
+     ORDER BY psl.requested_at ASC, psl.id ASC
+     LIMIT ? OFFSET ?"
+);
+$pendingStmt->bindValue(1, $perPage, PDO::PARAM_INT);
+$pendingStmt->bindValue(2, $offset, PDO::PARAM_INT);
+$pendingStmt->execute();
+$pending = $pendingStmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -131,6 +142,15 @@ $pending = $pdo->query(
             </table>
         </div>
     </div>
+    <?php if ($totalPages > 1): ?>
+        <nav aria-label="Halaman verifikasi wali" class="mt-3">
+            <ul class="pagination justify-content-center">
+                <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>"><a class="page-link" href="?page=<?= max(1, $page - 1) ?>">Sebelumnya</a></li>
+                <li class="page-item disabled"><span class="page-link">Halaman <?= $page ?> dari <?= $totalPages ?></span></li>
+                <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>"><a class="page-link" href="?page=<?= min($totalPages, $page + 1) ?>">Berikutnya</a></li>
+            </ul>
+        </nav>
+    <?php endif; ?>
 </main>
 </body>
 </html>

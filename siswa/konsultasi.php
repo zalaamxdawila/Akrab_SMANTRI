@@ -19,13 +19,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_POST['pertanyaan'])) {
     }
 }
 
-// Get history
+// Get a bounded, ownership-scoped history page.
+$page = max(1, filter_var($_GET['page'] ?? 1, FILTER_VALIDATE_INT) ?: 1);
+$perPage = 10;
+$countStmt = $pdo->prepare('SELECT COUNT(*) FROM konsultasi WHERE siswa_id = ?');
+$countStmt->execute([$user_id]);
+$totalHistory = (int) $countStmt->fetchColumn();
+$totalPages = max(1, (int) ceil($totalHistory / $perPage));
+$page = min($page, $totalPages);
+$offset = ($page - 1) * $perPage;
 $stmt = $pdo->prepare("SELECT k.*, b.isi_balasan, b.tanggal_balas 
                       FROM konsultasi k 
                       LEFT JOIN balasan_konsultasi b ON k.id = b.konsultasi_id 
                       WHERE k.siswa_id = ? 
-                      ORDER BY k.tanggal_kirim DESC");
-$stmt->execute([$user_id]);
+                      ORDER BY k.tanggal_kirim DESC, k.id DESC
+                      LIMIT ? OFFSET ?");
+$stmt->bindValue(1, $user_id, PDO::PARAM_INT);
+$stmt->bindValue(2, $perPage, PDO::PARAM_INT);
+$stmt->bindValue(3, $offset, PDO::PARAM_INT);
+$stmt->execute();
 $riwayat = $stmt->fetchAll();
 
 ?>
@@ -106,6 +118,15 @@ $riwayat = $stmt->fetchAll();
                             </div>
                         <?php endforeach; ?>
                     </div>
+                    <?php if ($totalPages > 1): ?>
+                        <nav aria-label="Halaman riwayat konsultasi" class="mt-3">
+                            <ul class="pagination pagination-sm justify-content-center mb-0">
+                                <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>"><a class="page-link" href="?page=<?= max(1, $page - 1) ?>">Sebelumnya</a></li>
+                                <li class="page-item disabled"><span class="page-link"><?= $page ?> / <?= $totalPages ?></span></li>
+                                <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>"><a class="page-link" href="?page=<?= min($totalPages, $page + 1) ?>">Berikutnya</a></li>
+                            </ul>
+                        </nav>
+                    <?php endif; ?>
                 <?php endif; ?>
                 
             </div>

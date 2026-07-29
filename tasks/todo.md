@@ -141,10 +141,11 @@ Status: `[ ]` belum, `[-]` berjalan, `[x]` selesai, `[!]` diblokir.
 - [x] Pagination konsultasi UKS dan eliminasi N+1 balasan
 - [x] Pagination data siswa UKS dengan filter tetap terjaga
 - [x] Pagination artikel UKS dengan ownership scope
-- [ ] Pagination semua list
-- [ ] `EXPLAIN` query kritis
-- [ ] Tambahkan indeks berbasis bukti
-- [ ] Benchmark P95
+- [x] Pagination semua list operasional
+- [x] Siapkan skrip `EXPLAIN` query kritis
+- [ ] Jalankan `EXPLAIN` setelah deployment
+- [ ] Tambahkan indeks hanya jika didukung bukti
+- [ ] Benchmark P95 setelah deployment
 
 ## Sprint 19 — Observability
 
