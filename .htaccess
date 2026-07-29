@@ -17,7 +17,7 @@ Options -Indexes
 </IfModule>
 
 # Internal application files are include-only and must not be served directly.
-<FilesMatch "^(config\.php|helpers\.php|Tech_Stack_Aplikasi_AKRAB\.md|Panduan_Instalasi_PWA_AKRAB\.pdf|.*\.(sql|md|py|bat|bak|log))$">
+<FilesMatch "^(\.env(?:\..*)?|config\.php|helpers\.php|Tech_Stack_Aplikasi_AKRAB\.md|Panduan_Instalasi_PWA_AKRAB\.pdf|.*\.(sql|md|py|bat|bak|log))$">
     Require all denied
 </FilesMatch>
 

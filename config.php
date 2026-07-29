@@ -2,6 +2,7 @@
 // config.php
 
 require_once __DIR__ . '/config/environment.php';
+loadEnvironmentFile(__DIR__ . '/.env');
 require_once __DIR__ . '/config/error_handling.php';
 require_once __DIR__ . '/config/observability.php';
 require_once __DIR__ . '/config/session.php';
