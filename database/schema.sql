@@ -142,7 +142,10 @@ CREATE TABLE IF NOT EXISTS kuesioner (
     archived_by INT NULL,
     archive_reason VARCHAR(500) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    KEY idx_kuesioner_archive (archived_at, user_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (corrected_by) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (archived_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS hasil_deteksi (
@@ -160,7 +163,10 @@ CREATE TABLE IF NOT EXISTS hasil_deteksi (
     archived_by INT NULL,
     archive_reason VARCHAR(500) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    KEY idx_hasil_deteksi_archive (archived_at, user_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (corrected_by) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (archived_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS konsumsi_ttd (
@@ -176,7 +182,10 @@ CREATE TABLE IF NOT EXISTS konsumsi_ttd (
     archive_reason VARCHAR(500) NULL,
     waktu_input TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_konsumsi_ttd_user_date (user_id, tanggal),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    KEY idx_konsumsi_ttd_archive (archived_at, user_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (corrected_by) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (archived_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS kadar_hb (
@@ -191,7 +200,10 @@ CREATE TABLE IF NOT EXISTS kadar_hb (
     archived_at TIMESTAMP NULL,
     archived_by INT NULL,
     archive_reason VARCHAR(500) NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    KEY idx_kadar_hb_archive (archived_at, user_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (corrected_by) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (archived_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS saran_edukasi (
@@ -252,9 +264,13 @@ CREATE TABLE IF NOT EXISTS riwayat_haid (
     archived_at TIMESTAMP NULL,
     archived_by INT NULL,
     archive_reason VARCHAR(500) NULL,
-    active_key INT GENERATED ALWAYS AS (IF(tanggal_selesai IS NULL, user_id, NULL)) STORED,
+    active_key INT GENERATED ALWAYS AS
+        (IF(tanggal_selesai IS NULL AND archived_at IS NULL, user_id, NULL)) STORED,
     UNIQUE KEY uq_haid_one_active (active_key),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    KEY idx_riwayat_haid_archive (archived_at, user_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (corrected_by) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (archived_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS artikel_edukasi (

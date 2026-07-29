@@ -31,6 +31,10 @@ final class HealthGovernanceMigrationTest extends TestCase
             self::assertStringContainsString("'{$column}'", $source);
         }
         self::assertStringContainsString('SHOW COLUMNS FROM', $source);
+        self::assertStringContainsString(
+            'tanggal_selesai IS NULL AND archived_at IS NULL',
+            $source
+        );
         self::assertDoesNotMatchRegularExpression('/\b(?:DROP|DELETE\s+FROM)\b/i', $source);
     }
 }

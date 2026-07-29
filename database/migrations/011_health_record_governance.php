@@ -57,5 +57,11 @@ return [
                 }
             }
         }
+        $pdo->exec(
+            'ALTER TABLE riwayat_haid MODIFY COLUMN active_key INT
+             GENERATED ALWAYS AS (
+                IF(tanggal_selesai IS NULL AND archived_at IS NULL, user_id, NULL)
+             ) STORED'
+        );
     },
 ];
