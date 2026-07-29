@@ -34,7 +34,11 @@ function roleCan(string $role, string $action): bool
         'siswa' => ['manage_own_health', 'read_education', 'ask_consultation'],
         'orangtua' => ['view_linked_child'],
         'uks' => ['manage_school_health', 'reply_consultation', 'manage_own_articles'],
-        'superadmin' => ['view_master_dashboard'],
+        'superadmin' => [
+            'view_master_dashboard',
+            'manage_users',
+            'manage_parent_links',
+        ],
     ];
 
     return isset($permissions[$role])
