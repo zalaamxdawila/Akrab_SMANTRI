@@ -43,6 +43,14 @@ function check_role($role) {
     require_role($role);
 }
 
+function requireActorAction(ActorContext $context, string $action): void
+{
+    if (!actionAllowedForActor($context, $action)) {
+        http_response_code(403);
+        throw new DomainException('Aksi tidak diizinkan.');
+    }
+}
+
 /**
  * Function to predict anemia risk
  * Uses Kaggle dataset Logistic Regression weights if lab data is available.

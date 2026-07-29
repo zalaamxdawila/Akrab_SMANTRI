@@ -63,3 +63,12 @@ function userCanAuthenticate(array $user): bool
 
     return $status === 'active' && roleIsEnabled($role);
 }
+
+function actionAllowedForActor(ActorContext $context, string $action): bool
+{
+    if ($context->isImpersonating()) {
+        return ImpersonationPolicy::allows($action);
+    }
+
+    return roleCan($context->effectiveRole, $action);
+}

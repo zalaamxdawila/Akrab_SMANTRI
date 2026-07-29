@@ -7,6 +7,11 @@ require_once __DIR__ . '/config/error_handling.php';
 require_once __DIR__ . '/config/observability.php';
 require_once __DIR__ . '/config/session.php';
 require_once __DIR__ . '/config/csrf.php';
+require_once __DIR__ . '/app/Security/ActorContext.php';
+require_once __DIR__ . '/app/Security/ActorContextResolver.php';
+require_once __DIR__ . '/app/Security/ImpersonationPolicy.php';
+require_once __DIR__ . '/app/Security/ImpersonationMutationAudit.php';
+require_once __DIR__ . '/app/Security/ImpersonationService.php';
 require_once __DIR__ . '/config/authorization.php';
 require_once __DIR__ . '/config/validation.php';
 require_once __DIR__ . '/config/csv.php';
@@ -55,6 +60,34 @@ if (session_status() === PHP_SESSION_NONE && php_sapi_name() !== 'cli') {
         (int)environmentValue('AKRAB_SESSION_ABSOLUTE_SECONDS', '28800')
     );
     startSecureSession($appEnvironment, $idleTimeout, $absoluteTimeout);
+}
+
+if (php_sapi_name() !== 'cli' && isset($_SESSION['user_id'])) {
+    try {
+        $impersonationService = new ImpersonationService($pdo, $_SESSION);
+        $impersonationService->expireIfNeeded();
+        $actorContext = (new ActorContextResolver($pdo))->resolve($_SESSION);
+
+        if (
+            ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST'
+            && $actorContext->isImpersonating()
+        ) {
+            (new ImpersonationMutationAudit($pdo))->registerCurrentMutation(
+                $actorContext,
+                (string) ($_SERVER['SCRIPT_NAME'] ?? ''),
+                requestCorrelationId()
+            );
+        }
+    } catch (Throwable $exception) {
+        akrabLog(
+            'warn',
+            'actor_context_rejected',
+            ['exception_class' => get_class($exception)]
+        );
+        destroySessionCompletely($appEnvironment);
+        http_response_code(403);
+        exit('Akses ditolak.');
+    }
 }
 
 if (
