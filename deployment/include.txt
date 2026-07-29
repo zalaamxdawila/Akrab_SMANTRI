@@ -17,6 +17,7 @@ app/
 config/
 database/
 tools/migrate.php
+tools/seed_staging.php
 cron/
 views/
 

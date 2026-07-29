@@ -174,11 +174,14 @@ Status: `[ ]` belum, `[-]` berjalan, `[x]` selesai, `[!]` diblokir.
 
 ## Sprint 22 — Staging/UAT
 
-- [ ] Deploy staging dengan data sintetis
-- [ ] Full regression/security/performance tests
-- [ ] UAT tiga role
-- [ ] Freeze release candidate
-- [ ] Lengkapi CP-10
+- [x] Siapkan builder deployment staging dan seeder data sintetis
+- [x] Siapkan matriks full regression/security/performance pascadeploy
+- [x] Siapkan skenario dan kontrak bukti UAT tiga role
+- [x] Siapkan release candidate notes dan checksum builder
+- [x] Lengkapi CP-10 sebagai YELLOW/NO-GO hingga bukti staging tersedia
+- [ ] Deploy ke staging dedicated (akses staging belum tersedia)
+- [ ] Jalankan pengujian pascadeploy dan UAT
+- [ ] Freeze checksum final setelah CP-10 GREEN
 
 ## Sprint 23 — Production readiness
 
