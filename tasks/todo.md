@@ -654,7 +654,7 @@ Aturan eksekusi:
   - Files: `docs/uat/superadmin-master-dashboard.md`,
     `tasks/checkpoints/CP-20.md`.
 
-- [ ] **SA32.5 — Deploy terkontrol hanya ke AKRAB**
+- [!] **SA32.5 — Deploy terkontrol hanya ke AKRAB**
   - Acceptance: exact domain/root guard; flag OFF saat deploy; health/migration/
     smoke lulus; enable setelah GO; rollback siap; domain lain tidak berubah.
   - Verify: Hostinger exact-domain evidence, HTTPS/header/health, login, error/
