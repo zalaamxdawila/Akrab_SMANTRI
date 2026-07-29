@@ -135,6 +135,12 @@ CREATE TABLE IF NOT EXISTS kuesioner (
     -- VII. Pola Makan
     skor_makan INT NOT NULL DEFAULT 0,
     
+    corrected_at TIMESTAMP NULL,
+    corrected_by INT NULL,
+    correction_reason VARCHAR(500) NULL,
+    archived_at TIMESTAMP NULL,
+    archived_by INT NULL,
+    archive_reason VARCHAR(500) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -147,6 +153,12 @@ CREATE TABLE IF NOT EXISTS hasil_deteksi (
     model_version VARCHAR(80) NULL,
     model_checksum CHAR(64) NULL,
     tanggal DATE NOT NULL,
+    corrected_at TIMESTAMP NULL,
+    corrected_by INT NULL,
+    correction_reason VARCHAR(500) NULL,
+    archived_at TIMESTAMP NULL,
+    archived_by INT NULL,
+    archive_reason VARCHAR(500) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -156,6 +168,12 @@ CREATE TABLE IF NOT EXISTS konsumsi_ttd (
     user_id INT NOT NULL,
     tanggal DATE NOT NULL,
     status_konsumsi ENUM('sudah', 'belum') NOT NULL,
+    corrected_at TIMESTAMP NULL,
+    corrected_by INT NULL,
+    correction_reason VARCHAR(500) NULL,
+    archived_at TIMESTAMP NULL,
+    archived_by INT NULL,
+    archive_reason VARCHAR(500) NULL,
     waktu_input TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_konsumsi_ttd_user_date (user_id, tanggal),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -167,6 +185,12 @@ CREATE TABLE IF NOT EXISTS kadar_hb (
     nilai_hb DECIMAL(4,1) NOT NULL,
     kategori_anemia ENUM('tidak_anemia', 'ringan', 'sedang', 'berat') NOT NULL,
     tanggal_periksa DATE NOT NULL,
+    corrected_at TIMESTAMP NULL,
+    corrected_by INT NULL,
+    correction_reason VARCHAR(500) NULL,
+    archived_at TIMESTAMP NULL,
+    archived_by INT NULL,
+    archive_reason VARCHAR(500) NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -222,6 +246,12 @@ CREATE TABLE IF NOT EXISTS riwayat_haid (
     user_id INT NOT NULL,
     tanggal_mulai DATE NOT NULL,
     tanggal_selesai DATE NULL,
+    corrected_at TIMESTAMP NULL,
+    corrected_by INT NULL,
+    correction_reason VARCHAR(500) NULL,
+    archived_at TIMESTAMP NULL,
+    archived_by INT NULL,
+    archive_reason VARCHAR(500) NULL,
     active_key INT GENERATED ALWAYS AS (IF(tanggal_selesai IS NULL, user_id, NULL)) STORED,
     UNIQUE KEY uq_haid_one_active (active_key),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
