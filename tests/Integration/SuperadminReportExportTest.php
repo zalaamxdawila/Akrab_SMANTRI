@@ -48,4 +48,21 @@ final class SuperadminReportExportTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         (new SuperadminReportRepository($this->pdo))->exportRows('root');
     }
+
+    public function testExportIsBoundedToOneThousandRows(): void
+    {
+        $insert = $this->pdo->prepare(
+            'INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+        );
+        for ($id = 4; $id <= 1010; $id++) {
+            $insert->execute([
+                $id, 'User ' . $id, 'user' . $id, 'secret',
+                'siswa', 'active', '7A', '2026-01-04',
+            ]);
+        }
+        self::assertCount(
+            AKRAB_CSV_MAX_ROWS,
+            (new SuperadminReportRepository($this->pdo))->exportRows('')
+        );
+    }
 }

@@ -63,7 +63,7 @@ final class SuperadminReportRepository
         }
         $statement = $this->pdo->prepare(
             'SELECT id, nama, username, role, status, kelas, created_at
-             FROM users WHERE ' . $where . ' ORDER BY id'
+             FROM users WHERE ' . $where . ' ORDER BY id LIMIT 1000'
         );
         $statement->execute($parameters);
         return $statement->fetchAll();

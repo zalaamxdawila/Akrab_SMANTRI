@@ -49,6 +49,8 @@ try {
 header('Content-Type: text/csv; charset=UTF-8');
 header('Content-Disposition: attachment; filename="akrab-users-' . date('Ymd-His') . '.csv"');
 header('X-Content-Type-Options: nosniff');
+header('Cache-Control: no-store, private');
+header('Pragma: no-cache');
 $stream = fopen('php://output', 'wb');
 fputcsv($stream, ['ID', 'Nama', 'Username', 'Role', 'Status', 'Kelas', 'Terdaftar']);
 foreach ($rows as $row) {
