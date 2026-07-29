@@ -1,6 +1,7 @@
 <?php
 require_once '../config.php';
 require_once '../helpers.php';
+require_once '../views/questionnaire_analytics.php';
 
 check_role('uks');
 
@@ -22,10 +23,16 @@ if (!$siswa) {
 recordAuditEvent($pdo, (int) $_SESSION['user_id'], 'health_record.viewed', 'student', $siswa_id, ['outcome' => 'success', 'actor_role' => 'uks']);
 akrabLog('info', 'health_record_viewed', ['outcome' => 'success', 'target_type' => 'student', 'actor_role' => 'uks']);
 
-// 2. Fetch Latest Kuesioner
-$stmt = $pdo->prepare("SELECT * FROM kuesioner WHERE user_id = ? ORDER BY created_at DESC LIMIT 1");
-$stmt->execute([$siswa_id]);
-$kuesioner = $stmt->fetch();
+$questionnaireRepository = new QuestionnaireAnalyticsRepository($pdo);
+$questionnaireInsights = new QuestionnaireInsights();
+$questionnaireHistory = $questionnaireRepository->historyForStudent($siswa_id);
+$kuesioner = $questionnaireHistory
+    ? $questionnaireHistory[array_key_last($questionnaireHistory)]
+    : null;
+$scoreInsights = $kuesioner
+    ? $questionnaireInsights->forResponse($kuesioner)
+    : [];
+$historyChart = $questionnaireInsights->historyChart($questionnaireHistory);
 
 // 3. Fetch Latest Deteksi
 $stmt = $pdo->prepare("SELECT * FROM hasil_deteksi WHERE user_id = ? ORDER BY tanggal DESC, id DESC LIMIT 1");
@@ -51,6 +58,7 @@ $total_ttd = $stmt->fetch()['total'];
     <title>Detail Siswa - AKRAB UKS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="../assets/css/style.css?v=20260729" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 </head>
 <body>
 <?php renderImpersonationBanner($pdo, $_SESSION); ?>
@@ -58,9 +66,14 @@ $total_ttd = $stmt->fetch()['total'];
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
     <div class="container">
         <a class="navbar-brand text-white fw-bold" href="dashboard.php">AKRAB UKS Panel</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item"><a class="nav-link text-white" href="dashboard.php">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link text-white" href="hasil_kuesioner.php">Hasil Kuesioner</a></li>
                 <li class="nav-item"><a class="nav-link text-white active" href="data_siswa.php">Data Siswa</a></li>
                 <li class="nav-item"><a class="nav-link text-white" href="jawab_konsultasi.php">Konsultasi</a></li>
                 <li class="nav-item"><a class="nav-link text-white" href="../logout.php">Logout</a></li>
@@ -153,39 +166,21 @@ $total_ttd = $stmt->fetch()['total'];
                             <div class="col-6 col-md-3"><strong>MCH:</strong><br><?= $kuesioner['kadar_mch'] ? $kuesioner['kadar_mch'] : '<span class="text-muted">-</span>' ?></div>
                         </div>
 
-                        <h5 class="text-primary border-bottom pb-2 mb-3">2. Skor Survei Kesehatan</h5>
-                        <div class="row mb-4">
-                            <div class="col-md-6 mb-3">
-                                <div class="p-3 bg-light rounded border">
-                                    <h6 class="mb-2">Gejala Klinis</h6>
-                                    <h3 class="mb-0 text-danger"><?= $kuesioner['skor_gejala'] ?> <small class="text-muted fs-6">/ 100</small></h3>
-                                    <small class="text-muted">Makin tinggi makin berisiko.</small>
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <div class="p-3 bg-light rounded border">
-                                    <h6 class="mb-2">Pola Makan</h6>
-                                    <h3 class="mb-0 text-success"><?= $kuesioner['skor_makan'] ?> <small class="text-muted fs-6">/ 18</small></h3>
-                                    <small class="text-muted">Makin tinggi makin baik.</small>
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <div class="p-3 bg-light rounded border">
-                                    <h6 class="mb-2">Pengetahuan Anemia</h6>
-                                    <h3 class="mb-0 text-info"><?= $kuesioner['skor_pengetahuan'] ?></h3>
-                                    <small class="text-muted">Total poin pengetahuan dasar.</small>
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <div class="p-3 bg-light rounded border">
-                                    <h6 class="mb-2">Sikap & Pandangan</h6>
-                                    <h3 class="mb-0 text-secondary"><?= $kuesioner['skor_sikap'] ?> <small class="text-muted fs-6">/ 40</small></h3>
-                                    <small class="text-muted">Tingkat kesadaran bahaya anemia.</small>
-                                </div>
-                            </div>
+                        <h5 class="text-primary border-bottom pb-2 mb-3">2. Diagram Perkembangan Kuesioner</h5>
+                        <p class="small text-muted">Grafik memuat semua pengisian aktif siswa ini dan menormalkan setiap skor ke skala 0–100%.</p>
+                        <div class="mb-4" style="height: 320px">
+                            <canvas id="studentQuestionnaireChart"></canvas>
                         </div>
 
-                        <h5 class="text-primary border-bottom pb-2 mb-3">3. Riwayat Menstruasi</h5>
+                        <h5 class="text-primary border-bottom pb-2 mb-3">3. Penjelasan Pengisian Terakhir</h5>
+                        <div class="mb-4">
+                            <?php renderQuestionnaireInsights(
+                                $scoreInsights,
+                                $questionnaireInsights->disclaimer()
+                            ); ?>
+                        </div>
+
+                        <h5 class="text-primary border-bottom pb-2 mb-3">4. Riwayat Menstruasi</h5>
                         <div class="row mb-4">
                             <div class="col-md-4"><strong>Sudah Menstruasi:</strong><br><?= ucfirst($kuesioner['mens_sudah'] ?? '-') ?></div>
                             <div class="col-md-4"><strong>Siklus Teratur:</strong><br><?= ucfirst($kuesioner['mens_teratur'] ?? '-') ?></div>
@@ -200,5 +195,8 @@ $total_ttd = $stmt->fetch()['total'];
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../assets/js/app-init.js?v=20260729"></script>
+<?php if ($questionnaireHistory): ?>
+    <?php renderQuestionnaireHistoryChartScript('studentQuestionnaireChart', $historyChart); ?>
+<?php endif; ?>
 </body>
 </html>

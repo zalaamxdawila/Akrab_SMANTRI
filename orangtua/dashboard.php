@@ -1,6 +1,7 @@
 <?php
 require_once '../config.php';
 require_once '../helpers.php';
+require_once '../views/questionnaire_analytics.php';
 
 check_role('orangtua');
 $parent_id = $_SESSION['user_id'];
@@ -9,29 +10,27 @@ $anak = null;
 $kuesioner = null;
 $hasil = null;
 $kepatuhan = [];
+$questionnaireHistory = [];
+$scoreInsights = [];
+$historyChart = ['labels' => [], 'series' => []];
 
-$stmt = $pdo->prepare(
-    "SELECT u.*
-     FROM parent_student_links psl
-     JOIN users u ON u.id = psl.student_id AND u.role = 'siswa'
-     WHERE psl.parent_id = ? AND psl.status = 'approved'
-     LIMIT 1"
-);
-$stmt->execute([$parent_id]);
-$anak = $stmt->fetch();
+$questionnaireRepository = new QuestionnaireAnalyticsRepository($pdo);
+$questionnaireInsights = new QuestionnaireInsights();
+$anak = $questionnaireRepository->approvedStudentForParent((int) $parent_id);
     
 if ($anak) {
-    $anak_id = $anak['id'];
-        
-    // Latest Kuesioner
-    $stmt = $pdo->prepare("SELECT * FROM kuesioner WHERE user_id = ? ORDER BY created_at DESC LIMIT 1");
-    $stmt->execute([$anak_id]);
-    $kuesioner = $stmt->fetch();
+    $anak_id = (int) $anak['id'];
+    $questionnaireHistory = $questionnaireRepository->historyForStudent($anak_id);
+    $kuesioner = $questionnaireHistory
+        ? $questionnaireHistory[array_key_last($questionnaireHistory)]
+        : null;
+    $scoreInsights = $kuesioner
+        ? $questionnaireInsights->forResponse($kuesioner)
+        : [];
+    $historyChart = $questionnaireInsights->historyChart($questionnaireHistory);
         
     // Latest Risk Detection
-        $stmt = $pdo->prepare("SELECT * FROM hasil_deteksi WHERE user_id = ? ORDER BY tanggal DESC, id DESC LIMIT 1");
-    $stmt->execute([$anak_id]);
-    $hasil = $stmt->fetch();
+    $hasil = $questionnaireRepository->latestDetectionForStudent($anak_id);
         
     // TTD History (Last 5)
     $stmt = $pdo->prepare("SELECT * FROM konsumsi_ttd WHERE user_id = ? ORDER BY tanggal DESC LIMIT 5");
@@ -48,6 +47,7 @@ if ($anak) {
     <title>Portal Orang Tua - AKRAB</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="../assets/css/style.css?v=20260729" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
 </head>
 <body class="bg-light">
@@ -135,6 +135,16 @@ if ($anak) {
                                     <small class="text-muted">Skor Kedisiplinan</small>
                                 </div>
                             </div>
+                            <h6 class="fw-bold">Perkembangan semua pengisian</h6>
+                            <p class="small text-muted">Grafik hanya memuat hasil dari akun siswa yang telah tertaut dan disetujui.</p>
+                            <div class="mb-4" style="height: 300px">
+                                <canvas id="parentQuestionnaireChart"></canvas>
+                            </div>
+                            <h6 class="fw-bold">Penjelasan pengisian terakhir</h6>
+                            <?php renderQuestionnaireInsights(
+                                $scoreInsights,
+                                $questionnaireInsights->disclaimer()
+                            ); ?>
                         <?php else: ?>
                             <p class="text-muted">Anak Anda belum pernah mengisi kuesioner *screening* Anemia.</p>
                         <?php endif; ?>
@@ -173,5 +183,8 @@ if ($anak) {
   lucide.createIcons();
 </script>
 <script src="../assets/js/app-init.js?v=20260729"></script>
+<?php if ($questionnaireHistory): ?>
+    <?php renderQuestionnaireHistoryChartScript('parentQuestionnaireChart', $historyChart); ?>
+<?php endif; ?>
 </body>
 </html>

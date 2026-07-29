@@ -8,6 +8,22 @@
     --master-blue: #175cd3;
     --master-amber: #b54708;
     --master-border: #dfe7e4;
+    --master-nav: rgba(255, 255, 255, .96);
+    --master-shadow: rgba(23, 32, 51, .06);
+}
+
+[data-bs-theme="dark"] {
+    --master-ink: #f1f5f9;
+    --master-muted: #a8b6c8;
+    --master-surface: #172033;
+    --master-canvas: #0f172a;
+    --master-green: #34d399;
+    --master-green-soft: #12382d;
+    --master-blue: #79a7ff;
+    --master-amber: #fbbf24;
+    --master-border: #344258;
+    --master-nav: rgba(15, 23, 42, .96);
+    --master-shadow: rgba(0, 0, 0, .35);
 }
 
 .superadmin-body {
@@ -20,8 +36,8 @@
 
 .superadmin-nav {
     border-bottom: 1px solid var(--master-border);
-    background: rgba(255, 255, 255, .96) !important;
-    box-shadow: 0 8px 28px rgba(23, 32, 51, .06) !important;
+    background: var(--master-nav) !important;
+    box-shadow: 0 8px 28px var(--master-shadow) !important;
 }
 
 .superadmin-nav .navbar-brand {
@@ -36,6 +52,11 @@
     color: var(--master-green);
     font-size: .62rem;
     letter-spacing: .18em;
+}
+
+.superadmin-nav .nav-link {
+    padding-inline: .65rem !important;
+    font-size: .875rem;
 }
 
 .brand-mark {
@@ -72,12 +93,13 @@
     border: 1px solid var(--master-border);
     border-radius: 1rem;
     background: var(--master-surface);
-    box-shadow: 0 10px 30px rgba(23, 32, 51, .05);
+    color: var(--master-ink);
+    box-shadow: 0 10px 30px var(--master-shadow);
 }
 
 .master-card:hover {
     transform: none;
-    box-shadow: 0 10px 30px rgba(23, 32, 51, .05);
+    box-shadow: 0 10px 30px var(--master-shadow);
 }
 
 .metric-card {
@@ -141,7 +163,7 @@
 
 .master-table tbody td {
     padding-block: .9rem;
-    border-color: #edf1ef;
+    border-color: var(--master-border);
     vertical-align: middle;
 }
 
@@ -180,6 +202,16 @@
     border-top: 1px solid var(--master-border);
     color: var(--master-muted);
     font-size: .78rem;
+}
+
+[data-bs-theme="dark"] .status-warn {
+    background: #422f0e;
+    color: #fde68a;
+}
+
+[data-bs-theme="dark"] .status-neutral {
+    background: #172f55;
+    color: #bfdbfe;
 }
 
 @media (max-width: 767.98px) {

@@ -27,6 +27,9 @@ function readSavedTheme() {
 function applyTheme(theme) {
     htmlElement.setAttribute('data-bs-theme', theme);
     htmlElement.style.colorScheme = theme;
+    document.dispatchEvent(new CustomEvent('akrab:themechange', {
+        detail: { theme }
+    }));
 }
 
 applyTheme(readSavedTheme() || (systemTheme.matches ? 'dark' : 'light'));

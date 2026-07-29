@@ -9,6 +9,7 @@ function renderSuperadminHeader(string $title, string $active): void
         'users' => ['Pengguna', 'users.php'],
         'links' => ['Relasi Wali', 'parent_links.php'],
         'health' => ['Data Kesehatan', 'health_records.php'],
+        'questionnaires' => ['Hasil Kuesioner', 'questionnaire_results.php'],
         'operations' => ['Operasional', 'consultations.php'],
         'login_as' => ['Login As', 'login_as.php'],
         'reports' => ['Laporan', 'reports.php'],
@@ -20,7 +21,7 @@ function renderSuperadminHeader(string $title, string $active): void
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="light">
+    <meta name="color-scheme" content="light dark">
     <title><?= escape_output($title) ?> — Superadmin AKRAB</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23087f5b'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-size='36' fill='white' font-family='Arial'%3EA%3C/text%3E%3C/svg%3E">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -77,6 +78,8 @@ function renderSuperadminFooter(): void
     <span>Aktivitas sensitif dilindungi audit</span>
 </footer>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../assets/js/app-init.js?v=20260729"></script>
+<script src="../assets/js/main.js?v=20260729"></script>
 </body>
 </html>
 <?php

@@ -29,11 +29,17 @@ final class IdentityWorkflowTest extends TestCase
 
     public function testParentDashboardRequiresApprovedDatabaseLink(): void
     {
-        $contents = file_get_contents(dirname(__DIR__, 2) . '/orangtua/dashboard.php');
+        $root = dirname(__DIR__, 2);
+        $contents = file_get_contents($root . '/orangtua/dashboard.php');
+        $repository = file_get_contents(
+            $root . '/app/Repositories/QuestionnaireAnalyticsRepository.php'
+        );
 
-        self::assertStringContainsString('parent_student_links', $contents);
-        self::assertStringContainsString("psl.status = 'approved'", $contents);
-        self::assertStringContainsString('psl.parent_id = ?', $contents);
+        self::assertStringContainsString('approvedStudentForParent', $contents);
+        self::assertStringContainsString('parent_student_links', $repository);
+        self::assertStringContainsString("psl.status = 'approved'", $repository);
+        self::assertStringContainsString('psl.parent_id = ?', $repository);
+        self::assertStringContainsString('psl.archived_at IS NULL', $repository);
         self::assertStringNotContainsString('$anak_username', $contents);
     }
 

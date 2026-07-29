@@ -17,10 +17,18 @@ final class RiskConsistencyTest extends TestCase
 
     public function testLatestQueriesUseDateAndIdTieBreakers(): void
     {
-        foreach (['siswa/dashboard.php', 'orangtua/dashboard.php', 'uks/export_csv.php'] as $path) {
+        foreach (['siswa/dashboard.php', 'uks/export_csv.php'] as $path) {
             $contents = file_get_contents(dirname(__DIR__, 2) . '/' . $path);
             self::assertStringContainsString('ORDER BY tanggal DESC, id DESC', $contents, $path);
         }
+        $repository = file_get_contents(
+            dirname(__DIR__, 2)
+                . '/app/Repositories/QuestionnaireAnalyticsRepository.php'
+        );
+        self::assertStringContainsString(
+            'ORDER BY tanggal DESC, id DESC',
+            $repository
+        );
     }
 
     public function testAdviceLookupUsesRiskMapping(): void

@@ -1,9 +1,9 @@
-const CACHE_NAME = 'akrab-static-20260729';
+const CACHE_NAME = 'akrab-static-20260729-analytics';
 const STATIC_ASSETS = [
   '/offline.html',
-  '/assets/css/style.css?v=20260729',
-  '/assets/js/app-init.js?v=20260729',
-  '/assets/js/main.js?v=20260729',
+  '/assets/css/style.css?v=20260729-analytics',
+  '/assets/js/app-init.js?v=20260729-analytics',
+  '/assets/js/main.js?v=20260729-analytics',
   '/assets/img/logo.png'
 ];
 

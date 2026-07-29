@@ -48,6 +48,7 @@ $data_tidak_patuh = $compliance['non_compliant'];
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item"><a class="nav-link text-white active fw-bold" href="dashboard.php">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link text-white" href="hasil_kuesioner.php">Hasil Kuesioner</a></li>
                 <li class="nav-item"><a class="nav-link text-white" href="data_siswa.php">Data Siswa</a></li>
                 <li class="nav-item"><a class="nav-link text-white" href="kelola_tautan.php">Verifikasi Wali</a></li>
                 <li class="nav-item"><a class="nav-link text-white" href="kelola_artikel.php">Berita</a></li>
@@ -85,10 +86,10 @@ $data_tidak_patuh = $compliance['non_compliant'];
     
     <div class="row g-4 mb-5">
         <div class="col-md-3">
-            <a href="data_siswa.php" class="text-decoration-none">
+            <a href="hasil_kuesioner.php" class="text-decoration-none">
                 <div class="card bg-success text-white text-center p-3 h-100 shadow-sm card-hover">
-                    <i data-lucide="users" class="mx-auto mb-2" style="width: 32px; height: 32px;"></i>
-                    <h5 class="mb-0">Data Siswa</h5>
+                    <i data-lucide="chart-no-axes-combined" class="mx-auto mb-2" style="width: 32px; height: 32px;"></i>
+                    <h5 class="mb-0">Hasil Kuesioner</h5>
                 </div>
             </a>
         </div>
