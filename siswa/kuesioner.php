@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
         }
-        error_log('AKRAB questionnaire submission failed: ' . get_class($e));
+        akrabLog('warn', 'questionnaire_submission_failed', ['exception_class' => get_class($e), 'outcome' => 'rejected']);
         $error = $e instanceof InvalidArgumentException ? $e->getMessage() : publicErrorMessage();
     }
     }

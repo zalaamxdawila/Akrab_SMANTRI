@@ -17,6 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
     $id = (int) $_POST['delete_id'];
     $stmt = $pdo->prepare("DELETE FROM artikel_edukasi WHERE id = ? AND uks_id = ?");
     if ($id > 0 && $stmt->execute([$id, $uks_id]) && $stmt->rowCount() === 1) {
+        recordAuditEvent($pdo, (int) $uks_id, 'article.deleted', 'article', $id, ['outcome' => 'success']);
         header("Location: kelola_artikel.php?success=deleted");
         exit;
     }
@@ -38,6 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete_id'])) {
             if ($ownership->fetch()) {
                 $stmt = $pdo->prepare("UPDATE artikel_edukasi SET judul = ?, konten = ? WHERE id = ? AND uks_id = ?");
                 $stmt->execute([$judul, $konten, $articleId, $uks_id]);
+                recordAuditEvent($pdo, (int) $uks_id, 'article.updated', 'article', $articleId, ['outcome' => 'success']);
                 header('Location: kelola_artikel.php?success=updated');
                 exit;
             }
@@ -46,6 +48,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete_id'])) {
             // Add
             $stmt = $pdo->prepare("INSERT INTO artikel_edukasi (uks_id, judul, konten) VALUES (?, ?, ?)");
             $stmt->execute([$uks_id, $judul, $konten]);
+            $articleId = (int) $pdo->lastInsertId();
+            recordAuditEvent($pdo, (int) $uks_id, 'article.created', 'article', $articleId, ['outcome' => 'success']);
             header('Location: kelola_artikel.php?success=created');
             exit;
         }

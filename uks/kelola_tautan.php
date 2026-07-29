@@ -47,17 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
             $update->execute([$studentId ?: null, $decision, $uksId, $linkId]);
 
-            $audit = $pdo->prepare(
-                'INSERT INTO audit_log (actor_id, action, target_type, target_id, metadata_json)
-                 VALUES (?, ?, ?, ?, ?)'
-            );
-            $audit->execute([
-                $uksId,
-                'parent_link.' . $decision,
-                'parent_student_link',
-                $linkId,
-                json_encode(['decision' => $decision], JSON_THROW_ON_ERROR),
-            ]);
+            recordAuditEvent($pdo, $uksId, 'parent_link.' . $decision, 'parent_student_link', $linkId, ['outcome' => $decision]);
 
             $pdo->commit();
             header('Location: kelola_tautan.php?updated=1');

@@ -149,10 +149,10 @@ Status: `[ ]` belum, `[-]` berjalan, `[x]` selesai, `[!]` diblokir.
 
 ## Sprint 19 — Observability
 
-- [ ] Structured/redacted logs
-- [ ] Audit trail
-- [ ] Health endpoint
-- [ ] Alert dan retention policy
+- [x] Structured/redacted logs
+- [x] Audit trail untuk aksi sensitif
+- [x] Health endpoint aman
+- [x] Alert dan retention policy
 
 ## Sprint 20 — PWA/frontend
 

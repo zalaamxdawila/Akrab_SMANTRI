@@ -19,6 +19,8 @@ $siswa = $stmt->fetch();
 if (!$siswa) {
     die("Data siswa tidak ditemukan.");
 }
+recordAuditEvent($pdo, (int) $_SESSION['user_id'], 'health_record.viewed', 'student', $siswa_id, ['outcome' => 'success', 'actor_role' => 'uks']);
+akrabLog('info', 'health_record_viewed', ['outcome' => 'success', 'target_type' => 'student', 'actor_role' => 'uks']);
 
 // 2. Fetch Latest Kuesioner
 $stmt = $pdo->prepare("SELECT * FROM kuesioner WHERE user_id = ? ORDER BY created_at DESC LIMIT 1");

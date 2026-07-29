@@ -21,10 +21,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['nama'] = $user['nama'];
             $_SESSION['role'] = $user['role'];
+            recordAuditEvent($pdo, (int) $user['id'], 'auth.login_succeeded', 'session', null, ['outcome' => 'success', 'actor_role' => $user['role']]);
+            akrabLog('info', 'login_succeeded', ['outcome' => 'success', 'actor_role' => $user['role']]);
             
             header('Location: ' . BASE_URL . dashboardForRole($user['role']));
             exit;
         } else {
+            recordAuditEvent($pdo, null, 'auth.login_failed', 'session', null, ['outcome' => 'failed']);
+            akrabLog('warn', 'login_failed', ['outcome' => 'failed']);
             $error = "Username atau password salah!";
         }
     } else {

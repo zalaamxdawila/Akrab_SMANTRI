@@ -3,6 +3,7 @@
 
 require_once __DIR__ . '/config/environment.php';
 require_once __DIR__ . '/config/error_handling.php';
+require_once __DIR__ . '/config/observability.php';
 require_once __DIR__ . '/config/session.php';
 require_once __DIR__ . '/config/csrf.php';
 require_once __DIR__ . '/config/authorization.php';
@@ -35,7 +36,7 @@ try {
         ]
     );
 } catch (Throwable $exception) {
-    error_log('AKRAB bootstrap failed: ' . get_class($exception));
+    akrabLog('error', 'bootstrap_failed', ['exception_class' => get_class($exception)]);
     http_response_code(500);
     exit(publicErrorMessage());
 }

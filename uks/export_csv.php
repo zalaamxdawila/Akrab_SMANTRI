@@ -5,6 +5,12 @@ require_once '../helpers.php';
 check_role('uks');
 
 $type = isset($_GET['type']) ? $_GET['type'] : 'siswa';
+if (!in_array($type, ['siswa', 'log'], true)) {
+    http_response_code(400);
+    exit('Jenis export tidak valid.');
+}
+recordAuditEvent($pdo, (int) $_SESSION['user_id'], 'data.exported', $type === 'log' ? 'ttd_log' : 'student_summary', null, ['outcome' => 'success']);
+akrabLog('info', 'data_exported', ['outcome' => 'success', 'target_type' => $type === 'log' ? 'ttd_log' : 'student_summary', 'actor_role' => 'uks']);
 
 // Bersihkan output buffer apa pun yang mungkin bocor dari file konfigurasi
 if (ob_get_length()) {
