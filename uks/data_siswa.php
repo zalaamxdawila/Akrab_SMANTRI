@@ -54,8 +54,8 @@ $pageQuery = $search !== '' ? '&amp;search=' . rawurlencode($search) : '';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Data Siswa - AKRAB UKS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="../assets/css/style.css?v=<?= time() ?>" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="../assets/css/style.css?v=20260729" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
 </head>
 <body>
 
@@ -169,6 +169,6 @@ $pageQuery = $search !== '' ? '&amp;search=' . rawurlencode($search) : '';
 <script>
   lucide.createIcons();
 </script>
-<script src="../assets/js/app-init.js"></script>
+<script src="../assets/js/app-init.js?v=20260729"></script>
 </body>
 </html>

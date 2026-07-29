@@ -156,12 +156,12 @@ Status: `[ ]` belum, `[-]` berjalan, `[x]` selesai, `[!]` diblokir.
 
 ## Sprint 20 — PWA/frontend
 
-- [ ] Cache versioning dan cleanup
-- [ ] Asset fingerprint
-- [ ] CSP/security headers
-- [ ] Rebranding/disclaimer chatbot
-- [ ] Accessibility audit
-- [ ] Lengkapi CP-09
+- [x] Cache versioning dan cleanup
+- [x] Asset fingerprint/version stabil
+- [x] CSP/security headers
+- [x] Rebranding/disclaimer chatbot
+- [x] Accessibility baseline
+- [x] Lengkapi CP-09 (YELLOW menunggu browser evidence)
 
 ## Sprint 21 — Operations
 

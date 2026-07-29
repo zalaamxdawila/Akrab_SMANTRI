@@ -12,8 +12,8 @@ $dashboard_url = $is_logged_in ? ($_SESSION['role'] === 'siswa' ? 'siswa/dashboa
     <title>AKRAB - Aplikasi Kesehatan Remaja Bebas Anemia</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="assets/css/style.css?v=<?= time() ?>" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="assets/css/style.css?v=20260729" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
     <style>
         .hero-section {
             background: linear-gradient(135deg, var(--primary-color) 0%, #3a7bd5 100%);
@@ -140,6 +140,6 @@ $dashboard_url = $is_logged_in ? ($_SESSION['role'] === 'siswa' ? 'siswa/dashboa
 <script>
   lucide.createIcons();
 </script>
-<script src="assets/js/app-init.js"></script>
+<script src="assets/js/app-init.js?v=20260729"></script>
 </body>
 </html>

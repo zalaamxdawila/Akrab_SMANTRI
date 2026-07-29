@@ -31,7 +31,7 @@ $saran = $stmt->fetch();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hasil Deteksi - AKRAB</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="../assets/css/style.css?v=<?= time() ?>" rel="stylesheet">
+    <link href="../assets/css/style.css?v=20260729" rel="stylesheet">
 </head>
 <body>
 
@@ -112,6 +112,6 @@ $saran = $stmt->fetch();
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="../assets/js/app-init.js"></script>
+<script src="../assets/js/app-init.js?v=20260729"></script>
 </body>
 </html>

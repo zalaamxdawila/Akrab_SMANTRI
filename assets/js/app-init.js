@@ -1,21 +1,29 @@
 // PWA Registration
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js')
-            .then(registration => console.log('SW registered'))
-            .catch(err => console.log('SW registration failed', err));
+        navigator.serviceWorker.register('/service-worker.js', { updateViaCache: 'none' });
     });
 }
 
 // Inject Manifest
 const manifestLink = document.createElement('link');
 manifestLink.rel = 'manifest';
-manifestLink.href = '/manifest.json';
-document.head.appendChild(manifestLink);
+manifestLink.href = '/manifest.json?v=20260729';
+if (!document.querySelector('link[rel="manifest"]')) document.head.appendChild(manifestLink);
 
 // Dark Mode Logic
 document.addEventListener('DOMContentLoaded', () => {
     const htmlElement = document.documentElement;
+    const mainContent = document.querySelector('main, body > .container');
+    if (mainContent && !document.getElementById('main-content')) {
+        mainContent.id = 'main-content';
+        mainContent.setAttribute('tabindex', '-1');
+        const skipLink = document.createElement('a');
+        skipLink.href = '#main-content';
+        skipLink.className = 'skip-link';
+        skipLink.textContent = 'Lewati ke konten utama';
+        document.body.insertBefore(skipLink, document.body.firstChild);
+    }
     
     // Load preference
     const savedTheme = localStorage.getItem('theme');
@@ -34,10 +42,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const toggleBtn = document.createElement('button');
         toggleBtn.className = 'btn btn-outline-secondary rounded-pill px-3 d-flex align-items-center gap-2';
         toggleBtn.id = 'darkModeToggle';
+        toggleBtn.type = 'button';
         
         const updateBtnUI = () => {
             const isDark = htmlElement.getAttribute('data-bs-theme') === 'dark';
             toggleBtn.innerHTML = isDark ? '<i data-lucide="sun"></i> Terang' : '<i data-lucide="moon"></i> Gelap';
+            toggleBtn.setAttribute('aria-label', isDark ? 'Gunakan tema terang' : 'Gunakan tema gelap');
+            toggleBtn.setAttribute('aria-pressed', String(isDark));
             if (typeof lucide !== 'undefined') lucide.createIcons();
         };
         

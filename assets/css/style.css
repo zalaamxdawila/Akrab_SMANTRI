@@ -274,3 +274,25 @@ h1, h2, h3, h4, h5, h6 {
         width: 100%;
     }
 }
+/* Keyboard and reduced-motion accessibility baseline. */
+.skip-link {
+    position: fixed;
+    left: 1rem;
+    top: -5rem;
+    z-index: 2000;
+    padding: .75rem 1rem;
+    background: #ffffff;
+    color: #0d6efd;
+    border: 2px solid currentColor;
+    border-radius: .375rem;
+}
+.skip-link:focus { top: 1rem; }
+:focus-visible { outline: 3px solid #ffbf47; outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+    }
+}
