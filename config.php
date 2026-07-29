@@ -15,6 +15,7 @@ require_once __DIR__ . '/config/risk.php';
 require_once __DIR__ . '/config/clinical.php';
 
 $appEnvironment = environmentValue('AKRAB_APP_ENV', 'production');
+date_default_timezone_set(environmentValue('AKRAB_TIMEZONE', 'Asia/Jakarta'));
 if (PHP_SAPI !== 'cli' && !headers_sent()) {
     header('Cache-Control: private, no-store, max-age=0');
     header('Pragma: no-cache');
