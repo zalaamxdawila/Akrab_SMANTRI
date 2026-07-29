@@ -165,10 +165,12 @@ Status: `[ ]` belum, `[-]` berjalan, `[x]` selesai, `[!]` diblokir.
 
 ## Sprint 21 — Operations
 
-- [ ] README dan environment setup
-- [ ] Deploy/migration/rollback runbook
-- [ ] Backup/restore drill
-- [ ] Incident dan secret rotation runbook
+- [x] README dan environment setup
+- [x] Deploy/migration/rollback runbook
+- [x] Backup/restore drill procedure (execution deferred)
+- [x] Incident dan secret rotation runbook
+- [x] Data retention dan correction/deletion process
+- [x] Release checklist dan ownership matrix
 
 ## Sprint 22 — Staging/UAT
 

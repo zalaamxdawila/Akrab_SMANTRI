@@ -5,14 +5,20 @@ logout.php
 register.php
 manifest.json
 service-worker.js
+offline.html
+health.php
 .htaccess
 
 # Include-only runtime
 config.php
 helpers.php
+bootstrap.php
+app/
 config/
 database/
 tools/migrate.php
+cron/
+views/
 
 # Role-specific application pages
 siswa/

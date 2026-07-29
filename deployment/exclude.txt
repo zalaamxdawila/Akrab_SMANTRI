@@ -7,7 +7,6 @@ deployment/
 tasks/
 tests/
 vendor/
-cron/
 *.zip
 *.bak
 *.log
