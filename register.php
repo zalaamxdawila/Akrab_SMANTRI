@@ -115,11 +115,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daftar - Aplikasi AKRAB</title>
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/assets/vendor/bootstrap.min.css" rel="stylesheet">
     <!-- Custom CSS -->
     <link href="assets/css/style.css?v=20260729" rel="stylesheet">
     <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <script src="/assets/vendor/lucide.min.js"></script>
     <style>
         .login-bg {
             background: url('assets/img/bg.png') no-repeat center center fixed;
@@ -216,7 +216,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </div>
 </main>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/assets/vendor/bootstrap.bundle.min.js"></script>
 <script>
 function toggleFields() {
     const role = document.getElementById('role').value;

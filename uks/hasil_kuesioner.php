@@ -36,10 +36,10 @@ recordAuditEvent(
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hasil Kuesioner - AKRAB UKS</title>
     <link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/assets/vendor/bootstrap.min.css" rel="stylesheet">
     <link href="../assets/css/style.css?v=20260729" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <script src="/assets/vendor/chart.umd.min.js"></script>
+    <script src="/assets/vendor/lucide.min.js"></script>
 </head>
 <body>
 <?php renderImpersonationBanner($pdo, $_SESSION); ?>
@@ -143,7 +143,7 @@ recordAuditEvent(
         </div>
     </section>
 </main>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/assets/vendor/bootstrap.bundle.min.js"></script>
 <script src="../assets/js/app-init.js?v=20260729"></script>
 <script src="../assets/js/main.js?v=20260729"></script>
 <?php if ($aggregate['total_responses'] > 0): ?>

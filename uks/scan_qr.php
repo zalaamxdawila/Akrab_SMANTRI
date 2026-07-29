@@ -9,9 +9,9 @@ check_role('uks');
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pindai QR Siswa - AKRAB</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <link href="/assets/vendor/bootstrap.min.css" rel="stylesheet">
+    <script src="/assets/vendor/html5-qrcode.min.js"></script>
+    <script src="/assets/vendor/lucide.min.js"></script>
 </head>
 <body class="bg-light">
 <?php renderImpersonationBanner($pdo, $_SESSION); ?>

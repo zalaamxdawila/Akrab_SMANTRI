@@ -23,6 +23,8 @@ backups/
 
 # Dependencies and test output
 vendor/
+!assets/vendor/
+!assets/vendor/**
 .phpunit.cache/
 coverage/
 __pycache__/

@@ -17,7 +17,7 @@ $stmt->execute([$user_id]);
 $total_minum = (int) $stmt->fetchColumn();
 
 if (!isCertificateEligible($total_minum)) {
-    echo '<!DOCTYPE html><html lang="id"><head><title>Akses Ditolak - AKRAB</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"></head><body class="bg-light d-flex align-items-center justify-content-center" style="min-height: 100vh;"><main class="card shadow-sm border-0 p-5 text-center" style="max-width: 500px;"><h1 class="h3 fw-bold text-dark mb-3">Belum Memenuhi Syarat</h1><p class="text-muted mb-4">Diperlukan minimal 12 hari unik konsumsi TTD dalam 90 hari terakhir (Saat ini: '.$total_minum.' hari).</p><a href="dashboard.php" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">Kembali ke Dasbor</a></main></body></html>';
+    echo '<!DOCTYPE html><html lang="id"><head><title>Akses Ditolak - AKRAB</title><link href="/assets/vendor/bootstrap.min.css" rel="stylesheet"></head><body class="bg-light d-flex align-items-center justify-content-center" style="min-height: 100vh;"><main class="card shadow-sm border-0 p-5 text-center" style="max-width: 500px;"><h1 class="h3 fw-bold text-dark mb-3">Belum Memenuhi Syarat</h1><p class="text-muted mb-4">Diperlukan minimal 12 hari unik konsumsi TTD dalam 90 hari terakhir (Saat ini: '.$total_minum.' hari).</p><a href="dashboard.php" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">Kembali ke Dasbor</a></main></body></html>';
     exit;
 }
 

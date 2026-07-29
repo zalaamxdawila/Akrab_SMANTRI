@@ -48,11 +48,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <title>Login - Aplikasi AKRAB</title>
     <link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/assets/vendor/bootstrap.min.css" rel="stylesheet">
     <!-- Custom CSS -->
     <link href="assets/css/style.css?v=20260729" rel="stylesheet">
     <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <script src="/assets/vendor/lucide.min.js"></script>
     <style>
         .login-bg {
             background: url('assets/img/bg.png') no-repeat center center fixed;
@@ -103,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </div>
 </main>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/assets/vendor/bootstrap.bundle.min.js"></script>
 <script>lucide.createIcons();</script>
 <script src="assets/js/main.js?v=20260729"></script>
 <script src="assets/js/app-init.js?v=20260729"></script>

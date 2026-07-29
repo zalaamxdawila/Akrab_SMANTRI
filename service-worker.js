@@ -1,9 +1,15 @@
-const CACHE_NAME = 'akrab-static-20260729-analytics';
+const CACHE_NAME = 'akrab-static-20260729-local-assets';
 const STATIC_ASSETS = [
   '/offline.html',
   '/assets/css/style.css?v=20260729-analytics',
   '/assets/js/app-init.js?v=20260729-analytics',
   '/assets/js/main.js?v=20260729-analytics',
+  '/assets/vendor/bootstrap.min.css',
+  '/assets/vendor/bootstrap.bundle.min.js',
+  '/assets/vendor/chart.umd.min.js',
+  '/assets/vendor/lucide.min.js',
+  '/assets/vendor/qrcode.min.js',
+  '/assets/vendor/html5-qrcode.min.js',
   '/assets/img/logo.png'
 ];
 

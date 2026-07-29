@@ -39,7 +39,7 @@ $tanggal_cetak = date('d F Y');
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Laporan Eksekutif - AKRAB</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/assets/vendor/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background: #fff; color: #000; font-family: 'Times New Roman', Times, serif; }
         .kop-surat { border-bottom: 3px solid #000; padding-bottom: 15px; margin-bottom: 25px; }

@@ -37,13 +37,11 @@ final class FrontendSecurityTest extends TestCase
     {
         $root = dirname(__DIR__, 2);
         $contents = file_get_contents($root . '/siswa/id_card.php');
-        $headers = file_get_contents($root . '/.htaccess');
 
         self::assertStringContainsString(
-            'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js',
+            '/assets/vendor/qrcode.min.js',
             $contents
         );
-        self::assertStringContainsString('https://cdn.jsdelivr.net', $headers);
         self::assertStringNotContainsString('cdnjs.cloudflare.com', $contents);
     }
 
@@ -70,5 +68,38 @@ final class FrontendSecurityTest extends TestCase
             'Redirect 302 /favicon.ico /assets/icons/icon.svg',
             $htaccess
         );
+    }
+
+    public function testRuntimeFrontendDependenciesAreSelfHosted(): void
+    {
+        $root = dirname(__DIR__, 2);
+        foreach ([
+            'bootstrap.min.css',
+            'bootstrap.bundle.min.js',
+            'chart.umd.min.js',
+            'lucide.min.js',
+            'qrcode.min.js',
+            'html5-qrcode.min.js',
+        ] as $asset) {
+            $path = $root . '/assets/vendor/' . $asset;
+            self::assertFileExists($path);
+            self::assertGreaterThan(1000, filesize($path), $asset);
+        }
+
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS)
+        );
+        foreach ($iterator as $file) {
+            if (
+                $file->getExtension() !== 'php'
+                || str_contains($file->getPathname(), DIRECTORY_SEPARATOR . 'tests' . DIRECTORY_SEPARATOR)
+            ) {
+                continue;
+            }
+            $contents = file_get_contents($file->getPathname());
+            self::assertStringNotContainsString('cdn.jsdelivr.net', $contents);
+            self::assertStringNotContainsString('unpkg.com', $contents);
+            self::assertStringNotContainsString('cdnjs.cloudflare.com', $contents);
+        }
     }
 }

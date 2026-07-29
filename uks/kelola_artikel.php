@@ -79,9 +79,9 @@ $articles = $stmt->fetchAll();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kelola Artikel - AKRAB UKS</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/assets/vendor/bootstrap.min.css" rel="stylesheet">
     <link href="../assets/css/style.css?v=20260729" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <script src="/assets/vendor/lucide.min.js"></script>
 </head>
 <body class="bg-light">
 <?php renderImpersonationBanner($pdo, $_SESSION); ?>
@@ -197,7 +197,7 @@ $articles = $stmt->fetchAll();
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/assets/vendor/bootstrap.bundle.min.js"></script>
 <script>
   lucide.createIcons();
 </script>

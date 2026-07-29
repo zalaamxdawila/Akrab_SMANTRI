@@ -59,7 +59,7 @@ recordAuditEvent(
 
 renderSuperadminHeader('Hasil Kuesioner', 'questionnaires');
 ?>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="/assets/vendor/chart.umd.min.js"></script>
 
 <section class="row g-3 mb-4" aria-label="Ringkasan hasil kuesioner">
     <?php foreach ([
