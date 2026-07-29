@@ -72,6 +72,12 @@ if (php_sapi_name() !== 'cli' && isset($_SESSION['user_id'])) {
             ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST'
             && $actorContext->isImpersonating()
         ) {
+            ImpersonationPolicy::assertAllowed(
+                impersonationActionForRequest(
+                    (string) ($_SERVER['SCRIPT_NAME'] ?? ''),
+                    $_POST
+                )
+            );
             (new ImpersonationMutationAudit($pdo))->registerCurrentMutation(
                 $actorContext,
                 (string) ($_SERVER['SCRIPT_NAME'] ?? ''),
@@ -88,6 +94,20 @@ if (php_sapi_name() !== 'cli' && isset($_SESSION['user_id'])) {
         http_response_code(403);
         exit('Akses ditolak.');
     }
+}
+
+if (
+    php_sapi_name() !== 'cli'
+    && isset($actorContext)
+    && $actorContext->isImpersonating()
+    && in_array(
+        basename((string) ($_SERVER['SCRIPT_NAME'] ?? '')),
+        ['export_calendar.php', 'export_csv.php'],
+        true
+    )
+) {
+    http_response_code(403);
+    exit('Export tidak diizinkan selama Login As.');
 }
 
 if (

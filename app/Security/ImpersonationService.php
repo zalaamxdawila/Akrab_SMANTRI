@@ -32,6 +32,7 @@ final class ImpersonationService
         ?int $now = null
     ): int {
         $now ??= time();
+        $this->assertNotRateLimited($now);
         $reasonNote = trim($reasonNote);
         $this->assertStartInput($reasonCategory, $reasonNote);
         if (array_key_exists('_impersonation_session_id', $this->session)) {
@@ -58,6 +59,7 @@ final class ImpersonationService
                 || $superadmin['status'] !== 'active'
                 || !password_verify($password, $superadmin['password_hash'])
             ) {
+                $this->recordFailedStepUp($now);
                 throw new DomainException('Step-up authentication failed.');
             }
             if (
@@ -117,6 +119,7 @@ final class ImpersonationService
             }
 
             ($this->regenerateSession)();
+            unset($this->session['_impersonation_failures']);
             $this->session['_impersonation_session_id'] = $impersonationId;
             $this->session['user_id'] = $targetUserId;
             $this->session['role'] = $target['role'];
@@ -129,6 +132,46 @@ final class ImpersonationService
             }
             throw $exception;
         }
+    }
+
+    public function paginateTargets(
+        string $search,
+        int $page,
+        int $perPage = 25
+    ): array {
+        $search = trim($search);
+        if (mb_strlen($search) > 100) {
+            throw new InvalidArgumentException('Pencarian terlalu panjang.');
+        }
+        $where = "status = 'active' AND role IN ('siswa', 'uks', 'orangtua')";
+        $parameters = [];
+        if ($search !== '') {
+            $where .= ' AND (nama LIKE ? OR username LIKE ?)';
+            $parameters = ['%' . $search . '%', '%' . $search . '%'];
+        }
+        $count = $this->pdo->prepare("SELECT COUNT(*) FROM users WHERE {$where}");
+        $count->execute($parameters);
+        $total = (int) $count->fetchColumn();
+        $perPage = max(1, min(100, $perPage));
+        $pages = max(1, (int) ceil($total / $perPage));
+        $page = min(max(1, $page), $pages);
+        $statement = $this->pdo->prepare(
+            "SELECT id, nama, username, role FROM users WHERE {$where}
+             ORDER BY nama ASC, id ASC LIMIT ? OFFSET ?"
+        );
+        $position = 1;
+        foreach ($parameters as $parameter) {
+            $statement->bindValue($position++, $parameter);
+        }
+        $statement->bindValue($position++, $perPage, PDO::PARAM_INT);
+        $statement->bindValue($position, ($page - 1) * $perPage, PDO::PARAM_INT);
+        $statement->execute();
+        return [
+            'items' => $statement->fetchAll(),
+            'total' => $total,
+            'page' => $page,
+            'pages' => $pages,
+        ];
     }
 
     public function end(?int $now = null): void
@@ -290,5 +333,25 @@ final class ImpersonationService
         return function_exists('requestCorrelationId')
             ? requestCorrelationId()
             : '';
+    }
+
+    private function assertNotRateLimited(int $now): void
+    {
+        $attempts = array_values(array_filter(
+            (array) ($this->session['_impersonation_failures'] ?? []),
+            static fn (mixed $attempt): bool => is_int($attempt)
+                && $attempt > $now - 900
+        ));
+        $this->session['_impersonation_failures'] = $attempts;
+        if (count($attempts) >= 5) {
+            throw new DomainException('Step-up authentication temporarily locked.');
+        }
+    }
+
+    private function recordFailedStepUp(int $now): void
+    {
+        $attempts = (array) ($this->session['_impersonation_failures'] ?? []);
+        $attempts[] = $now;
+        $this->session['_impersonation_failures'] = array_slice($attempts, -5);
     }
 }

@@ -112,6 +112,7 @@ renderSuperadminHeader('Ringkasan Sistem', 'dashboard');
                 <dd><?= $summary['operations']['articles'] ?> artikel</dd>
             </dl>
             <a href="audit.php" class="btn btn-sm btn-outline-primary mt-4">Buka audit trail</a>
+            <a href="login_as.php" class="btn btn-sm btn-danger mt-4">Login As pengguna</a>
         </div>
     </aside>
 </div>

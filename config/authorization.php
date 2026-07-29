@@ -78,3 +78,32 @@ function actionAllowedForActor(ActorContext $context, string $action): bool
 
     return roleCan($context->effectiveRole, $action);
 }
+
+function impersonationActionForRequest(string $scriptName, array $input): string
+{
+    $path = str_replace('\\', '/', $scriptName);
+    if (str_ends_with($path, '/siswa/kuesioner.php')) {
+        return 'questionnaire.submit';
+    }
+    if (str_ends_with($path, '/siswa/konsultasi.php')) {
+        return 'consultation.create';
+    }
+    if (str_ends_with($path, '/uks/jawab_konsultasi.php')) {
+        return 'consultation.reply';
+    }
+    if (str_ends_with($path, '/uks/kelola_artikel.php')) {
+        return isset($input['id']) ? 'article.update_own' : 'article.create';
+    }
+    if (str_ends_with($path, '/orangtua/dashboard.php')) {
+        return 'parent_link.request';
+    }
+    if (str_ends_with($path, '/siswa/dashboard.php')) {
+        return isset($input['toggle_haid'])
+            ? 'menstruation.record'
+            : 'ttd.record';
+    }
+    if (str_ends_with($path, '/end_impersonation.php')) {
+        return 'impersonation.end';
+    }
+    return 'impersonation.route_unapproved';
+}

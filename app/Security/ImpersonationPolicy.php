@@ -13,6 +13,7 @@ final class ImpersonationPolicy
         'article.create',
         'article.update_own',
         'parent_link.request',
+        'impersonation.end',
     ];
 
     private const BLOCKED_ACTIONS = [
