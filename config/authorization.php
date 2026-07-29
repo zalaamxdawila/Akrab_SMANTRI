@@ -38,6 +38,7 @@ function roleCan(string $role, string $action): bool
             'view_master_dashboard',
             'manage_users',
             'manage_parent_links',
+            'manage_health_records',
         ],
     ];
 

@@ -54,3 +54,22 @@ FROM audit_log a
 WHERE COALESCE(a.authenticated_actor_id, a.actor_id) = 1
 ORDER BY a.created_at DESC, a.id DESC
 LIMIT 25 OFFSET 0;
+
+-- Sprint 29 superadmin health master evidence.
+EXPLAIN SELECT r.id, r.user_id, u.nama, r.tanggal_periksa, r.nilai_hb
+FROM kadar_hb r
+JOIN users u ON u.id = r.user_id AND u.role = 'siswa'
+WHERE r.archived_at IS NULL AND (u.nama LIKE '%uat%' OR u.username LIKE '%uat%')
+ORDER BY r.tanggal_periksa DESC, r.id DESC
+LIMIT 25 OFFSET 0;
+
+EXPLAIN SELECT kategori_risiko, COUNT(DISTINCT user_id)
+FROM hasil_deteksi h
+WHERE h.archived_at IS NULL
+  AND NOT EXISTS (
+      SELECT 1 FROM hasil_deteksi newer
+      WHERE newer.user_id = h.user_id AND newer.archived_at IS NULL
+        AND (newer.tanggal > h.tanggal
+          OR (newer.tanggal = h.tanggal AND newer.id > h.id))
+  )
+GROUP BY kategori_risiko;

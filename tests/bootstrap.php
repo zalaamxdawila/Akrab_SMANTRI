@@ -19,3 +19,4 @@ require_once dirname(__DIR__) . '/config/integrity.php';
 require_once dirname(__DIR__) . '/config/risk.php';
 require_once dirname(__DIR__) . '/config/clinical.php';
 require_once __DIR__ . '/Integration/Sprint28Fixture.php';
+require_once __DIR__ . '/Integration/Sprint29Fixture.php';

@@ -22,5 +22,6 @@ final class DashboardRepositoryTest extends TestCase
         self::assertStringContainsString('uksSummary', $contents);
         self::assertStringContainsString('ttdComplianceLastSevenDays', $contents);
         self::assertStringContainsString('max(0, $totalStudents - $count)', $contents);
+        self::assertStringContainsString('archived_at IS NULL', $contents);
     }
 }

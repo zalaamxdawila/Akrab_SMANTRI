@@ -36,6 +36,16 @@ final class ImpersonationMutationAudit
                 40
             );
         }
+        if (isset($metadata['changed_fields']) && is_array($metadata['changed_fields'])) {
+            $safeFields = array_values(array_filter(
+                $metadata['changed_fields'],
+                static fn (mixed $field): bool => is_string($field)
+                    && preg_match('/^[a-z][a-z0-9_]{0,39}$/', $field) === 1
+            ));
+            if ($safeFields !== []) {
+                $safeMetadata['changed_fields'] = array_slice($safeFields, 0, 20);
+            }
+        }
 
         $statement = $this->pdo->prepare(
             'INSERT INTO audit_log (
