@@ -101,6 +101,28 @@ function validateBmiInput(mixed $weight, mixed $height): array
 function validateQuestionnaireInput(array $input): array
 {
     try {
+        $labStatus = enumValue($input['lab_status'] ?? null, ['tersedia', 'belum_ada']);
+        $labValues = [
+            'kadar_hb' => null,
+            'kadar_mchc' => null,
+            'kadar_mcv' => null,
+            'kadar_mch' => null,
+        ];
+
+        if ($labStatus === 'tersedia') {
+            $labValues = [
+                'kadar_hb' => optionalDecimal($input['kadar_hb'] ?? null, 0, 30),
+                'kadar_mchc' => optionalDecimal($input['kadar_mchc'] ?? null, 0, 100),
+                'kadar_mcv' => optionalDecimal($input['kadar_mcv'] ?? null, 0, 200),
+                'kadar_mch' => optionalDecimal($input['kadar_mch'] ?? null, 0, 100),
+            ];
+            if (in_array(null, $labValues, true)) {
+                throw new InvalidArgumentException(
+                    'Semua nilai hasil lab darah wajib diisi jika hasil tersedia.'
+                );
+            }
+        }
+
         $values = [
             'tanggal_wawancara' => optionalDate($input['tanggal_wawancara'] ?? null),
             'inisial_responden' => normalizeText($input['inisial'] ?? '', 20),
@@ -109,10 +131,7 @@ function validateQuestionnaireInput(array $input): array
             'alamat' => normalizeText($input['alamat'] ?? '', 5000),
             'pendidikan' => enumValue($input['pendidikan'] ?? null, ['Kelas VII', 'Kelas VIII', 'Kelas IX', 'Kelas X', 'Kelas XI', 'Kelas XII'], true),
             'jurusan' => normalizeText($input['jurusan'] ?? '', 80),
-            'kadar_hb' => optionalDecimal($input['kadar_hb'] ?? null, 0, 30),
-            'kadar_mchc' => optionalDecimal($input['kadar_mchc'] ?? null, 0, 100),
-            'kadar_mcv' => optionalDecimal($input['kadar_mcv'] ?? null, 0, 200),
-            'kadar_mch' => optionalDecimal($input['kadar_mch'] ?? null, 0, 100),
+            ...$labValues,
             'mens_sudah' => enumValue($input['mens_sudah'] ?? null, ['ya', 'belum']),
             'mens_usia_th' => boundedInt($input['mens_usia_th'] ?? null, 5, 25, true),
             'mens_teratur' => enumValue($input['mens_teratur'] ?? null, ['ya', 'tidak']),

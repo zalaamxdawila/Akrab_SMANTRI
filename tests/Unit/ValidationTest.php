@@ -34,6 +34,47 @@ final class ValidationTest extends TestCase
         self::assertSame(6, $result['values']['skor_makan']);
     }
 
+    public function testQuestionnaireRequiresExplicitLabAvailabilityChoice(): void
+    {
+        $payload = validQuestionnairePayload();
+        unset($payload['lab_status']);
+
+        $result = validateQuestionnaireInput($payload);
+
+        self::assertFalse($result['valid']);
+    }
+
+    public function testAvailableLabResultRequiresEveryMeasurement(): void
+    {
+        $payload = validQuestionnairePayload();
+        $payload['kadar_mcv'] = '';
+
+        $result = validateQuestionnaireInput($payload);
+
+        self::assertFalse($result['valid']);
+        self::assertStringContainsString('hasil lab', $result['errors'][0]);
+    }
+
+    public function testUnavailableLabResultStoresNoMeasurement(): void
+    {
+        $payload = validQuestionnairePayload();
+        $payload['lab_status'] = 'belum_ada';
+        unset(
+            $payload['kadar_hb'],
+            $payload['kadar_mchc'],
+            $payload['kadar_mcv'],
+            $payload['kadar_mch']
+        );
+
+        $result = validateQuestionnaireInput($payload);
+
+        self::assertTrue($result['valid']);
+        self::assertNull($result['values']['kadar_hb']);
+        self::assertNull($result['values']['kadar_mchc']);
+        self::assertNull($result['values']['kadar_mcv']);
+        self::assertNull($result['values']['kadar_mch']);
+    }
+
     public function testBmiRejectsImpossibleMeasurements(): void
     {
         self::assertTrue(validateBmiInput('50', '160')['valid']);
@@ -53,6 +94,9 @@ function validQuestionnairePayload(): array
 {
     $payload = [
         'mens_sudah' => 'ya', 'mens_teratur' => 'ya', 'pendidikan' => 'Kelas X',
+        'lab_status' => 'tersedia',
+        'kadar_hb' => '12.5', 'kadar_mchc' => '33.5',
+        'kadar_mcv' => '85', 'kadar_mch' => '29',
         'makan_1' => 'tidak', 'makan_2' => 'tidak', 'makan_3' => 'tidak',
         'makan_4' => 'tidak', 'makan_5' => 'tidak', 'makan_6' => 'tidak',
     ];

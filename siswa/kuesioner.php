@@ -161,21 +161,86 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </div>
             </div>
             
-            <div class="card mb-4 shadow-sm border-0">
-                <div class="card-header bg-white fw-bold border-bottom-0 pt-3">
-                    <div class="form-check form-switch mb-0 d-flex align-items-center gap-2">
-                        <input class="form-check-input fs-5 mt-0" type="checkbox" id="toggleLab">
-                        <label class="form-check-label text-dark" for="toggleLab">Saya memiliki Hasil Lab Darah (Opsional)</label>
+            <fieldset class="card mb-4 shadow-sm border-0">
+                <legend class="card-header bg-white fw-bold border-bottom-0 pt-3 fs-6">
+                    Hasil Lab Darah <span class="text-danger" aria-hidden="true">*</span>
+                </legend>
+                <div class="card-body pt-2">
+                    <p class="small text-muted mb-3">
+                        Pilih salah satu kondisi berikut. Pilihan ini wajib agar data kuesioner dapat
+                        ditafsirkan dengan benar.
+                    </p>
+                    <div class="row g-2" role="radiogroup" aria-label="Ketersediaan hasil lab darah">
+                        <div class="col-md-6">
+                            <input class="btn-check" type="radio" name="lab_status" id="labAvailable"
+                                   value="tersedia" required autocomplete="off"
+                                   aria-controls="labSection" aria-expanded="false">
+                            <label class="btn btn-outline-primary w-100 text-start p-3" for="labAvailable">
+                                <span class="d-block fw-bold">Hasil lab tersedia</span>
+                                <span class="small">Saya akan mengisi semua nilai sesuai lembar hasil lab.</span>
+                            </label>
+                        </div>
+                        <div class="col-md-6">
+                            <input class="btn-check" type="radio" name="lab_status" id="labUnavailable"
+                                   value="belum_ada" required autocomplete="off"
+                                   aria-controls="labSection" aria-expanded="false">
+                            <label class="btn btn-outline-secondary w-100 text-start p-3" for="labUnavailable">
+                                <span class="d-block fw-bold">Belum memiliki hasil lab</span>
+                                <span class="small">Kuesioner tetap dapat dilanjutkan tanpa memasukkan angka.</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-2 d-none" id="labSection" aria-live="polite">
+                        <div class="col-12">
+                            <div class="alert alert-info border-0 py-2 small mb-0">
+                                <i data-lucide="info" style="width: 16px;" class="me-1" aria-hidden="true"></i>
+                                Masukkan angka persis seperti pada lembar hasil lab, bukan perkiraan.
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" for="labHb">Hb <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="number" step="0.1" min="0" max="30" inputmode="decimal"
+                                       class="form-control" name="kadar_hb" id="labHb"
+                                       aria-describedby="lab-hb-help" disabled>
+                                <span class="input-group-text">g/dL</span>
+                            </div>
+                            <div class="form-text" id="lab-hb-help">Hemoglobin: protein pembawa oksigen di dalam darah.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" for="labMchc">MCHC <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="number" step="0.1" min="0" max="100" inputmode="decimal"
+                                       class="form-control" name="kadar_mchc" id="labMchc"
+                                       aria-describedby="lab-mchc-help" disabled>
+                                <span class="input-group-text">g/dL</span>
+                            </div>
+                            <div class="form-text" id="lab-mchc-help">Konsentrasi rata-rata hemoglobin di dalam sel darah merah.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" for="labMcv">MCV <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="number" step="0.1" min="0" max="200" inputmode="decimal"
+                                       class="form-control" name="kadar_mcv" id="labMcv"
+                                       aria-describedby="lab-mcv-help" disabled>
+                                <span class="input-group-text">fL</span>
+                            </div>
+                            <div class="form-text" id="lab-mcv-help">Ukuran rata-rata sel darah merah.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" for="labMch">MCH <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="number" step="0.1" min="0" max="100" inputmode="decimal"
+                                       class="form-control" name="kadar_mch" id="labMch"
+                                       aria-describedby="lab-mch-help" disabled>
+                                <span class="input-group-text">pg</span>
+                            </div>
+                            <div class="form-text" id="lab-mch-help">Jumlah rata-rata hemoglobin pada setiap sel darah merah.</div>
+                        </div>
                     </div>
                 </div>
-                <div class="card-body row g-3 d-none" id="labSection">
-                    <div class="alert alert-info border-0 py-2 small mb-0"><i data-lucide="info" style="width: 16px;" class="me-1"></i> Data lab meningkatkan akurasi deteksi menggunakan AI.</div>
-                    <div class="col-md-3 col-6"><label class="form-label text-muted small fw-semibold">Hb (gr%)</label><input type="number" step="0.1" class="form-control" name="kadar_hb"></div>
-                    <div class="col-md-3 col-6"><label class="form-label text-muted small fw-semibold">MCHC</label><input type="number" step="0.1" class="form-control" name="kadar_mchc"></div>
-                    <div class="col-md-3 col-6"><label class="form-label text-muted small fw-semibold">MCV</label><input type="number" step="0.1" class="form-control" name="kadar_mcv"></div>
-                    <div class="col-md-3 col-6"><label class="form-label text-muted small fw-semibold">MCH</label><input type="number" step="0.1" class="form-control" name="kadar_mch"></div>
-                </div>
-            </div>
+            </fieldset>
             
             <div class="d-flex justify-content-end">
                 <button type="button" class="btn btn-primary rounded-pill px-4 btn-next shadow-sm">Selanjutnya <i data-lucide="arrow-right" style="width: 18px;"></i></button>
@@ -341,15 +406,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <script>
     lucide.createIcons();
     
-    // Toggle Lab Section
-    document.getElementById('toggleLab').addEventListener('change', function() {
+    function setLabRequirement(status) {
         const labSection = document.getElementById('labSection');
-        if (this.checked) {
-            labSection.classList.remove('d-none');
-            labSection.classList.add('animate-fade-in-up');
-        } else {
-            labSection.classList.add('d-none');
-        }
+        const labInputs = labSection.querySelectorAll('input');
+        const hasResult = status === 'tersedia';
+
+        labSection.classList.toggle('d-none', !hasResult);
+        labSection.classList.toggle('animate-fade-in-up', hasResult);
+        labInputs.forEach(input => {
+            input.disabled = !hasResult;
+            input.required = hasResult;
+            if (!hasResult) input.value = '';
+        });
+        document.querySelectorAll('input[name="lab_status"]').forEach(input => {
+            input.setAttribute('aria-expanded', String(hasResult && input.value === 'tersedia'));
+        });
+    }
+
+    document.querySelectorAll('input[name="lab_status"]').forEach(input => {
+        input.addEventListener('change', () => setLabRequirement(input.value));
     });
 
     // Multi-step Wizard Logic

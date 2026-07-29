@@ -51,7 +51,9 @@ final class QuestionnaireServiceIntegrationTest extends TestCase
     {
         $input = [
             'inisial' => 'AB', 'pendidikan' => 'Kelas X', 'mens_sudah' => 'ya', 'mens_teratur' => 'ya',
-            'mens_usia_th' => '12', 'mens_lama' => '5', 'kadar_hb' => '11',
+            'mens_usia_th' => '12', 'mens_lama' => '5',
+            'lab_status' => 'tersedia', 'kadar_hb' => '11',
+            'kadar_mchc' => '33', 'kadar_mcv' => '82', 'kadar_mch' => '28',
         ];
         for ($i = 1; $i <= 10; $i++) {
             $input['gejala_' . $i] = '0';
