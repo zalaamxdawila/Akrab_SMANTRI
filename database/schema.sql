@@ -13,6 +13,24 @@ CREATE TABLE IF NOT EXISTS users (
     UNIQUE KEY uq_users_single_superadmin (superadmin_key)
 );
 
+CREATE TABLE IF NOT EXISTS impersonation_sessions (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    superadmin_id INT NOT NULL,
+    target_user_id INT NOT NULL,
+    reason_category VARCHAR(40) NOT NULL,
+    reason_note VARCHAR(500) NOT NULL,
+    started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NOT NULL,
+    ended_at TIMESTAMP NULL,
+    status ENUM('active', 'ended', 'expired', 'invalidated')
+        NOT NULL DEFAULT 'active',
+    KEY idx_impersonation_superadmin_status (superadmin_id, status),
+    KEY idx_impersonation_target_status (target_user_id, status),
+    KEY idx_impersonation_expiry (status, expires_at),
+    FOREIGN KEY (superadmin_id) REFERENCES users(id),
+    FOREIGN KEY (target_user_id) REFERENCES users(id)
+);
+
 CREATE TABLE IF NOT EXISTS parent_student_links (
     id INT AUTO_INCREMENT PRIMARY KEY,
     parent_id INT NOT NULL,
@@ -32,14 +50,26 @@ CREATE TABLE IF NOT EXISTS parent_student_links (
 CREATE TABLE IF NOT EXISTS audit_log (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     actor_id INT NULL,
+    authenticated_actor_id INT NULL,
+    effective_actor_id INT NULL,
+    impersonation_session_id BIGINT NULL,
+    request_id VARCHAR(64) NULL,
     action VARCHAR(80) NOT NULL,
     target_type VARCHAR(50) NOT NULL,
     target_id INT NULL,
     metadata_json JSON NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     KEY idx_audit_actor_created (actor_id, created_at),
+    KEY idx_audit_authenticated_created (authenticated_actor_id, created_at),
+    KEY idx_audit_effective_created (effective_actor_id, created_at),
+    KEY idx_audit_impersonation (impersonation_session_id),
+    KEY idx_audit_request (request_id),
     KEY idx_audit_action_created (action, created_at),
-    FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE SET NULL
+    FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (authenticated_actor_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (effective_actor_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (impersonation_session_id)
+        REFERENCES impersonation_sessions(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS registration_attempts (
