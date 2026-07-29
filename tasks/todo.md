@@ -437,7 +437,7 @@ Aturan eksekusi:
 
 ### Sprint 29 — Student health master data
 
-- [ ] **SA29.1 — Tambahkan correction/archive metadata kesehatan**
+- [!] **SA29.1 — Tambahkan correction/archive metadata kesehatan**
   - Acceptance: additive metadata untuk kuesioner, hasil existing, Hb, TTD,
     dan menstruasi; data/constraint lama tetap utuh.
   - Verify: migration clone, idempotent rerun, schema assertions.
@@ -446,7 +446,7 @@ Aturan eksekusi:
     `database/schema.sql`,
     `tests/Integration/HealthGovernanceMigrationTest.php`.
 
-- [ ] **SA29.2 — Buat repository health master read**
+- [!] **SA29.2 — Buat repository health master read**
   - Acceptance: search/filter/pagination; deterministic ordering; archived
     excluded by default; no N+1.
   - Verify: repository integration tests dan EXPLAIN.
@@ -456,7 +456,7 @@ Aturan eksekusi:
     `tests/Integration/SuperadminHealthReadTest.php`,
     `deployment/explain_queries.sql`.
 
-- [ ] **SA29.3 — Koreksi/archive kuesioner dan hasil existing**
+- [!] **SA29.3 — Koreksi/archive kuesioner dan hasil existing**
   - Acceptance: domain validation reused; before/after values tidak masuk audit
     mentah; clinical model tidak dijalankan.
   - Verify: validation, transaction rollback, audit redaction, clinical gate.
@@ -465,7 +465,7 @@ Aturan eksekusi:
     `superadmin/health_questionnaire_action.php`,
     `tests/Integration/SuperadminQuestionnaireGovernanceTest.php`.
 
-- [ ] **SA29.4 — Koreksi/archive Hb dan konsumsi TTD**
+- [!] **SA29.4 — Koreksi/archive Hb dan konsumsi TTD**
   - Acceptance: range/category/unique-date integrity dijaga; reason/audit wajib;
     Login As master actions ditolak.
   - Verify: boundary, duplicate date, category, rollback, audit tests.
@@ -474,7 +474,7 @@ Aturan eksekusi:
     `superadmin/health_hb_ttd_action.php`,
     `tests/Integration/SuperadminHbTtdGovernanceTest.php`.
 
-- [ ] **SA29.5 — Koreksi/archive menstruasi dan agregat**
+- [!] **SA29.5 — Koreksi/archive menstruasi dan agregat**
   - Acceptance: one-active-cycle invariant; archived rows tidak dihitung;
     historical rows tetap tersedia.
   - Verify: state machine, aggregate consistency, transaction/audit tests.
@@ -484,7 +484,7 @@ Aturan eksekusi:
     `app/Repositories/DashboardRepository.php`,
     `tests/Integration/SuperadminMenstruationGovernanceTest.php`.
 
-- [ ] **SA29.6 — Tutup CP-17**
+- [!] **SA29.6 — Tutup CP-17**
   - Acceptance: health UAT lulus dan clinical feature tetap OFF.
   - Verify: health/security/full regression, browser UAT, audit redaction.
   - Depends: SA29.1–SA29.5.
