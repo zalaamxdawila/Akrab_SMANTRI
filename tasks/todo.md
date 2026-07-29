@@ -282,7 +282,7 @@ Aturan eksekusi:
 
 ### Sprint 26 — Audit dua identitas dan security kernel Login As
 
-- [ ] **SA26.1 — Tambahkan schema impersonation session dan audit context**
+- [!] **SA26.1 — Tambahkan schema impersonation session dan audit context**
   - Acceptance: session menyimpan superadmin/target/reason/expiry/status; audit
     membedakan authenticated/effective actor dan request ID.
   - Verify: fresh/existing/idempotent migration plus FK/index assertions.
@@ -291,7 +291,7 @@ Aturan eksekusi:
     `database/schema.sql`, `tests/Unit/SchemaSnapshotTest.php`,
     `tests/Integration/ImpersonationMigrationTest.php`.
 
-- [ ] **SA26.2 — Modelkan authenticated dan effective actor**
+- [x] **SA26.2 — Modelkan authenticated dan effective actor**
   - Acceptance: server menghasilkan immutable actor context; client tidak dapat
     memasok actor/role; normal session tetap kompatibel.
   - Verify: forged-session, unknown-role, inactive-account unit tests.
@@ -300,7 +300,7 @@ Aturan eksekusi:
     `app/Security/ActorContextResolver.php`, `config/authorization.php`,
     `tests/Unit/ActorContextTest.php`.
 
-- [ ] **SA26.3 — Implementasikan lifecycle start/end/expire**
+- [x] **SA26.3 — Implementasikan lifecycle start/end/expire**
   - Acceptance: step-up password; reason tervalidasi; expiry 15 menit; session
     ID diregenerasi; nested impersonation ditolak.
   - Verify: start/end/expire/session-fixation integration tests.
@@ -309,7 +309,7 @@ Aturan eksekusi:
     `config/validation.php`,
     `tests/Integration/ImpersonationLifecycleTest.php`.
 
-- [ ] **SA26.4 — Terapkan deny policy aksi kritis**
+- [x] **SA26.4 — Terapkan deny policy aksi kritis**
   - Acceptance: credential, role/status, archive/delete, export massal,
     config, clinical, dan nested Login As selalu diblokir server-side.
   - Verify: allow/deny matrix and forged-route tests.
@@ -318,7 +318,7 @@ Aturan eksekusi:
     `config/authorization.php`, `helpers.php`,
     `tests/Unit/ImpersonationPolicyTest.php`.
 
-- [ ] **SA26.5 — Audit setiap mutasi selama Login As**
+- [x] **SA26.5 — Audit setiap mutasi selama Login As**
   - Acceptance: POST outcome mencatat dua actor, session, reason category,
     route, request ID; metadata tidak memuat PII/credential.
   - Verify: success/failure/403 audit integration and redaction tests.
@@ -328,7 +328,7 @@ Aturan eksekusi:
     `tests/Unit/ObservabilityTest.php`,
     `tests/Integration/ImpersonationAuditTest.php`.
 
-- [ ] **SA26.6 — Tutup CP-14**
+- [!] **SA26.6 — Tutup CP-14**
   - Acceptance: kernel aman tanpa UI publik dan flag tetap OFF.
   - Verify: auth/security suite, lint, migration rehearsal, review.
   - Depends: SA26.1–SA26.5.
