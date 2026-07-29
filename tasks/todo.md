@@ -618,7 +618,7 @@ Aturan eksekusi:
 
 ### Sprint 32 — Reports, hardening, UAT, and release
 
-- [ ] **SA32.1 — Buat reports dan audited export**
+- [x] **SA32.1 — Buat reports dan audited export**
   - Acceptance: aggregate terpaginate/filterable; mass export hanya session
     superadmin asli; confirmation/reason/audit; no secret/archived default.
   - Verify: authorization, Login As deny, formula injection, performance tests.
@@ -627,7 +627,7 @@ Aturan eksekusi:
     `superadmin/reports.php`, `superadmin/export.php`,
     `tests/Integration/SuperadminReportExportTest.php`.
 
-- [ ] **SA32.2 — Jalankan full hardening dan performance gate**
+- [!] **SA32.2 — Jalankan full hardening dan performance gate**
   - Acceptance: tidak ada critical/high reachable finding; auth/CSRF/IDOR/XSS/
     session/audit suites green; P95/EXPLAIN tercatat.
   - Verify: composer quality pada PHP lengkap, dependency audit, Python tests,
@@ -637,7 +637,7 @@ Aturan eksekusi:
     `docs/operations/release-checklist.md`,
     `tasks/checkpoints/CP-20.md`.
 
-- [ ] **SA32.3 — Rehearse migration, backup, and rollback**
+- [!] **SA32.3 — Rehearse migration, backup, and rollback**
   - Acceptance: fresh/existing/idempotent migration; backup readable; rollback
     flag OFF/package lama diuji; checksum artifact dicatat.
   - Verify: clone rehearsal, backup verification, rollback dry run.
@@ -646,7 +646,7 @@ Aturan eksekusi:
     `docs/operations/backup-restore.md`,
     `docs/releases/superadmin-release.md`.
 
-- [ ] **SA32.4 — Human UAT superadmin dan Login As**
+- [!] **SA32.4 — Human UAT superadmin dan Login As**
   - Acceptance: dashboard master dan tiga-role Login As ditandatangani; defect
     critical/high nol; evidence tanpa PII/credential.
   - Verify: approved UAT matrix, screenshots sanitized, audit request tracing.
