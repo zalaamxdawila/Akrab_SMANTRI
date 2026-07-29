@@ -35,3 +35,22 @@ JOIN users p ON p.id = psl.parent_id AND p.role = 'orangtua'
 WHERE psl.status = 'pending'
 ORDER BY psl.requested_at ASC, psl.id ASC
 LIMIT 25 OFFSET 0;
+
+-- Sprint 27 superadmin read-only list evidence.
+EXPLAIN SELECT id, nama, role, status, username, kelas, created_at
+FROM users
+WHERE role = 'siswa' AND status = 'active'
+ORDER BY created_at DESC, id DESC
+LIMIT 25 OFFSET 0;
+
+EXPLAIN SELECT
+    a.id,
+    COALESCE(a.authenticated_actor_id, a.actor_id),
+    COALESCE(a.effective_actor_id, a.actor_id),
+    a.action,
+    a.request_id,
+    a.created_at
+FROM audit_log a
+WHERE COALESCE(a.authenticated_actor_id, a.actor_id) = 1
+ORDER BY a.created_at DESC, a.id DESC
+LIMIT 25 OFFSET 0;

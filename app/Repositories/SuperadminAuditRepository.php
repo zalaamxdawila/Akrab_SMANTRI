@@ -15,14 +15,14 @@ final class SuperadminAuditRepository
         $this->integerFilter(
             $filters,
             'authenticated_actor_id',
-            'a.authenticated_actor_id',
+            'COALESCE(a.authenticated_actor_id, a.actor_id)',
             $conditions,
             $parameters
         );
         $this->integerFilter(
             $filters,
             'effective_actor_id',
-            'a.effective_actor_id',
+            'COALESCE(a.effective_actor_id, a.actor_id)',
             $conditions,
             $parameters
         );
@@ -92,7 +92,11 @@ final class SuperadminAuditRepository
         $jsonRoute = $this->jsonValueExpression('a.metadata_json', 'route');
 
         $statement = $this->pdo->prepare(
-            "SELECT a.id, a.authenticated_actor_id, a.effective_actor_id,
+            "SELECT a.id,
+                    COALESCE(a.authenticated_actor_id, a.actor_id)
+                        AS authenticated_actor_id,
+                    COALESCE(a.effective_actor_id, a.actor_id)
+                        AS effective_actor_id,
                     a.impersonation_session_id, a.request_id, a.action,
                     a.target_type, a.target_id, a.created_at,
                     authenticated.nama AS authenticated_name,
@@ -101,9 +105,11 @@ final class SuperadminAuditRepository
                     {$jsonRoute} AS route
              FROM audit_log a
              LEFT JOIN users authenticated
-                ON authenticated.id = a.authenticated_actor_id
+                ON authenticated.id =
+                    COALESCE(a.authenticated_actor_id, a.actor_id)
              LEFT JOIN users effective
-                ON effective.id = a.effective_actor_id"
+                ON effective.id =
+                    COALESCE(a.effective_actor_id, a.actor_id)"
             . $where
             . ' ORDER BY a.created_at DESC, a.id DESC LIMIT ? OFFSET ?'
         );
@@ -147,7 +153,7 @@ final class SuperadminAuditRepository
         if ($value === false) {
             throw new InvalidArgumentException('Actor filter is invalid.');
         }
-        $conditions[] = $column . ' = ?';
+        $conditions[] = $column . ' = (? + 0)';
         $parameters[] = (int) $value;
     }
 

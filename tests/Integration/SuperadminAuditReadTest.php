@@ -77,5 +77,19 @@ final class SuperadminAuditReadTest extends TestCase
         self::assertSame('failed', $result['items'][0]['outcome']);
         self::assertSame('/siswa/konsultasi.php', $result['items'][0]['route']);
         self::assertArrayNotHasKey('metadata_json', $result['items'][0]);
+
+        $insert->execute([
+            3, 2, null, null, null, 'req-legacy', 'auth.login_succeeded',
+            'session', null,
+            '{"outcome":"success","route":"/login.php"}',
+            '2026-07-29 12:00:00',
+        ]);
+        $legacy = (new SuperadminAuditRepository($pdo))->paginate(
+            ['request_id' => 'req-legacy'],
+            1,
+            25
+        );
+        self::assertSame('Siti', $legacy['items'][0]['authenticated_name']);
+        self::assertSame('Siti', $legacy['items'][0]['effective_name']);
     }
 }
