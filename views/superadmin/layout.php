@@ -9,6 +9,7 @@ function renderSuperadminHeader(string $title, string $active): void
         'users' => ['Pengguna', 'users.php'],
         'links' => ['Relasi Wali', 'parent_links.php'],
         'health' => ['Data Kesehatan', 'health_records.php'],
+        'operations' => ['Operasional', 'consultations.php'],
         'audit' => ['Audit', 'audit.php'],
     ];
     ?>

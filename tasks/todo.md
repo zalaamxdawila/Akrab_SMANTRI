@@ -493,7 +493,7 @@ Aturan eksekusi:
 
 ### Sprint 30 — Consultation, education, and notification management
 
-- [ ] **SA30.1 — Tambahkan governance metadata operasional**
+- [!] **SA30.1 — Tambahkan governance metadata operasional**
   - Acceptance: consultation/reply/article/advice/notification records dapat
     dikoreksi/diarsip tanpa hard delete.
   - Verify: migration existing/fresh/idempotent plus FK checks.
@@ -502,7 +502,7 @@ Aturan eksekusi:
     `database/schema.sql`,
     `tests/Integration/OperationalGovernanceMigrationTest.php`.
 
-- [ ] **SA30.2 — Kelola konsultasi dan balasan**
+- [!] **SA30.2 — Kelola konsultasi dan balasan**
   - Acceptance: state consistency; ownership history tidak hilang; archive dan
     correction reason/audit wajib.
   - Verify: transition, IDOR, transaction rollback, audit tests.
@@ -512,7 +512,7 @@ Aturan eksekusi:
     `superadmin/consultation_action.php`,
     `tests/Integration/SuperadminConsultationTest.php`.
 
-- [ ] **SA30.3 — Kelola artikel dan saran edukasi**
+- [!] **SA30.3 — Kelola artikel dan saran edukasi**
   - Acceptance: lintas UKS tetapi actor asli tercatat; content tervalidasi dan
     di-encode; archive tanpa delete.
   - Verify: XSS, ownership, validation, CSRF, audit tests.
@@ -521,7 +521,7 @@ Aturan eksekusi:
     `superadmin/education.php`, `superadmin/education_action.php`,
     `tests/Integration/SuperadminEducationTest.php`.
 
-- [ ] **SA30.4 — Kelola jadwal dan log notifikasi**
+- [!] **SA30.4 — Kelola jadwal dan log notifikasi**
   - Acceptance: schedule correction mempertahankan enum/time rules; delivery
     log hanya field allowlisted; archive/audit tersedia.
   - Verify: validation, IDOR, transaction, audit tests.
@@ -530,7 +530,7 @@ Aturan eksekusi:
     `superadmin/notifications.php`, `superadmin/notification_action.php`,
     `tests/Integration/SuperadminNotificationTest.php`.
 
-- [ ] **SA30.5 — Tutup CP-18**
+- [!] **SA30.5 — Tutup CP-18**
   - Acceptance: seluruh list operasional terpaginate dan browser-clean.
   - Verify: unit/integration/security, EXPLAIN, browser UAT, audit review.
   - Depends: SA30.1–SA30.4.
