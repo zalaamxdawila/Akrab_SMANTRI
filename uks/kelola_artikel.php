@@ -52,9 +52,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete_id'])) {
     }
 }
 
-// Fetch all articles
-$stmt = $pdo->prepare("SELECT * FROM artikel_edukasi WHERE uks_id = ? ORDER BY tanggal_publikasi DESC");
-$stmt->execute([$uks_id]);
+// Fetch a bounded page of articles owned by the current UKS account.
+$page = max(1, filter_var($_GET['page'] ?? 1, FILTER_VALIDATE_INT) ?: 1);
+$perPage = 15;
+$countStmt = $pdo->prepare('SELECT COUNT(*) FROM artikel_edukasi WHERE uks_id = ?');
+$countStmt->execute([$uks_id]);
+$totalArticles = (int) $countStmt->fetchColumn();
+$totalPages = max(1, (int) ceil($totalArticles / $perPage));
+$page = min($page, $totalPages);
+$offset = ($page - 1) * $perPage;
+$stmt = $pdo->prepare("SELECT * FROM artikel_edukasi WHERE uks_id = ? ORDER BY tanggal_publikasi DESC, id DESC LIMIT ? OFFSET ?");
+$stmt->bindValue(1, $uks_id, PDO::PARAM_INT);
+$stmt->bindValue(2, $perPage, PDO::PARAM_INT);
+$stmt->bindValue(3, $offset, PDO::PARAM_INT);
+$stmt->execute();
 $articles = $stmt->fetchAll();
 
 ?>
@@ -139,6 +150,15 @@ $articles = $stmt->fetchAll();
             </table>
         </div>
     </div>
+    <?php if ($totalPages > 1): ?>
+        <nav aria-label="Halaman artikel" class="mt-3">
+            <ul class="pagination justify-content-center">
+                <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>"><a class="page-link" href="?page=<?= max(1, $page - 1) ?>">Sebelumnya</a></li>
+                <li class="page-item disabled"><span class="page-link">Halaman <?= $page ?> dari <?= $totalPages ?></span></li>
+                <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>"><a class="page-link" href="?page=<?= min($totalPages, $page + 1) ?>">Berikutnya</a></li>
+            </ul>
+        </nav>
+    <?php endif; ?>
 </div>
 
 <!-- Modal Add -->

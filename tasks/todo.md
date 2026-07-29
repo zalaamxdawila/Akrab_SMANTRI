@@ -140,6 +140,7 @@ Status: `[ ]` belum, `[-]` berjalan, `[x]` selesai, `[!]` diblokir.
 
 - [x] Pagination konsultasi UKS dan eliminasi N+1 balasan
 - [x] Pagination data siswa UKS dengan filter tetap terjaga
+- [x] Pagination artikel UKS dengan ownership scope
 - [ ] Pagination semua list
 - [ ] `EXPLAIN` query kritis
 - [ ] Tambahkan indeks berbasis bukti
