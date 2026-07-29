@@ -48,6 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <link href="../assets/css/style.css?v=20260729" rel="stylesheet">
 </head>
 <body class="bg-light">
+<?php renderImpersonationBanner($pdo, $_SESSION); ?>
 
 <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm">
     <div class="container">

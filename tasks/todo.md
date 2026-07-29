@@ -539,7 +539,7 @@ Aturan eksekusi:
 
 ### Sprint 31 — Login As UX and route coverage
 
-- [ ] **SA31.1 — Buat target picker dan step-up form**
+- [!] **SA31.1 — Buat target picker dan step-up form**
   - Acceptance: target terpaginate; hanya active application role; password
     tidak dilog; reason tervalidasi; CSRF/PRG.
   - Verify: re-auth success/failure/rate limit, target/IDOR, audit tests.
@@ -548,7 +548,7 @@ Aturan eksekusi:
     `app/Security/ImpersonationService.php`,
     `tests/Integration/LoginAsStartTest.php`.
 
-- [ ] **SA31.2 — Buat banner dan endpoint kembali**
+- [!] **SA31.2 — Buat banner dan endpoint kembali**
   - Acceptance: banner server-rendered, countdown, target, POST return button;
     expiry dan session regeneration terjaga.
   - Verify: rendering, CSRF, end/expiry, accessibility tests.
@@ -557,7 +557,7 @@ Aturan eksekusi:
     `assets/css/impersonation.css`, `end_impersonation.php`,
     `tests/Unit/ImpersonationBannerTest.php`.
 
-- [ ] **SA31.3 — Integrasikan banner ke halaman siswa inti**
+- [!] **SA31.3 — Integrasikan banner ke halaman siswa inti**
   - Acceptance: dashboard, ID card, profil, kuesioner, konsultasi selalu
     menampilkan banner saat Login As.
   - Verify: route-coverage assertion dan browser navigation.
@@ -565,7 +565,7 @@ Aturan eksekusi:
   - Files: `siswa/dashboard.php`, `siswa/id_card.php`, `siswa/profil.php`,
     `siswa/kuesioner.php`, `siswa/konsultasi.php`.
 
-- [ ] **SA31.4 — Integrasikan banner ke halaman siswa pendukung**
+- [!] **SA31.4 — Integrasikan banner ke halaman siswa pendukung**
   - Acceptance: edukasi, artikel, hasil, gizi, sertifikat selalu ber-banner.
   - Verify: route-coverage assertion dan direct URL checks.
   - Depends: SA31.2.
@@ -573,7 +573,7 @@ Aturan eksekusi:
     `siswa/hasil_deteksi.php`, `siswa/kalkulator_gizi.php`,
     `siswa/cetak_sertifikat.php`.
 
-- [ ] **SA31.5 — Tutup route siswa tersisa dan blocked actions**
+- [!] **SA31.5 — Tutup route siswa tersisa dan blocked actions**
   - Acceptance: calendar export/header dan profil credential mutation mengikuti
     deny policy; tidak ada route siswa tanpa actor context.
   - Verify: export/profile blocked tests dan route inventory.
@@ -581,7 +581,7 @@ Aturan eksekusi:
   - Files: `siswa/export_calendar.php`, `app/Security/ImpersonationPolicy.php`,
     `tests/Unit/StudentImpersonationRouteCoverageTest.php`.
 
-- [ ] **SA31.6 — Integrasikan banner ke halaman UKS batch A**
+- [!] **SA31.6 — Integrasikan banner ke halaman UKS batch A**
   - Acceptance: dashboard, data/detail siswa, scan QR, laporan ber-banner.
   - Verify: route coverage dan direct URL browser checks.
   - Depends: SA31.2.
@@ -589,7 +589,7 @@ Aturan eksekusi:
     `uks/detail_siswa.php`, `uks/scan_qr.php`,
     `uks/cetak_laporan_eksekutif.php`.
 
-- [ ] **SA31.7 — Integrasikan banner ke halaman UKS batch B**
+- [!] **SA31.7 — Integrasikan banner ke halaman UKS batch B**
   - Acceptance: konsultasi, artikel, tautan, edukasi, rujukan ber-banner.
   - Verify: route coverage; allowed mutation/blocked master action tests.
   - Depends: SA31.2.
@@ -597,7 +597,7 @@ Aturan eksekusi:
     `uks/kelola_tautan.php`, `uks/edukasi.php`,
     `uks/cetak_rujukan.php`.
 
-- [ ] **SA31.8 — Tutup route UKS tersisa dan orang tua**
+- [!] **SA31.8 — Tutup route UKS tersisa dan orang tua**
   - Acceptance: import/export/profil mengikuti deny policy; parent dashboard
     ber-banner; seluruh protected routes terinventaris.
   - Verify: import/export/profile block tests and parent journey.
@@ -606,7 +606,7 @@ Aturan eksekusi:
     `orangtua/dashboard.php`,
     `tests/Unit/ImpersonationRouteCoverageTest.php`.
 
-- [ ] **SA31.9 — Tutup CP-19**
+- [!] **SA31.9 — Tutup CP-19**
   - Acceptance: Login As tiga role lulus allowed/blocked mutation matrix,
     expiry, back/refresh/direct URL, banner, return, dan audit trace.
   - Verify: Selenium/Chrome isolated profile, accessibility tree,

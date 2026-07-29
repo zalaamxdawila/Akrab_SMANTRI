@@ -167,6 +167,7 @@ $tanggal_cetak = date('d F Y');
     </style>
 </head>
 <body onload="window.print()">
+<?php renderImpersonationBanner($pdo, $_SESSION); ?>
 
 <div class="certificate">
     <div class="header">

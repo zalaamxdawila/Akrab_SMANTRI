@@ -44,6 +44,7 @@ $tanggal_sekarang = date('d F Y');
     </style>
 </head>
 <body>
+<?php renderImpersonationBanner($pdo, $_SESSION); ?>
 
 <div class="container py-4">
     <div class="text-end mb-4 no-print">

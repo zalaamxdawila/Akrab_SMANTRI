@@ -90,6 +90,7 @@ $pending = $pendingStmt->fetchAll();
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
+<?php renderImpersonationBanner($pdo, $_SESSION); ?>
 <main class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3 class="mb-0">Verifikasi Tautan Orang Tua–Siswa</h3>

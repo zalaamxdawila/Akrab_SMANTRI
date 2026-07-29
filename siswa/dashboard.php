@@ -124,6 +124,7 @@ if (empty($news)) {
     <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
 </head>
 <body>
+<?php renderImpersonationBanner($pdo, $_SESSION); ?>
 
 <nav class="navbar navbar-expand-lg navbar-light sticky-top">
     <div class="container">

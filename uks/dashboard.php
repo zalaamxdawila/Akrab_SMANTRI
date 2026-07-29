@@ -37,6 +37,7 @@ $data_tidak_patuh = $compliance['non_compliant'];
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 </head>
 <body>
+<?php renderImpersonationBanner($pdo, $_SESSION); ?>
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
     <div class="container">

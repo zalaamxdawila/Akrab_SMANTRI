@@ -29,6 +29,7 @@ if (!$artikel) {
     <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
 </head>
 <body class="bg-light">
+<?php renderImpersonationBanner($pdo, $_SESSION); ?>
 
 <nav class="navbar navbar-expand-lg navbar-light sticky-top bg-white shadow-sm">
     <div class="container">
