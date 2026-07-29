@@ -90,7 +90,10 @@ function renderQuestionnaireHistoryChartScript(string $canvasId, array $chart): 
     document.addEventListener('DOMContentLoaded', function () {
         const canvas = document.getElementById(<?= json_encode($canvasId, $jsonFlags) ?>);
         if (!canvas || typeof Chart === 'undefined') return;
-        const chartTextColor = () => getComputedStyle(document.body).color;
+        const chartTextColor = () =>
+            document.documentElement.getAttribute('data-bs-theme') === 'dark'
+                ? '#cbd5e1'
+                : '#334155';
         const chart = new Chart(canvas, {
             type: 'line',
             data: {
@@ -183,7 +186,10 @@ function renderQuestionnaireAverageChartScript(string $canvasId, array $insights
     document.addEventListener('DOMContentLoaded', function () {
         const canvas = document.getElementById(<?= json_encode($canvasId, $jsonFlags) ?>);
         if (!canvas || typeof Chart === 'undefined') return;
-        const chartTextColor = () => getComputedStyle(document.body).color;
+        const chartTextColor = () =>
+            document.documentElement.getAttribute('data-bs-theme') === 'dark'
+                ? '#cbd5e1'
+                : '#334155';
         const chart = new Chart(canvas, {
             type: 'bar',
             data: {

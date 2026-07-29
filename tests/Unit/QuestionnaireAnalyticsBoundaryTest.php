@@ -32,6 +32,10 @@ final class QuestionnaireAnalyticsBoundaryTest extends TestCase
             'renderQuestionnaireInsights',
             $sharedView
         );
+        self::assertStringContainsString(
+            "getAttribute('data-bs-theme')",
+            $sharedView
+        );
 
         foreach ([
             '/uks/hasil_kuesioner.php',
