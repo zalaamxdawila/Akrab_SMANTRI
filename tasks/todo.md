@@ -336,7 +336,7 @@ Aturan eksekusi:
 
 ### Sprint 27 — Read-only master dashboard
 
-- [ ] **SA27.1 — Buat overview repository**
+- [x] **SA27.1 — Buat overview repository**
   - Acceptance: metrik akun/relasi/konsultasi/artikel/TTD/health memakai query
     bounded tanpa N+1 dan mengabaikan archived row.
   - Verify: repository integration tests dan EXPLAIN fixture.
@@ -345,7 +345,7 @@ Aturan eksekusi:
     `tests/Integration/SuperadminOverviewRepositoryTest.php`,
     `deployment/explain_queries.sql`.
 
-- [ ] **SA27.2 — Buat shell dashboard superadmin**
+- [x] **SA27.2 — Buat shell dashboard superadmin**
   - Acceptance: route guarded; layout accessible/responsive; status clinical
     read-only; feature flag enforced.
   - Verify: authorization, HTML structure, keyboard, responsive smoke.
@@ -355,7 +355,7 @@ Aturan eksekusi:
     `assets/css/superadmin.css`,
     `tests/Unit/SuperadminRouteGuardTest.php`.
 
-- [ ] **SA27.3 — Buat daftar dan detail pengguna read-only**
+- [x] **SA27.3 — Buat daftar dan detail pengguna read-only**
   - Acceptance: search/filter/pagination; detail tidak memuat password hash;
     invalid ID aman; direct URL tetap guarded.
   - Verify: repository pagination, IDOR, output encoding tests.
@@ -364,7 +364,7 @@ Aturan eksekusi:
     `superadmin/users.php`, `superadmin/user_detail.php`,
     `tests/Integration/SuperadminUserReadTest.php`.
 
-- [ ] **SA27.4 — Buat audit viewer read-only**
+- [x] **SA27.4 — Buat audit viewer read-only**
   - Acceptance: filter waktu/actor/effective actor/action/outcome/request ID;
     pagination; audit append-only.
   - Verify: filter/query tests, authorization, XSS encoding.
@@ -373,7 +373,7 @@ Aturan eksekusi:
     `superadmin/audit.php`,
     `tests/Integration/SuperadminAuditReadTest.php`.
 
-- [ ] **SA27.5 — Tutup CP-15**
+- [!] **SA27.5 — Tutup CP-15**
   - Acceptance: read-only dashboard browser-clean dan role lama tetap tertutup.
   - Verify: Selenium/Chrome isolated profile, console/network, accessibility,
     lint, unit/integration, EXPLAIN.
