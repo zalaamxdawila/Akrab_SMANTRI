@@ -1,5 +1,8 @@
 Options -Indexes
 
+# Browsers request this path when a page does not declare its own icon.
+Redirect 302 /favicon.ico /assets/icons/icon.svg
+
 <IfModule mod_headers.c>
     Header always set X-Content-Type-Options "nosniff"
     Header always set X-Frame-Options "DENY"

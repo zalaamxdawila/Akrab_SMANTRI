@@ -88,11 +88,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <form method="POST" action="login.php" class="mt-4">
             <?= csrfInput() ?>
             <div class="form-floating mb-3">
-                <input type="text" class="form-control rounded-3 border-0 bg-light" id="floatingInput" name="username" placeholder="Username" required>
+                <input type="text" class="form-control rounded-3 border-0 bg-light" id="floatingInput" name="username" placeholder="Username" autocomplete="username" required>
                 <label for="floatingInput" class="text-muted"><i data-lucide="user" style="width: 16px;" class="me-1"></i> Username</label>
             </div>
             <div class="form-floating mb-4">
-                <input type="password" class="form-control rounded-3 border-0 bg-light" id="floatingPassword" name="password" placeholder="Password" required>
+                <input type="password" class="form-control rounded-3 border-0 bg-light" id="floatingPassword" name="password" placeholder="Password" autocomplete="current-password" required>
                 <label for="floatingPassword" class="text-muted"><i data-lucide="lock" style="width: 16px;" class="me-1"></i> Password</label>
             </div>
             <button class="w-100 btn btn-lg btn-primary rounded-pill fw-bold shadow-sm mb-4 d-flex justify-content-center align-items-center gap-2" type="submit">

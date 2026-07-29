@@ -57,4 +57,18 @@ final class FrontendSecurityTest extends TestCase
             }
         }
     }
+
+    public function testLoginAssetsAndFieldsAvoidBrowserWarnings(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $login = file_get_contents($root . '/login.php');
+        $htaccess = file_get_contents($root . '/.htaccess');
+
+        self::assertStringContainsString('autocomplete="username"', $login);
+        self::assertStringContainsString('autocomplete="current-password"', $login);
+        self::assertStringContainsString(
+            'Redirect 302 /favicon.ico /assets/icons/icon.svg',
+            $htaccess
+        );
+    }
 }
