@@ -10,9 +10,14 @@ return [
                ON k1.user_id = k2.user_id AND k1.tanggal = k2.tanggal
               AND k1.id > k2.id"
         );
-        $pdo->exec(
-            'ALTER TABLE konsumsi_ttd ADD UNIQUE KEY uq_konsumsi_ttd_user_date (user_id, tanggal)'
-        );
+        $ttdIndex = $pdo->query(
+            "SHOW INDEX FROM konsumsi_ttd WHERE Key_name = 'uq_konsumsi_ttd_user_date'"
+        )->fetch();
+        if (!$ttdIndex) {
+            $pdo->exec(
+                'ALTER TABLE konsumsi_ttd ADD UNIQUE KEY uq_konsumsi_ttd_user_date (user_id, tanggal)'
+            );
+        }
 
         $pdo->exec(
             "UPDATE riwayat_haid h1
@@ -23,11 +28,24 @@ return [
               AND h1.id < h2.id
              SET h1.tanggal_selesai = h1.tanggal_mulai"
         );
-        $pdo->exec(
-            "ALTER TABLE riwayat_haid
-             ADD COLUMN active_key INT GENERATED ALWAYS AS
-                (IF(tanggal_selesai IS NULL, 1, id)) STORED,
-             ADD UNIQUE KEY uq_haid_one_active (user_id, active_key)"
-        );
+        $activeKey = $pdo->query(
+            "SHOW COLUMNS FROM riwayat_haid LIKE 'active_key'"
+        )->fetch();
+        if (!$activeKey) {
+            $pdo->exec(
+                "ALTER TABLE riwayat_haid
+                 ADD COLUMN active_key INT GENERATED ALWAYS AS
+                    (IF(tanggal_selesai IS NULL, 1, id)) STORED"
+            );
+        }
+
+        $haidIndex = $pdo->query(
+            "SHOW INDEX FROM riwayat_haid WHERE Key_name = 'uq_haid_one_active'"
+        )->fetch();
+        if (!$haidIndex) {
+            $pdo->exec(
+                'ALTER TABLE riwayat_haid ADD UNIQUE KEY uq_haid_one_active (user_id, active_key)'
+            );
+        }
     },
 ];
