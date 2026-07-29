@@ -33,6 +33,10 @@ renderSuperadminHeader('Detail Pengguna', 'users');
 ?>
 <div class="mb-3">
     <a href="users.php" class="btn btn-sm btn-outline-secondary">← Kembali ke daftar</a>
+    <?php if ($user['role'] !== 'superadmin'): ?>
+        <a href="user_edit.php?id=<?= (int) $user['id'] ?>"
+           class="btn btn-sm btn-primary">Koreksi identitas</a>
+    <?php endif; ?>
 </div>
 <div class="row g-4">
     <section class="col-lg-7" aria-labelledby="identity-title">
@@ -73,4 +77,32 @@ renderSuperadminHeader('Detail Pengguna', 'users');
         </div>
     </aside>
 </div>
+<?php if ($user['role'] !== 'superadmin'): ?>
+<section class="master-card p-3 p-lg-4 mt-4" aria-labelledby="status-title">
+    <h2 id="status-title" class="h5">Status akun</h2>
+    <form method="post" action="user_status.php" class="row g-3 align-items-end">
+        <?= csrfInput() ?>
+        <input type="hidden" name="user_id" value="<?= (int) $user['id'] ?>">
+        <div class="col-md-4">
+            <label class="form-label" for="status">Status baru</label>
+            <select class="form-select" id="status" name="status" required>
+                <?php foreach (['active', 'inactive', 'archived'] as $status): ?>
+                    <option value="<?= $status ?>"><?= escape_output(ucfirst($status)) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label" for="reason">Alasan</label>
+            <select class="form-select" id="reason" name="reason" required>
+                <option value="data_governance">Tata kelola data</option>
+                <option value="verification">Verifikasi</option>
+                <option value="support">Dukungan</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <button class="btn btn-warning" type="submit">Ubah status</button>
+        </div>
+    </form>
+</section>
+<?php endif; ?>
 <?php renderSuperadminFooter(); ?>

@@ -83,7 +83,10 @@ renderSuperadminHeader('Direktori Pengguna', 'users');
 <section class="master-card p-3 p-lg-4" aria-labelledby="user-list-title">
     <div class="d-flex flex-wrap justify-content-between gap-2 align-items-center mb-3">
         <h2 id="user-list-title" class="h5 mb-0">Pengguna terdaftar</h2>
-        <span class="text-muted small"><?= $result['total'] ?> hasil</span>
+        <div class="d-flex gap-2 align-items-center">
+            <span class="text-muted small"><?= $result['total'] ?> hasil</span>
+            <a class="btn btn-sm btn-primary" href="user_create.php">Tambah pengguna</a>
+        </div>
     </div>
     <div class="table-responsive">
         <table class="table master-table">

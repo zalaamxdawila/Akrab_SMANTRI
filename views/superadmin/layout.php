@@ -7,6 +7,7 @@ function renderSuperadminHeader(string $title, string $active): void
     $navigation = [
         'dashboard' => ['Dashboard', 'dashboard.php'],
         'users' => ['Pengguna', 'users.php'],
+        'links' => ['Relasi Wali', 'parent_links.php'],
         'audit' => ['Audit', 'audit.php'],
     ];
     ?>
@@ -58,7 +59,7 @@ function renderSuperadminHeader(string $title, string $active): void
     <header class="page-heading mb-4">
         <p class="eyebrow mb-1">Pusat kendali sistem</p>
         <h1 class="h2 mb-1"><?= escape_output($title) ?></h1>
-        <p class="text-muted mb-0">Mode baca-saja · perubahan data belum diaktifkan</p>
+        <p class="text-muted mb-0">Kendali master · semua perubahan sensitif tercatat pada audit</p>
     </header>
 <?php
 }

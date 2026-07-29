@@ -383,7 +383,7 @@ Aturan eksekusi:
 
 ### Sprint 28 — User and parent-link management
 
-- [ ] **SA28.1 — Tambahkan archive metadata relasi**
+- [!] **SA28.1 — Tambahkan archive metadata relasi**
   - Acceptance: parent link dapat diarsip/restore tanpa hard delete dan tanpa
     mengubah relasi existing.
   - Verify: migration fresh/existing/idempotent and aggregate assertions.
@@ -392,7 +392,7 @@ Aturan eksekusi:
     `database/schema.sql`,
     `tests/Integration/ParentLinkArchiveMigrationTest.php`.
 
-- [ ] **SA28.2 — Implementasikan create user**
+- [!] **SA28.2 — Implementasikan create user**
   - Acceptance: hanya siswa/UKS/orang tua; validation kuat; password di-hash;
     username unik; audit dan PRG.
   - Verify: validation, duplicate, CSRF, transaction, audit tests.
@@ -401,7 +401,7 @@ Aturan eksekusi:
     `superadmin/user_create.php`,
     `tests/Integration/SuperadminUserCreateTest.php`.
 
-- [ ] **SA28.3 — Implementasikan koreksi/status/archive user**
+- [!] **SA28.3 — Implementasikan koreksi/status/archive user**
   - Acceptance: allowlisted fields; reason wajib; role conversion akun berdata
     ditolak; superadmin sendiri tidak dapat diubah; tidak ada hard delete.
   - Verify: invariant, FK, IDOR, CSRF, audit, rollback tests.
@@ -410,7 +410,7 @@ Aturan eksekusi:
     `superadmin/user_edit.php`, `superadmin/user_status.php`,
     `tests/Integration/SuperadminUserLifecycleTest.php`.
 
-- [ ] **SA28.4 — Buat parent-link master view**
+- [!] **SA28.4 — Buat parent-link master view**
   - Acceptance: filter status/parent/student; pagination; archived visible
     hanya melalui filter; detail tervalidasi.
   - Verify: query, pagination, IDOR, encoding tests.
@@ -419,7 +419,7 @@ Aturan eksekusi:
     `superadmin/parent_links.php`,
     `tests/Integration/SuperadminParentLinkReadTest.php`.
 
-- [ ] **SA28.5 — Implementasikan keputusan/koreksi/archive parent-link**
+- [!] **SA28.5 — Implementasikan keputusan/koreksi/archive parent-link**
   - Acceptance: approve/reject/correct/archive transactional; role target
     diverifikasi; reason/audit wajib; Login As ditolak.
   - Verify: state transition, forged target, CSRF, audit tests.
@@ -428,7 +428,7 @@ Aturan eksekusi:
     `superadmin/parent_link_action.php`,
     `tests/Integration/SuperadminParentLinkMutationTest.php`.
 
-- [ ] **SA28.6 — Tutup CP-16**
+- [!] **SA28.6 — Tutup CP-16**
   - Acceptance: account/link lifecycle UAT lulus tanpa hard delete.
   - Verify: full account regression, browser UAT, audit review.
   - Depends: SA28.1–SA28.5.
