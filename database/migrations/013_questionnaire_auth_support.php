@@ -7,13 +7,19 @@ return [
     'description' => 'Add questionnaire details and managed password reset and passkey storage',
     'up' => function (PDO $pdo): void {
         $columnExists = static function (PDO $pdo, string $table, string $column): bool {
-            $statement = $pdo->prepare("SHOW COLUMNS FROM {$table} LIKE ?");
-            $statement->execute([$column]);
+            $quotedTable = '`' . str_replace('`', '``', $table) . '`';
+            $statement = $pdo->query(
+                "SHOW COLUMNS FROM {$quotedTable} LIKE " . $pdo->quote($column)
+            );
+
             return (bool) $statement->fetch();
         };
         $indexExists = static function (PDO $pdo, string $table, string $index): bool {
-            $statement = $pdo->prepare("SHOW INDEX FROM {$table} WHERE Key_name = ?");
-            $statement->execute([$index]);
+            $quotedTable = '`' . str_replace('`', '``', $table) . '`';
+            $statement = $pdo->query(
+                "SHOW INDEX FROM {$quotedTable} WHERE Key_name = " . $pdo->quote($index)
+            );
+
             return (bool) $statement->fetch();
         };
 

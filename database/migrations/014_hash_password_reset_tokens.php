@@ -7,18 +7,18 @@ return [
     'description' => 'Store password reset tokens only as one-way SHA-256 digests',
     'up' => function (PDO $pdo): void {
         $columnExists = static function (string $column) use ($pdo): bool {
-            $statement = $pdo->prepare(
-                'SHOW COLUMNS FROM password_reset_requests LIKE ?'
+            $statement = $pdo->query(
+                'SHOW COLUMNS FROM password_reset_requests LIKE '
+                . $pdo->quote($column)
             );
-            $statement->execute([$column]);
 
             return (bool) $statement->fetch();
         };
         $indexExists = static function (string $index) use ($pdo): bool {
-            $statement = $pdo->prepare(
-                'SHOW INDEX FROM password_reset_requests WHERE Key_name = ?'
+            $statement = $pdo->query(
+                'SHOW INDEX FROM password_reset_requests WHERE Key_name = '
+                . $pdo->quote($index)
             );
-            $statement->execute([$index]);
 
             return (bool) $statement->fetch();
         };
