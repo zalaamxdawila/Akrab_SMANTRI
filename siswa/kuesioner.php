@@ -8,12 +8,58 @@ $error = '';
 $success = '';
 $clinicalRiskEnabled = isClinicalRiskEnabled();
 
+// Cek Cooldown Kuesioner (6 Bulan)
+$stmtCooldown = $pdo->prepare("SELECT created_at FROM kuesioner WHERE user_id = ? AND archived_at IS NULL ORDER BY created_at DESC LIMIT 1");
+$stmtCooldown->execute([$user_id]);
+$lastKuesioner = $stmtCooldown->fetch();
+if ($lastKuesioner) {
+    $lastFilled = strtotime($lastKuesioner['created_at']);
+    $sixMonthsAgo = strtotime('-6 months');
+    if ($lastFilled > $sixMonthsAgo) {
+        header("Location: dashboard.php?cooldown=1");
+        exit;
+    }
+}
+
+$stmtUser = $pdo->prepare("SELECT nama, username, kelas FROM users WHERE id = ?");
+$stmtUser->execute([$user_id]);
+$userData = $stmtUser->fetch();
+
+$user_nama = $userData['nama'] ?? '';
+$words = explode(" ", $user_nama);
+$inisial = "";
+foreach ($words as $w) {
+    if (!empty($w)) {
+        $inisial .= strtoupper($w[0]);
+    }
+}
+
+$user_kelas = trim($userData['kelas'] ?? '');
+$pendidikan = '';
+$jurusan = '';
+if (preg_match('/^(Kelas\s+(VII|VIII|IX|X|XI|XII))\s*(.*)$/i', $user_kelas, $matches)) {
+    $pendidikan = 'Kelas ' . strtoupper($matches[2]);
+    $jurusan = trim($matches[3]);
+} elseif (preg_match('/^(VII|VIII|IX|X|XI|XII)\s*(.*)$/i', $user_kelas, $matches)) {
+    $pendidikan = 'Kelas ' . strtoupper($matches[1]);
+    $jurusan = trim($matches[2]);
+} else {
+    // If not matching any known roman numerals, just pass it along
+    $pendidikan = $user_kelas;
+    $jurusan = '';
+}
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (!$clinicalRiskEnabled) {
         $error = "Skrining risiko sedang dinonaktifkan sampai model selesai divalidasi. Tidak ada data yang disimpan.";
     } else {
     try {
-        (new QuestionnaireService($pdo))->submit($user_id, $_POST);
+        $submission = $_POST;
+        $submission['inisial'] = $inisial;
+        $submission['pendidikan'] = $pendidikan;
+        $submission['jurusan'] = $jurusan;
+        $submission['tanggal_wawancara'] = date('Y-m-d');
+        (new QuestionnaireService($pdo))->submit($user_id, $submission);
         header("Location: hasil_deteksi.php");
         exit;
     } catch (Exception $e) {
@@ -133,29 +179,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <span class="badge bg-primary rounded-circle px-2 py-2">1</span> Data Diri Dasar
                 </div>
                 <div class="card-body row g-3">
-                    <div class="col-md-6"><label class="form-label text-muted small fw-semibold">Tanggal Wawancara</label><input type="date" class="form-control" name="tanggal_wawancara"></div>
+                    <div class="col-md-6"><label class="form-label text-muted small fw-semibold">Tanggal Pengisian (Otomatis)</label><input type="date" class="form-control" name="tanggal_wawancara" value="<?= date('Y-m-d') ?>" readonly style="background-color: #e9ecef;"></div>
 
-                    <div class="col-md-6"><label class="form-label text-muted small fw-semibold">Inisial</label><input type="text" class="form-control" name="inisial"></div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small fw-semibold">Nama Lengkap (Otomatis)</label>
+                        <input type="text" class="form-control" value="<?= htmlspecialchars($user_nama) ?>" readonly style="background-color: #e9ecef;">
+                        <input type="hidden" name="inisial" value="<?= htmlspecialchars($inisial) ?>">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small fw-semibold">NISN (Otomatis)</label>
+                        <input type="text" class="form-control" value="<?= htmlspecialchars($userData['username'] ?? '') ?>" readonly style="background-color: #e9ecef;">
+                    </div>
                     <div class="col-md-6"><label class="form-label text-muted small fw-semibold">Tanggal Lahir</label><input type="date" class="form-control" name="tanggal_lahir"></div>
                     <div class="col-md-6"><label class="form-label text-muted small fw-semibold">Tempat Lahir</label><input type="text" class="form-control" name="tempat_lahir"></div>
                     <div class="col-md-6">
-                        <label class="form-label text-muted small fw-semibold">Pendidikan / Tingkat Kelas</label>
-                        <div class="row g-2">
-                            <div class="col-6">
-                                <select name="pendidikan" class="form-select">
-                                    <option value="">Pilih Tingkat</option>
-                                    <option value="Kelas VII">Kelas VII (SMP)</option>
-                                    <option value="Kelas VIII">Kelas VIII (SMP)</option>
-                                    <option value="Kelas IX">Kelas IX (SMP)</option>
-                                    <option value="Kelas X">Kelas X (SMA)</option>
-                                    <option value="Kelas XI">Kelas XI (SMA)</option>
-                                    <option value="Kelas XII">Kelas XII (SMA)</option>
-                                </select>
-                            </div>
-                            <div class="col-6">
-                                <input type="text" name="jurusan" class="form-control" placeholder="Jurusan (Opsional)">
-                            </div>
-                        </div>
+                        <label class="form-label text-muted small fw-semibold">Pendidikan / Tingkat Kelas (Otomatis)</label>
+                        <input type="text" class="form-control" value="<?= htmlspecialchars($pendidikan . ($jurusan ? ' ' . $jurusan : '')) ?>" readonly style="background-color: #e9ecef;">
+                        <input type="hidden" name="pendidikan" value="<?= htmlspecialchars($pendidikan) ?>">
+                        <input type="hidden" name="jurusan" value="<?= htmlspecialchars($jurusan) ?>">
                     </div>
                     <div class="col-12"><label class="form-label text-muted small fw-semibold">Alamat</label><textarea class="form-control" name="alamat" rows="2"></textarea></div>
                 </div>
@@ -170,6 +211,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         Pilih salah satu kondisi berikut. Pilihan ini wajib agar data kuesioner dapat
                         ditafsirkan dengan benar.
                     </p>
+
                     <div class="row g-2" role="radiogroup" aria-label="Ketersediaan hasil lab darah">
                         <div class="col-md-6">
                             <input class="btn-check" type="radio" name="lab_status" id="labAvailable"
@@ -206,7 +248,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                        aria-describedby="lab-hb-help" disabled>
                                 <span class="input-group-text">g/dL</span>
                             </div>
-                            <div class="form-text" id="lab-hb-help">Hemoglobin: protein pembawa oksigen di dalam darah.</div>
+                            <div class="form-text mt-2" id="lab-hb-help">
+                                <div class="fw-semibold text-secondary mb-1">Panduan Nilai Hb (Hemoglobin):</div>
+                                <ul class="mb-0 ps-3 small">
+                                    <li>Sangat Rendah (&lt;8,0 g/dL)</li>
+                                    <li>Rendah (8,0 sampai 10,9 g/dL)</li>
+                                    <li>Sedikit Rendah (11,0 sampai 11,9 g/dL)</li>
+                                    <li>Normal (12,0 sampai 16,0 g/dL)</li>
+                                    <li>Tinggi (&gt;16,0 g/dL)</li>
+                                </ul>
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold" for="labMchc">MCHC <span class="text-danger">*</span></label>
@@ -216,7 +267,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                        aria-describedby="lab-mchc-help" disabled>
                                 <span class="input-group-text">g/dL</span>
                             </div>
-                            <div class="form-text" id="lab-mchc-help">Konsentrasi rata-rata hemoglobin di dalam sel darah merah.</div>
+                            <div class="form-text mt-2" id="lab-mchc-help">
+                                <div class="fw-semibold text-secondary mb-1">Panduan Nilai MCHC:</div>
+                                <ul class="mb-0 ps-3 small">
+                                    <li>Rendah (&lt;32 g/dL)</li>
+                                    <li>Normal (32 sampai 36 g/dL)</li>
+                                    <li>Tinggi (&gt;36 g/dL)</li>
+                                </ul>
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold" for="labMcv">MCV <span class="text-danger">*</span></label>
@@ -226,7 +284,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                        aria-describedby="lab-mcv-help" disabled>
                                 <span class="input-group-text">fL</span>
                             </div>
-                            <div class="form-text" id="lab-mcv-help">Ukuran rata-rata sel darah merah.</div>
+                            <div class="form-text mt-2" id="lab-mcv-help">
+                                <div class="fw-semibold text-secondary mb-1">Panduan Nilai MCV:</div>
+                                <ul class="mb-0 ps-3 small">
+                                    <li>Mikrositik / Sel Darah Merah Kecil (&lt;80 fL)</li>
+                                    <li>Normositik / Ukuran Normal (80 sampai 100 fL)</li>
+                                    <li>Makrositik / Sel Darah Merah Besar (&gt;100 fL)</li>
+                                </ul>
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold" for="labMch">MCH <span class="text-danger">*</span></label>
@@ -236,7 +301,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                        aria-describedby="lab-mch-help" disabled>
                                 <span class="input-group-text">pg</span>
                             </div>
-                            <div class="form-text" id="lab-mch-help">Jumlah rata-rata hemoglobin pada setiap sel darah merah.</div>
+                            <div class="form-text mt-2" id="lab-mch-help">
+                                <div class="fw-semibold text-secondary mb-1">Panduan Nilai MCH:</div>
+                                <ul class="mb-0 ps-3 small">
+                                    <li>Rendah (&lt;27 pg)</li>
+                                    <li>Normal (27 sampai 33 pg)</li>
+                                    <li>Tinggi (&gt;33 pg)</li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -266,15 +338,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <label class="form-label text-muted small fw-semibold">Usia mulai (Tahun)</label>
                             <input type="number" class="form-control" name="mens_usia_th">
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label text-muted small fw-semibold">Siklus teratur tiap bulan?</label>
                             <select name="mens_teratur" class="form-select">
                                 <option value="ya">Ya</option><option value="tidak">Tidak</option>
                             </select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label text-muted small fw-semibold">Lama menstruasi (Hari)</label>
-                            <input type="number" class="form-control" name="mens_lama">
+                            <input type="number" class="form-control" name="mens_lama" min="1" max="15">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small fw-semibold">Jarak antar siklus (Hari)</label>
+                            <input type="number" class="form-control" name="mens_jarak_siklus" min="1" max="100" placeholder="Cth: 28">
                         </div>
                     </div>
                     
@@ -291,6 +367,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         </select>
                     </div>
                     <?php endforeach; ?>
+
+                    <div class="mt-4 p-3 bg-light rounded border border-light-subtle">
+                        <label class="fw-semibold text-dark mb-2">Ceritakan jenis makanan apa yang paling sering Anda konsumsi setiap harinya?</label>
+                        <textarea class="form-control" name="makanan_dikonsumsi" rows="3" placeholder="Contoh: Nasi, sayur bayam, telur dadar, ayam goreng, buah pisang, dsb."></textarea>
+                    </div>
                 </div>
             </div>
             
@@ -405,7 +486,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <script src="../assets/js/app-init.js?v=20260729"></script>
 <script>
     lucide.createIcons();
-    
+
     function setLabRequirement(status) {
         const labSection = document.getElementById('labSection');
         const labInputs = labSection.querySelectorAll('input');

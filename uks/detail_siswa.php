@@ -182,9 +182,16 @@ $total_ttd = $stmt->fetch()['total'];
 
                         <h5 class="text-primary border-bottom pb-2 mb-3">4. Riwayat Menstruasi</h5>
                         <div class="row mb-4">
-                            <div class="col-md-4"><strong>Sudah Menstruasi:</strong><br><?= ucfirst($kuesioner['mens_sudah'] ?? '-') ?></div>
-                            <div class="col-md-4"><strong>Siklus Teratur:</strong><br><?= ucfirst($kuesioner['mens_teratur'] ?? '-') ?></div>
-                            <div class="col-md-4"><strong>Lama Hari:</strong><br><?= $kuesioner['mens_lama_hari'] ? $kuesioner['mens_lama_hari'].' Hari' : '-' ?></div>
+                            <div class="col-md-3"><strong>Sudah Menstruasi:</strong><br><?= ucfirst($kuesioner['mens_sudah'] ?? '-') ?></div>
+                            <div class="col-md-3"><strong>Siklus Teratur:</strong><br><?= ucfirst($kuesioner['mens_teratur'] ?? '-') ?></div>
+                            <div class="col-md-3"><strong>Lama Hari:</strong><br><?= $kuesioner['mens_lama_hari'] ? $kuesioner['mens_lama_hari'].' Hari' : '-' ?></div>
+                            <div class="col-md-3"><strong>Jarak Siklus:</strong><br><?= $kuesioner['mens_jarak_siklus'] ? $kuesioner['mens_jarak_siklus'].' Hari' : '-' ?></div>
+                        </div>
+
+                        <h5 class="text-primary border-bottom pb-2 mb-3">5. Pola Makan</h5>
+                        <div class="row mb-4">
+                            <div class="col-md-3"><strong>Skor Makan:</strong><br><?= $kuesioner['skor_makan'] ?? '-' ?></div>
+                            <div class="col-md-9"><strong>Makanan Sering Dikonsumsi:</strong><br><?= nl2br(htmlspecialchars($kuesioner['makanan_dikonsumsi'] ?? '-')) ?></div>
                         </div>
                     <?php endif; ?>
                 </div>

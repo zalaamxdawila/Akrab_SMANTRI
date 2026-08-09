@@ -7,33 +7,33 @@ final class SuperadminHealthRepository
     private const TYPES = [
         'questionnaire' => [
             'table' => 'kuesioner',
-            'date' => 'created_at',
-            'summary' => "('Gejala: ' || skor_gejala || ' · Hb: ' || COALESCE(kadar_hb, '-'))",
-            'mysql_summary' => "CONCAT('Gejala: ', skor_gejala, ' · Hb: ', COALESCE(kadar_hb, '-'))",
+            'date' => 'r.created_at',
+            'summary' => "('Gejala: ' || r.skor_gejala || ' · Hb: ' || COALESCE(r.kadar_hb, '-'))",
+            'mysql_summary' => "CONCAT('Gejala: ', r.skor_gejala, ' · Hb: ', COALESCE(r.kadar_hb, '-'))",
         ],
         'risk' => [
             'table' => 'hasil_deteksi',
-            'date' => 'tanggal',
-            'summary' => 'kategori_risiko',
-            'mysql_summary' => 'kategori_risiko',
+            'date' => 'r.tanggal',
+            'summary' => 'r.kategori_risiko',
+            'mysql_summary' => 'r.kategori_risiko',
         ],
         'hb' => [
             'table' => 'kadar_hb',
-            'date' => 'tanggal_periksa',
-            'summary' => "CAST(nilai_hb AS TEXT) || ' · ' || kategori_anemia",
-            'mysql_summary' => "CONCAT(nilai_hb, ' · ', kategori_anemia)",
+            'date' => 'r.tanggal_periksa',
+            'summary' => "CAST(r.nilai_hb AS TEXT) || ' · ' || r.kategori_anemia",
+            'mysql_summary' => "CONCAT(r.nilai_hb, ' · ', r.kategori_anemia)",
         ],
         'ttd' => [
             'table' => 'konsumsi_ttd',
-            'date' => 'tanggal',
-            'summary' => 'status_konsumsi',
-            'mysql_summary' => 'status_konsumsi',
+            'date' => 'r.tanggal',
+            'summary' => 'r.status_konsumsi',
+            'mysql_summary' => 'r.status_konsumsi',
         ],
         'menstruation' => [
             'table' => 'riwayat_haid',
-            'date' => 'tanggal_mulai',
-            'summary' => "tanggal_mulai || ' — ' || COALESCE(tanggal_selesai, 'aktif')",
-            'mysql_summary' => "CONCAT(tanggal_mulai, ' — ', COALESCE(tanggal_selesai, 'aktif'))",
+            'date' => 'r.tanggal_mulai',
+            'summary' => "r.tanggal_mulai || ' — ' || COALESCE(r.tanggal_selesai, 'aktif')",
+            'mysql_summary' => "CONCAT(r.tanggal_mulai, ' — ', COALESCE(r.tanggal_selesai, 'aktif'))",
         ],
     ];
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'akrab-static-20260729-local-assets';
+const CACHE_NAME = 'akrab-static-20260730-v2-auto-update';
 const STATIC_ASSETS = [
   '/offline.html',
   '/assets/css/style.css?v=20260729-analytics',

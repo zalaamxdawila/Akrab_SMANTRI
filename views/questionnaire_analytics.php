@@ -80,6 +80,48 @@ function renderLabSummary(array $response): void
 }
 
 /**
+ * @param array<string, mixed> $response
+ */
+function renderMenstruationSummary(array $response): void
+{
+    ?>
+    <dl class="row g-2 mb-0 mt-3">
+        <div class="col-6 col-lg-3">
+            <dt class="small text-muted">Sudah Menstruasi</dt>
+            <dd class="fw-semibold mb-0"><?= escape_output(ucfirst((string) ($response['mens_sudah'] ?? '-'))) ?></dd>
+        </div>
+        <div class="col-6 col-lg-3">
+            <dt class="small text-muted">Siklus Teratur</dt>
+            <dd class="fw-semibold mb-0"><?= escape_output(ucfirst((string) ($response['mens_teratur'] ?? '-'))) ?></dd>
+        </div>
+        <div class="col-6 col-lg-3">
+            <dt class="small text-muted">Lama Hari</dt>
+            <dd class="fw-semibold mb-0"><?= $response['mens_lama_hari'] ? (int) $response['mens_lama_hari'].' Hari' : '-' ?></dd>
+        </div>
+        <div class="col-6 col-lg-3">
+            <dt class="small text-muted">Jarak Siklus</dt>
+            <dd class="fw-semibold mb-0"><?= $response['mens_jarak_siklus'] ? (int) $response['mens_jarak_siklus'].' Hari' : '-' ?></dd>
+        </div>
+    </dl>
+    <?php
+}
+
+/**
+ * @param array<string, mixed> $response
+ */
+function renderDietSummary(array $response): void
+{
+    ?>
+    <dl class="row g-2 mb-0 mt-3">
+        <div class="col-12">
+            <dt class="small text-muted">Makanan Sering Dikonsumsi</dt>
+            <dd class="fw-semibold mb-0"><?= nl2br(escape_output((string) ($response['makanan_dikonsumsi'] ?? '-'))) ?></dd>
+        </div>
+    </dl>
+    <?php
+}
+
+/**
  * @param array{labels:list<string>,series:array<string,list<float>>} $chart
  */
 function renderQuestionnaireHistoryChartScript(string $canvasId, array $chart): void

@@ -7,3 +7,9 @@
 - html5-qrcode 2.3.8 — Apache-2.0 License — https://github.com/mebjas/html5-qrcode
 
 The minified runtime files in this directory are pinned to the versions above.
+
+## Server-side dependency
+
+- lbuchs/WebAuthn v2.2.0 — MIT License — https://github.com/lbuchs/WebAuthn/tree/v2.2.0
+
+The vendored source and license are stored under `vendor_manual/WebAuthn/`.

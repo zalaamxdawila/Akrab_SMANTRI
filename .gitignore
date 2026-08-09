@@ -23,6 +23,7 @@ backups/
 
 # Dependencies and test output
 vendor/
+node_modules/
 !assets/vendor/
 !assets/vendor/**
 .phpunit.cache/

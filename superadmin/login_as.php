@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         );
         header('Location: ' . BASE_URL . dashboardForRole((string) $_SESSION['role']), true, 303);
         exit;
-    } catch (Throwable $exception) {
+    } catch (Throwable) {
         $error = 'Login As ditolak. Periksa target, password, alasan, atau batas percobaan.';
     }
 }

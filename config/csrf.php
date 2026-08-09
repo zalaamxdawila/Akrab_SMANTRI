@@ -28,6 +28,17 @@ function csrfInput(): string
         . '">';
 }
 
+function csrfTokenFromRequest(array $post, array $server): ?string
+{
+    $formToken = $post['_csrf'] ?? null;
+    if (is_string($formToken)) {
+        return $formToken;
+    }
+
+    $headerToken = $server['HTTP_X_CSRF_TOKEN'] ?? null;
+    return is_string($headerToken) ? $headerToken : null;
+}
+
 function verifyCsrfOrFail($submittedToken): void
 {
     if (csrfTokenIsValid($submittedToken)) {

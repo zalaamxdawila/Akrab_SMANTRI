@@ -12,6 +12,8 @@ require_once __DIR__ . '/app/Security/ActorContextResolver.php';
 require_once __DIR__ . '/app/Security/ImpersonationPolicy.php';
 require_once __DIR__ . '/app/Security/ImpersonationMutationAudit.php';
 require_once __DIR__ . '/app/Security/ImpersonationService.php';
+require_once __DIR__ . '/app/Security/AuthAttemptLimiter.php';
+require_once __DIR__ . '/app/Security/PasswordResetToken.php';
 require_once __DIR__ . '/config/authorization.php';
 require_once __DIR__ . '/config/validation.php';
 require_once __DIR__ . '/config/csv.php';
@@ -27,6 +29,14 @@ if (PHP_SAPI !== 'cli' && !headers_sent()) {
 }
 if ($appEnvironment === 'production') {
     configureProductionErrorHandling();
+}
+
+if (
+    PHP_SAPI !== 'cli'
+    && !applicationHostIsAllowed($_SERVER['HTTP_HOST'] ?? null, $appEnvironment)
+) {
+    http_response_code(400);
+    exit('Host tidak diizinkan.');
 }
 
 try {
@@ -114,7 +124,7 @@ if (
     php_sapi_name() !== 'cli'
     && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST'
 ) {
-    verifyCsrfOrFail($_POST['_csrf'] ?? null);
+    verifyCsrfOrFail(csrfTokenFromRequest($_POST, $_SERVER));
 }
 
 define('BASE_URL', $baseUrl);

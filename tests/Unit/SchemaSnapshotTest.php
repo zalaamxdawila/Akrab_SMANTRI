@@ -21,6 +21,8 @@ final class SchemaSnapshotTest extends TestCase
             'balasan_konsultasi',
             'riwayat_haid',
             'artikel_edukasi',
+            'password_reset_requests',
+            'webauthn_credentials',
             'schema_migrations',
         ] as $table) {
             self::assertStringContainsString(
@@ -52,5 +54,24 @@ final class SchemaSnapshotTest extends TestCase
         $schema = file_get_contents(dirname(__DIR__, 2) . '/database/schema.sql');
         self::assertStringContainsString('model_version VARCHAR(80)', $schema);
         self::assertStringContainsString('model_checksum CHAR(64)', $schema);
+    }
+
+    public function testRuntimeRoutesDoNotPerformSchemaChanges(): void
+    {
+        $root = dirname(__DIR__, 2);
+        foreach ([
+            'app/Services/QuestionnaireService.php',
+            'lupa_password.php',
+            'superadmin/dashboard.php',
+            'superadmin/process_reset_request.php',
+            'superadmin_passkey.php',
+        ] as $path) {
+            $contents = file_get_contents($root . '/' . $path);
+            self::assertDoesNotMatchRegularExpression(
+                '/\b(?:CREATE|ALTER|DROP|TRUNCATE)\s+TABLE\b/i',
+                $contents,
+                $path . ' must not change the database schema at request time.'
+            );
+        }
     }
 }

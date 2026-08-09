@@ -12,6 +12,8 @@ require_once dirname(__DIR__) . '/app/Security/ActorContextResolver.php';
 require_once dirname(__DIR__) . '/app/Security/ImpersonationPolicy.php';
 require_once dirname(__DIR__) . '/app/Security/ImpersonationMutationAudit.php';
 require_once dirname(__DIR__) . '/app/Security/ImpersonationService.php';
+require_once dirname(__DIR__) . '/app/Security/AuthAttemptLimiter.php';
+require_once dirname(__DIR__) . '/app/Security/PasswordResetToken.php';
 require_once dirname(__DIR__) . '/config/authorization.php';
 require_once dirname(__DIR__) . '/config/validation.php';
 require_once dirname(__DIR__) . '/config/csv.php';

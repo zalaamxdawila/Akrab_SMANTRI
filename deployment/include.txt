@@ -4,6 +4,9 @@ login.php
 logout.php
 end_impersonation.php
 register.php
+lupa_password.php
+reset_password.php
+superadmin_passkey.php
 manifest.json
 service-worker.js
 offline.html
@@ -18,6 +21,7 @@ bootstrap.php
 app/
 config/
 database/
+vendor_manual/WebAuthn/
 tools/migrate.php
 tools/provision_superadmin.php
 tools/seed_staging.php

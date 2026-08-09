@@ -115,6 +115,12 @@ renderSuperadminHeader('Hasil Kuesioner', 'questionnaires');
             <div class="mt-4">
                 <h3 class="h6">Hasil lab pada pengisian terakhir</h3>
                 <?php renderLabSummary($selectedLatest); ?>
+
+                <h3 class="h6 mt-4">Riwayat Menstruasi</h3>
+                <?php renderMenstruationSummary($selectedLatest); ?>
+
+                <h3 class="h6 mt-4">Pola Makan</h3>
+                <?php renderDietSummary($selectedLatest); ?>
             </div>
         <?php endif; ?>
     </section>

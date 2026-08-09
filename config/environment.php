@@ -70,3 +70,27 @@ function requireEnvironmentValue($name)
 
     return $value;
 }
+
+/**
+ * Limit production traffic to the single canonical AKRAB hostname.
+ */
+function applicationHostIsAllowed(?string $httpHost, string $environment): bool
+{
+    if ($httpHost === null || trim($httpHost) === '') {
+        return false;
+    }
+
+    $host = strtolower(trim($httpHost));
+    $host = preg_replace('/:\d+$/', '', $host);
+    if (!is_string($host)) {
+        return false;
+    }
+
+    $allowedHosts = ['akrab.portodq.com'];
+    if ($environment !== 'production') {
+        $allowedHosts[] = 'localhost';
+        $allowedHosts[] = '127.0.0.1';
+    }
+
+    return in_array($host, $allowedHosts, true);
+}

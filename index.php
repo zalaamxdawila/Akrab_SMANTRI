@@ -2,7 +2,9 @@
 require_once 'config.php';
 
 $is_logged_in = isset($_SESSION['user_id']);
-$dashboard_url = $is_logged_in ? ($_SESSION['role'] === 'siswa' ? 'siswa/dashboard.php' : 'uks/dashboard.php') : 'login.php';
+$dashboard_url = $is_logged_in
+    ? dashboardForRole((string) $_SESSION['role'])
+    : 'login.php';
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -60,8 +62,8 @@ $dashboard_url = $is_logged_in ? ($_SESSION['role'] === 'siswa' ? 'siswa/dashboa
     <div class="container">
         <h1 class="display-4 fw-bold mb-4">Wujudkan Generasi Remaja Cerdas, Sehat, Bebas Anemia!</h1>
         <p class="lead mb-4 px-md-5">AKRAB (Aplikasi Kesehatan Remaja Bebas Anemia) hadir untuk mendampingi sekolah dalam memantau kesehatan siswa dan mengingatkan konsumsi Tablet Tambah Darah (TTD).</p>
-        <div class="alert alert-warning mx-auto mb-5 text-start" style="max-width: 760px;" role="alert">
-            <strong>Status prototipe:</strong> fitur skrining risiko anemia sedang dinonaktifkan sampai model selesai divalidasi tenaga kesehatan. AKRAB bukan alat diagnosis dan tidak menggantikan pemeriksaan tenaga medis.
+        <div class="alert alert-info mx-auto mb-5 text-start" style="max-width: 760px;" role="alert">
+            <strong>Perhatian:</strong> AKRAB adalah alat bantu skrining risiko, bukan alat diagnosis medis. Hasil dari aplikasi ini tidak menggantikan pemeriksaan langsung oleh tenaga kesehatan.
         </div>
         
         <?php if ($is_logged_in): ?>

@@ -38,9 +38,21 @@ $stmt->execute([$user_id]);
 $sedang_haid = $stmt->fetch() ? true : false;
 
 // Check latest questionnaire
-$stmt = $pdo->prepare("SELECT * FROM kuesioner WHERE user_id = ? ORDER BY created_at DESC LIMIT 1");
+$stmt = $pdo->prepare("SELECT * FROM kuesioner WHERE user_id = ? AND archived_at IS NULL ORDER BY created_at DESC LIMIT 1");
 $stmt->execute([$user_id]);
 $kuesioner = $stmt->fetch();
+
+$can_fill_kuesioner = true;
+$next_kuesioner_date = null;
+if ($kuesioner) {
+    $last_filled = strtotime($kuesioner['created_at']);
+    $six_months_ago = strtotime('-6 months');
+    if ($last_filled > $six_months_ago) {
+        $can_fill_kuesioner = false;
+        // Translate format nicely to Indonesian visually, e.g. using basic date
+        $next_kuesioner_date = date('d M Y', strtotime('+6 months', $last_filled));
+    }
+}
 
 // Check latest risk detection
 $stmt = $pdo->prepare("SELECT * FROM hasil_deteksi WHERE user_id = ? ORDER BY tanggal DESC, id DESC LIMIT 1");
@@ -179,6 +191,9 @@ if (empty($news)) {
     <?php if (isset($_GET['haid_updated'])): ?>
         <div class="alert alert-info alert-auto-dismiss">Status siklus menstruasi berhasil diperbarui.</div>
     <?php endif; ?>
+    <?php if (isset($_GET['cooldown'])): ?>
+        <div class="alert alert-warning alert-auto-dismiss border-warning shadow-sm"><i data-lucide="lock" style="width: 18px;" class="me-1"></i> Anda sudah mengisi kuesioner semester ini. Kuesioner akan terbuka otomatis pada jadwal pengecekan kesehatan berikutnya.</div>
+    <?php endif; ?>
 
     <div class="row g-4 animate-fade-in-up delay-100">
         <!-- TTD Status -->
@@ -251,8 +266,14 @@ if (empty($news)) {
                         <span class="risk-badge <?= $risk_class ?> fs-4">Risiko <?= $risk_label ?></span>
                     </div>
                     <p class="text-center mb-4">Terakhir dicek pada: <?= date('d M Y', strtotime($hasil_deteksi['tanggal'])) ?></p>
-                    <div class="text-center">
-                        <a href="hasil_deteksi.php" class="btn btn-outline-primary">Lihat Detail Saran</a>
+                    <div class="text-center d-flex flex-column gap-2 align-items-center">
+                        <a href="hasil_deteksi.php" class="btn btn-outline-primary w-75">Lihat Detail Saran</a>
+                        <?php if ($can_fill_kuesioner): ?>
+                            <a href="kuesioner.php" class="btn btn-primary w-75">Perbarui Hasil Kesehatan</a>
+                        <?php else: ?>
+                            <button class="btn btn-secondary w-75 opacity-75" disabled><i data-lucide="lock" style="width: 16px;"></i> Kuesioner Terkunci</button>
+                            <small class="text-muted mt-1"><i data-lucide="calendar" style="width: 12px;"></i> Dapat diisi kembali pada: <strong><?= $next_kuesioner_date ?></strong></small>
+                        <?php endif; ?>
                     </div>
                 <?php else: ?>
                     <div class="text-center my-4">

@@ -19,6 +19,7 @@ jobs:
           coverage: none
 
       - run: composer install --no-interaction --no-progress --prefer-dist
+      - run: composer audit --locked --no-interaction
       - run: composer quality
       - name: Secret assignment scan
         run: |

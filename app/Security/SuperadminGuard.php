@@ -13,6 +13,7 @@ final class SuperadminGuard
         if (!self::contextIsAuthorized($context)) {
             throw new DomainException('Superadmin access is denied.');
         }
+
         return $context;
     }
 

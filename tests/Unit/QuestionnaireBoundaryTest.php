@@ -39,4 +39,25 @@ final class QuestionnaireBoundaryTest extends TestCase
         }
         self::assertStringContainsString('setLabRequirement', $contents);
     }
+
+    public function testAutomaticIdentityFieldsAreRebuiltOnTheServer(): void
+    {
+        $contents = file_get_contents(dirname(__DIR__, 2) . '/siswa/kuesioner.php');
+
+        self::assertStringContainsString('$submission = $_POST;', $contents);
+        self::assertStringContainsString('$submission[\'inisial\'] = $inisial;', $contents);
+        self::assertStringContainsString('$submission[\'pendidikan\'] = $pendidikan;', $contents);
+        self::assertStringContainsString('$submission[\'jurusan\'] = $jurusan;', $contents);
+        self::assertStringContainsString('$submission[\'tanggal_wawancara\'] = date(\'Y-m-d\');', $contents);
+        self::assertStringContainsString('submit($user_id, $submission)', $contents);
+    }
+
+    public function testArchivedQuestionnairesDoNotExtendTheCooldown(): void
+    {
+        $questionnaire = file_get_contents(dirname(__DIR__, 2) . '/siswa/kuesioner.php');
+        $dashboard = file_get_contents(dirname(__DIR__, 2) . '/siswa/dashboard.php');
+
+        self::assertStringContainsString('archived_at IS NULL', $questionnaire);
+        self::assertStringContainsString('archived_at IS NULL', $dashboard);
+    }
 }

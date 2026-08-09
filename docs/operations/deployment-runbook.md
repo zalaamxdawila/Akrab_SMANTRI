@@ -1,6 +1,6 @@
 # AKRAB deployment runbook
 
-1. Assert the exact domain `akrab.portodq.com` and deploy root only.
+1. Assert the exact domain `akrab.portodq.com` and deploy root only. Do not deploy AKRAB to another hostname; superadmin remains under `/superadmin/` on this domain.
 2. Retain the previous release archives and verify the same-day SQL backup.
 3. Build from a clean commit using `tools/build_release.php`.
 4. Package `.env` with `AKRAB_SUPERADMIN_ENABLED=false` and all clinical flags

@@ -24,7 +24,6 @@ function requestCorrelationId(): string
 
     return $id;
 }
-
 function configureProductionErrorHandling()
 {
     $startedAt = microtime(true);

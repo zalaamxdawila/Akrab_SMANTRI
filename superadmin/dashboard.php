@@ -19,6 +19,16 @@ try {
 $summary = (new SuperadminOverviewRepository($pdo))->summary(date('Y-m-d'));
 $activeUsers = array_sum(array_column($summary['accounts'], 'active'));
 $clinicalEnabled = clinicalApprovalGatePassed();
+$generatedResetLink = $_SESSION['_generated_password_reset_link'] ?? null;
+unset($_SESSION['_generated_password_reset_link']);
+if (
+    !is_array($generatedResetLink)
+    || !isset($generatedResetLink['request_id'], $generatedResetLink['url'])
+    || !is_int($generatedResetLink['request_id'])
+    || !is_string($generatedResetLink['url'])
+) {
+    $generatedResetLink = null;
+}
 
 renderSuperadminHeader('Ringkasan Sistem', 'dashboard');
 ?>
@@ -88,6 +98,78 @@ renderSuperadminHeader('Ringkasan Sistem', 'dashboard');
                     </tbody>
                 </table>
             </div>
+        </div>
+    </section>
+
+    <?php
+    $stmtReset = $pdo->query("SELECT p.id, p.created_at, p.token_hash IS NOT NULL AS has_token, p.expires_at, u.nama, u.username, u.role FROM password_reset_requests p JOIN users u ON p.user_id = u.id WHERE p.status = 'pending' ORDER BY p.created_at ASC LIMIT 100");
+    $resetRequests = $stmtReset->fetchAll();
+    ?>
+
+    <section class="col-xl-8" aria-labelledby="reset-title">
+        <div class="master-card p-3 p-lg-4 border-danger border-top border-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <p class="eyebrow text-danger mb-1"><i data-lucide="bell" style="width:14px"></i> Perhatian Khusus</p>
+                    <h2 id="reset-title" class="h5 mb-0">Permintaan Reset Password (Lupa Password)</h2>
+                </div>
+            </div>
+
+            <?php if ($generatedResetLink !== null): ?>
+                <div class="alert alert-info alert-dismissible fade show" role="alert">
+                    Link reset password mandiri berhasil dibuat. Link hanya ditampilkan sekali; salin sekarang dan kirim melalui kanal tepercaya.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
+
+            <?php if (count($resetRequests) > 0): ?>
+            <div class="table-responsive">
+                <table class="table master-table table-hover">
+                    <thead>
+                    <tr>
+                        <th scope="col">Nama / Username</th>
+                        <th scope="col">Role</th>
+                        <th scope="col">Waktu Permintaan</th>
+                        <th scope="col">Aksi</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($resetRequests as $req): ?>
+                        <tr>
+                            <td>
+                                <strong><?= escape_output($req['nama']) ?></strong><br>
+                                <span class="text-muted small"><?= escape_output($req['username']) ?></span>
+                            </td>
+                            <td><span class="badge bg-secondary"><?= escape_output(ucfirst($req['role'])) ?></span></td>
+                            <td><?= date('d M Y H:i', strtotime($req['created_at'])) ?></td>
+                            <td>
+                                <?php if (
+                                    $generatedResetLink !== null
+                                    && $generatedResetLink['request_id'] === (int) $req['id']
+                                ): ?>
+                                    <div class="input-group input-group-sm mb-2">
+                                        <input type="text" class="form-control" value="<?= escape_output($generatedResetLink['url']) ?>" id="link-<?= (int) $req['id'] ?>" readonly>
+                                        <button class="btn btn-outline-secondary" type="button" onclick="navigator.clipboard.writeText(document.getElementById('link-<?= $req['id'] ?>').value); alert('Link disalin!')" title="Salin Link"><i data-lucide="copy" style="width:14px"></i></button>
+                                    </div>
+                                <?php endif; ?>
+                                <form method="POST" action="process_reset_request.php" class="d-inline">
+                                    <?= csrfInput() ?>
+                                    <input type="hidden" name="request_id" value="<?= $req['id'] ?>">
+                                    <button type="submit" name="action" value="generate_link" class="btn btn-sm btn-primary"><?= (bool) $req['has_token'] && strtotime((string) $req['expires_at']) > time() ? 'Buat Ulang Link' : 'Buat Link Reset' ?></button>
+                                    <button type="submit" name="action" value="complete" class="btn btn-sm btn-outline-success" onclick="return confirm('Tandai sudah diselesaikan tanpa mengubah password?')">Selesai</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <?php else: ?>
+                <div class="alert alert-light border text-center text-muted mb-0 py-4">
+                    <i data-lucide="check-circle" class="text-success mb-2" style="width: 32px; height: 32px;"></i><br>
+                    Tidak ada permintaan reset password saat ini.
+                </div>
+            <?php endif; ?>
         </div>
     </section>
 

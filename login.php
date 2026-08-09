@@ -1,13 +1,23 @@
 <?php
 require_once 'config.php';
+require_once 'helpers.php';
+
+if (isset($_SESSION['user_id'])) {
+    header('Location: ' . BASE_URL . dashboardForRole($_SESSION['role']));
+    exit;
+}
 
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $username = trim($_POST['username']);
-    $password = trim($_POST['password']);
-    
-    if (!empty($username) && !empty($password)) {
+    $usernameInput = $_POST['username'] ?? '';
+    $passwordInput = $_POST['password'] ?? '';
+    $username = is_string($usernameInput) ? trim($usernameInput) : '';
+    $password = is_string($passwordInput) ? $passwordInput : '';
+
+    if (!AuthAttemptLimiter::allows($_SESSION, 'password-login')) {
+        $error = "Username atau password salah!";
+    } elseif ($username !== '' && $password !== '') {
         $stmt = $pdo->prepare(
             'SELECT id, nama, role, status, password_hash
              FROM users
@@ -21,16 +31,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             && password_verify($password, $user['password_hash'])
             && userCanAuthenticate($user)
         ) {
+            AuthAttemptLimiter::clear($_SESSION, 'password-login');
             regenerateAuthenticatedSession();
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['nama'] = $user['nama'];
             $_SESSION['role'] = $user['role'];
             recordAuditEvent($pdo, (int) $user['id'], 'auth.login_succeeded', 'session', null, ['outcome' => 'success', 'actor_role' => $user['role']]);
             akrabLog('info', 'login_succeeded', ['outcome' => 'success', 'actor_role' => $user['role']]);
-            
+
             header('Location: ' . BASE_URL . dashboardForRole($user['role']));
             exit;
         } else {
+            AuthAttemptLimiter::record($_SESSION, 'password-login');
             recordAuditEvent($pdo, null, 'auth.login_failed', 'session', null, ['outcome' => 'failed']);
             akrabLog('warn', 'login_failed', ['outcome' => 'failed']);
             $error = "Username atau password salah!";
@@ -95,9 +107,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <input type="password" class="form-control rounded-3 border-0 bg-light" id="floatingPassword" name="password" placeholder="Password" autocomplete="current-password" required>
                 <label for="floatingPassword" class="text-muted"><i data-lucide="lock" style="width: 16px;" class="me-1"></i> Password</label>
             </div>
-            <button class="w-100 btn btn-lg btn-primary rounded-pill fw-bold shadow-sm mb-4 d-flex justify-content-center align-items-center gap-2" type="submit">
+            <button class="w-100 btn btn-lg btn-primary rounded-pill fw-bold shadow-sm mb-3 d-flex justify-content-center align-items-center gap-2" type="submit">
                 Masuk <i data-lucide="arrow-right" style="width: 20px;"></i>
             </button>
+
+            <div class="text-center mb-3">
+                <a href="lupa_password.php" class="text-decoration-none text-muted small fw-semibold">Lupa Password?</a>
+            </div>
             <p class="text-center text-muted mb-0 small">Belum punya akun? <a href="register.php" class="text-decoration-none fw-semibold" style="color: var(--primary-color);">Daftar di sini</a></p>
         </form>
     </div>

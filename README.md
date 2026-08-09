@@ -46,4 +46,4 @@ Jangan commit `.env`, dump database, log, backup, atau data pengguna.
 - [Retensi dan hak subjek data](docs/operations/data-retention.md)
 - [Release checklist dan ownership](docs/operations/release-checklist.md)
 
-Target produksi direncanakan pada `https://akrab.portodq.com/`. Kredensial database hanya boleh disuntikkan melalui konfigurasi hosting.
+Seluruh role, termasuk superadmin pada `/superadmin/`, menggunakan satu origin produksi: `https://akrab.portodq.com/`. Kredensial database hanya boleh disuntikkan melalui konfigurasi hosting.

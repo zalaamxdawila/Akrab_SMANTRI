@@ -109,7 +109,7 @@ CREATE TABLE IF NOT EXISTS kuesioner (
     tanggal_lahir DATE NULL,
     tempat_lahir VARCHAR(100) NULL,
     alamat TEXT NULL,
-    pendidikan VARCHAR(20) NULL,
+    pendidikan VARCHAR(150) NULL,
     
     -- II. Lab Darah (Kaggle Dataset Features)
     kadar_hb DECIMAL(5,2) NULL,
@@ -131,9 +131,11 @@ CREATE TABLE IF NOT EXISTS kuesioner (
     mens_usia_th INT NULL,
     mens_teratur ENUM('ya', 'tidak') NULL,
     mens_lama_hari INT NULL,
+    mens_jarak_siklus INT NULL,
     
     -- VII. Pola Makan
     skor_makan INT NOT NULL DEFAULT 0,
+    makanan_dikonsumsi TEXT NULL,
     
     corrected_at TIMESTAMP NULL,
     corrected_by INT NULL,
@@ -335,6 +337,30 @@ CREATE TABLE IF NOT EXISTS artikel_edukasi (
     FOREIGN KEY (corrected_by) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (archived_by) REFERENCES users(id) ON DELETE SET NULL
 );
+
+CREATE TABLE IF NOT EXISTS password_reset_requests (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    status ENUM('pending', 'completed') NOT NULL DEFAULT 'pending',
+    token_hash CHAR(64) NULL,
+    expires_at TIMESTAMP NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_password_reset_user_status (user_id, status),
+    UNIQUE KEY uq_password_reset_token_hash (token_hash),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS webauthn_credentials (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    credential_id TEXT NOT NULL,
+    public_key TEXT NOT NULL,
+    sign_count INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_webauthn_user (user_id),
+    UNIQUE KEY uq_webauthn_credential (credential_id(255)),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS schema_migrations (
     version VARCHAR(100) PRIMARY KEY,

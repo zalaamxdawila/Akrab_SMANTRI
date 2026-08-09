@@ -46,4 +46,23 @@ final class SuperadminAuthenticationTest extends TestCase
         self::assertStringContainsString('status', $contents);
         self::assertStringContainsString('userCanAuthenticate($user)', $contents);
     }
+
+    public function testPasswordLoginIsRateLimitedWithoutChangingPasswordBytes(): void
+    {
+        $contents = file_get_contents(dirname(__DIR__, 2) . '/login.php');
+
+        self::assertStringContainsString(
+            "AuthAttemptLimiter::allows(\$_SESSION, 'password-login')",
+            $contents
+        );
+        self::assertStringContainsString(
+            "AuthAttemptLimiter::record(\$_SESSION, 'password-login')",
+            $contents
+        );
+        self::assertStringContainsString(
+            "AuthAttemptLimiter::clear(\$_SESSION, 'password-login')",
+            $contents
+        );
+        self::assertStringNotContainsString("trim(\$_POST['password'])", $contents);
+    }
 }

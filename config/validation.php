@@ -136,6 +136,8 @@ function validateQuestionnaireInput(array $input): array
             'mens_usia_th' => boundedInt($input['mens_usia_th'] ?? null, 5, 25, true),
             'mens_teratur' => enumValue($input['mens_teratur'] ?? null, ['ya', 'tidak']),
             'mens_lama_hari' => boundedInt($input['mens_lama'] ?? null, 1, 15, true),
+            'mens_jarak_siklus' => boundedInt($input['mens_jarak_siklus'] ?? null, 1, 100, true),
+            'makanan_dikonsumsi' => normalizeText($input['makanan_dikonsumsi'] ?? '', 1000),
         ];
 
         $gejala = 0;

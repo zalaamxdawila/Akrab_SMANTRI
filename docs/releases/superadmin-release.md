@@ -1,6 +1,6 @@
 # Superadmin master dashboard release
 
-Target: `https://akrab.portodq.com/` only.
+Target: `https://akrab.portodq.com/superadmin/` on the single AKRAB domain only.
 
 Scope includes immutable superadmin identity, master account/data governance,
 dual-actor audit, secure Login As for siswa/UKS/orangtua, system reports, and
