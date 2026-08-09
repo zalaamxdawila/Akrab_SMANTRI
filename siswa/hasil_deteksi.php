@@ -1,14 +1,17 @@
 <?php
 require_once '../config.php';
 require_once '../helpers.php';
+require_once '../views/questionnaire_analytics.php';
 
 check_role('siswa');
 $user_id = $_SESSION['user_id'];
 
-// Get latest detection result
-$stmt = $pdo->prepare("SELECT * FROM hasil_deteksi WHERE user_id = ? ORDER BY tanggal DESC, id DESC LIMIT 1");
-$stmt->execute([$user_id]);
-$hasil = $stmt->fetch();
+$questionnaireRepository = new QuestionnaireAnalyticsRepository($pdo);
+$questionnaireHistory = $questionnaireRepository->historyForStudent((int) $user_id);
+$kuesioner = $questionnaireHistory
+    ? $questionnaireHistory[array_key_last($questionnaireHistory)]
+    : null;
+$hasil = $questionnaireRepository->latestDetectionForStudent((int) $user_id);
 
 if (!$hasil) {
     header("Location: kuesioner.php");
@@ -19,9 +22,12 @@ if (!$hasil) {
 $kategori = canonicalRiskCategory((string) $hasil['kategori_risiko']);
 $kat_anemia = adviceCategoryForRisk($kategori);
 
-$stmt = $pdo->prepare("SELECT * FROM saran_edukasi WHERE kategori_anemia = ?");
+$stmt = $pdo->prepare("SELECT * FROM saran_edukasi WHERE kategori_anemia = ? AND archived_at IS NULL");
 $stmt->execute([$kat_anemia]);
 $saran = $stmt->fetch();
+$resultPresentation = $kuesioner
+    ? (new QuestionnaireResultPresenter())->forResult($kuesioner, $hasil)
+    : null;
 
 ?>
 <!DOCTYPE html>
@@ -52,30 +58,15 @@ $saran = $stmt->fetch();
 
 <div class="container py-5">
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            
-            <div class="card shadow-sm mb-4">
-                <div class="card-body text-center p-5">
-                    <h4 class="text-muted mb-4">Hasil Deteksi Risiko Anemia</h4>
-                    
-                    <?php 
-                        $risk_class = 'risk-low';
-                        $risk_label = 'RENDAH';
-                        if ($kategori == 'sedang') { $risk_class = 'risk-medium'; $risk_label = 'SEDANG'; }
-                        if ($kategori == 'tinggi') { $risk_class = 'risk-high'; $risk_label = 'TINGGI'; }
-                        
-                        // Convert probability to percentage
-                        $percentage = round($hasil['probabilitas_risiko'] * 100, 1);
-                    ?>
-                    
-                    <div class="mb-4">
-                        <span class="risk-badge <?= $risk_class ?> display-6 p-3 px-5"><?= $risk_label ?></span>
-                    </div>
-                    
-                    <p class="fs-5 mb-1">Probabilitas Risiko: <strong><?= $percentage ?>%</strong></p>
-                    <p class="text-muted small">Dihitung pada: <?= date('d M Y', strtotime($hasil['tanggal'])) ?></p>
+        <div class="col-xl-10">
+            <?php if ($resultPresentation): ?>
+                <?php renderQuestionnaireResult($resultPresentation, $kuesioner); ?>
+            <?php else: ?>
+                <div class="alert alert-warning" role="alert">
+                    Hasil risiko tersedia, tetapi rincian kuesioner aktif tidak ditemukan.
+                    Silakan hubungi petugas UKS untuk pemeriksaan data.
                 </div>
-            </div>
+            <?php endif; ?>
             
             <?php if ($saran): ?>
             <div class="card shadow-sm border-0 border-start border-5 <?= $kategori == 'tinggi' ? 'border-danger' : 'border-success' ?>">
