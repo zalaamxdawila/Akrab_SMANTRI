@@ -36,7 +36,7 @@ final class QuestionnaireServiceIntegrationTest extends TestCase
                 static fn (): string => date('Y-m-d')
             );
         }
-        $this->pdo->exec('CREATE TABLE kuesioner (user_id INTEGER, tanggal_wawancara TEXT, nomor_responden TEXT, inisial_responden TEXT, tanggal_lahir TEXT, tempat_lahir TEXT, alamat TEXT, pendidikan TEXT, kadar_hb REAL, kadar_mchc REAL, kadar_mcv REAL, kadar_mch REAL, skor_gejala INTEGER, skor_sikap INTEGER, skor_pengetahuan INTEGER, mens_sudah TEXT, mens_usia_th INTEGER, mens_teratur TEXT, mens_lama_hari INTEGER, mens_jarak_siklus INTEGER, skor_makan INTEGER, makanan_dikonsumsi TEXT)');
+        $this->pdo->exec('CREATE TABLE kuesioner (user_id INTEGER, tanggal_wawancara TEXT, nomor_responden TEXT, inisial_responden TEXT, tanggal_lahir TEXT, tempat_lahir TEXT, alamat TEXT, pendidikan TEXT, kadar_hb REAL, kadar_mchc REAL, kadar_mcv REAL, kadar_mch REAL, skor_gejala INTEGER, skor_sikap INTEGER, skor_pengetahuan INTEGER, mens_sudah TEXT, mens_usia_th INTEGER, mens_teratur TEXT, mens_lama_hari INTEGER, mens_jarak_siklus INTEGER, skor_makan INTEGER, makanan_dikonsumsi TEXT, answers_snapshot TEXT)');
         $this->pdo->exec('CREATE TABLE hasil_deteksi (user_id INTEGER, probabilitas_risiko REAL, kategori_risiko TEXT, model_version TEXT, model_checksum TEXT, tanggal TEXT)');
     }
 
@@ -57,7 +57,7 @@ final class QuestionnaireServiceIntegrationTest extends TestCase
         ];
         for ($i = 1; $i <= 10; $i++) {
             $input['gejala_' . $i] = '0';
-            $input['sikap_' . $i] = '0';
+            $input['sikap_' . $i] = $i <= 5 ? '1' : '0';
             $input['pengetahuan_' . $i] = [];
         }
         foreach (range(1, 6) as $i) {
@@ -69,5 +69,13 @@ final class QuestionnaireServiceIntegrationTest extends TestCase
         self::assertSame('model-v1', $result['model_version']);
         self::assertSame(1, (int) $this->pdo->query('SELECT COUNT(*) FROM kuesioner')->fetchColumn());
         self::assertSame(1, (int) $this->pdo->query('SELECT COUNT(*) FROM hasil_deteksi')->fetchColumn());
+        $snapshot = json_decode(
+            (string) $this->pdo->query('SELECT answers_snapshot FROM kuesioner')->fetchColumn(),
+            true,
+            32,
+            JSON_THROW_ON_ERROR
+        );
+        self::assertSame('2026-08-17.v1', $snapshot['version']);
+        self::assertCount(10, $snapshot['sections']['gejala']['items']);
     }
 }

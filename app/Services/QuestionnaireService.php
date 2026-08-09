@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 final class QuestionnaireService
 {
-    public function __construct(private PDO $pdo, private AnemiaRiskService $riskService = new AnemiaRiskService())
-    {
+    public function __construct(
+        private PDO $pdo,
+        private AnemiaRiskService $riskService = new AnemiaRiskService(),
+        private QuestionnaireAnswerSnapshot $answerSnapshot = new QuestionnaireAnswerSnapshot()
+    ) {
     }
 
     /** @return array{probability: float, category: string, model_version: string, model_checksum: string} */
@@ -17,6 +20,7 @@ final class QuestionnaireService
         }
 
         $values = $validated['values'];
+        $answersSnapshot = $this->answerSnapshot->encode($input);
         $risk = $this->riskService->evaluate([
             'kadar_hb' => $values['kadar_hb'],
             'kadar_mchc' => $values['kadar_mchc'],
@@ -34,14 +38,16 @@ final class QuestionnaireService
             $stmt = $this->pdo->prepare('INSERT INTO kuesioner
                 (user_id, tanggal_wawancara, nomor_responden, inisial_responden, tanggal_lahir, tempat_lahir, alamat, pendidikan,
                  kadar_hb, kadar_mchc, kadar_mcv, kadar_mch, skor_gejala, skor_sikap, skor_pengetahuan,
-                 mens_sudah, mens_usia_th, mens_teratur, mens_lama_hari, mens_jarak_siklus, skor_makan, makanan_dikonsumsi)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+                 mens_sudah, mens_usia_th, mens_teratur, mens_lama_hari, mens_jarak_siklus, skor_makan, makanan_dikonsumsi,
+                 answers_snapshot)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
             $stmt->execute([
                 $userId, $values['tanggal_wawancara'], $respondentNumber, $values['inisial_responden'], $values['tanggal_lahir'],
                 $values['tempat_lahir'], $values['alamat'], $education, $values['kadar_hb'], $values['kadar_mchc'],
                 $values['kadar_mcv'], $values['kadar_mch'], $values['skor_gejala'], $values['skor_sikap'],
                 $values['skor_pengetahuan'], $values['mens_sudah'], $values['mens_usia_th'], $values['mens_teratur'],
                 $values['mens_lama_hari'], $values['mens_jarak_siklus'], $values['skor_makan'], $values['makanan_dikonsumsi'],
+                $answersSnapshot,
             ]);
 
             $result = $this->pdo->prepare('INSERT INTO hasil_deteksi

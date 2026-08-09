@@ -136,6 +136,7 @@ CREATE TABLE IF NOT EXISTS kuesioner (
     -- VII. Pola Makan
     skor_makan INT NOT NULL DEFAULT 0,
     makanan_dikonsumsi TEXT NULL,
+    answers_snapshot JSON NULL,
     
     corrected_at TIMESTAMP NULL,
     corrected_by INT NULL,
