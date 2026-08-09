@@ -11,6 +11,5 @@ vendor/
 *.bak
 *.log
 *.md
-*.pdf
 *.py
 *.bat

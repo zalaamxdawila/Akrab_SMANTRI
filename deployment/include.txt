@@ -1,5 +1,6 @@
 # Public application entry points
 index.php
+Panduan_Instalasi_PWA_AKRAB.pdf
 login.php
 logout.php
 end_impersonation.php
