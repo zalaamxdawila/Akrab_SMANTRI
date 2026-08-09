@@ -7,7 +7,8 @@ final class QuestionnaireService
     public function __construct(
         private PDO $pdo,
         private AnemiaRiskService $riskService = new AnemiaRiskService(),
-        private QuestionnaireAnswerSnapshot $answerSnapshot = new QuestionnaireAnswerSnapshot()
+        private QuestionnaireAnswerSnapshot $answerSnapshot = new QuestionnaireAnswerSnapshot(),
+        private QuestionnaireEligibility $eligibility = new QuestionnaireEligibility()
     ) {
     }
 
@@ -33,6 +34,7 @@ final class QuestionnaireService
 
         $this->pdo->beginTransaction();
         try {
+            $this->lockStudentAndAssertEligibility($userId);
             $respondentNumber = 'AKRAB-' . date('Ym') . '-' . str_pad((string) $userId, 4, '0', STR_PAD_LEFT) . '-' . strtoupper(bin2hex(random_bytes(3)));
             $education = $values['pendidikan'] . (!empty($values['jurusan']) ? ' ' . $values['jurusan'] : '');
             $stmt = $this->pdo->prepare('INSERT INTO kuesioner
@@ -63,5 +65,38 @@ final class QuestionnaireService
         }
 
         return $risk;
+    }
+
+    private function lockStudentAndAssertEligibility(int $userId): void
+    {
+        $forUpdate = $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql'
+            ? ' FOR UPDATE'
+            : '';
+        $student = $this->pdo->prepare(
+            'SELECT id FROM users WHERE id = ?' . $forUpdate
+        );
+        $student->execute([$userId]);
+        if (!$student->fetch()) {
+            throw new RuntimeException('Questionnaire user does not exist.');
+        }
+
+        $latest = $this->pdo->prepare(
+            'SELECT created_at
+             FROM kuesioner
+             WHERE user_id = ? AND archived_at IS NULL
+             ORDER BY created_at DESC, id DESC
+             LIMIT 1'
+        );
+        $latest->execute([$userId]);
+        $latestCreatedAt = $latest->fetchColumn();
+        $status = $this->eligibility->forLatestSubmission(
+            is_string($latestCreatedAt) ? $latestCreatedAt : null
+        );
+        if (!$status['allowed']) {
+            $date = $status['next_eligible_at']?->format('d M Y') ?? '-';
+            throw new InvalidArgumentException(
+                'Kuesioner dapat diisi kembali pada ' . $date . '.'
+            );
+        }
     }
 }
