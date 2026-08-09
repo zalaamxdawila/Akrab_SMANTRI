@@ -4,6 +4,7 @@
 require_once __DIR__ . '/app/Services/AnemiaRiskService.php';
 require_once __DIR__ . '/app/Services/QuestionnaireService.php';
 require_once __DIR__ . '/app/Services/QuestionnaireInsights.php';
+require_once __DIR__ . '/app/Services/QuestionnaireEligibility.php';
 require_once __DIR__ . '/app/Repositories/DashboardRepository.php';
 require_once __DIR__ . '/app/Repositories/QuestionnaireAnalyticsRepository.php';
 require_once __DIR__ . '/views/partials/impersonation_banner.php';

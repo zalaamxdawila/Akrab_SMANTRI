@@ -42,17 +42,13 @@ $stmt = $pdo->prepare("SELECT * FROM kuesioner WHERE user_id = ? AND archived_at
 $stmt->execute([$user_id]);
 $kuesioner = $stmt->fetch();
 
-$can_fill_kuesioner = true;
-$next_kuesioner_date = null;
-if ($kuesioner) {
-    $last_filled = strtotime($kuesioner['created_at']);
-    $six_months_ago = strtotime('-6 months');
-    if ($last_filled > $six_months_ago) {
-        $can_fill_kuesioner = false;
-        // Translate format nicely to Indonesian visually, e.g. using basic date
-        $next_kuesioner_date = date('d M Y', strtotime('+6 months', $last_filled));
-    }
-}
+$questionnaireEligibility = (new QuestionnaireEligibility())->forLatestSubmission(
+    $kuesioner['created_at'] ?? null
+);
+$can_fill_kuesioner = $questionnaireEligibility['allowed'];
+$next_kuesioner_date = $questionnaireEligibility['next_eligible_at']
+    ? $questionnaireEligibility['next_eligible_at']->format('d M Y')
+    : null;
 
 // Check latest risk detection
 $stmt = $pdo->prepare("SELECT * FROM hasil_deteksi WHERE user_id = ? ORDER BY tanggal DESC, id DESC LIMIT 1");

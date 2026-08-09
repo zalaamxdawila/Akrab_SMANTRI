@@ -12,13 +12,12 @@ $clinicalRiskEnabled = isClinicalRiskEnabled();
 $stmtCooldown = $pdo->prepare("SELECT created_at FROM kuesioner WHERE user_id = ? AND archived_at IS NULL ORDER BY created_at DESC LIMIT 1");
 $stmtCooldown->execute([$user_id]);
 $lastKuesioner = $stmtCooldown->fetch();
-if ($lastKuesioner) {
-    $lastFilled = strtotime($lastKuesioner['created_at']);
-    $sixMonthsAgo = strtotime('-6 months');
-    if ($lastFilled > $sixMonthsAgo) {
-        header("Location: dashboard.php?cooldown=1");
-        exit;
-    }
+$questionnaireEligibility = (new QuestionnaireEligibility())->forLatestSubmission(
+    $lastKuesioner['created_at'] ?? null
+);
+if (!$questionnaireEligibility['allowed']) {
+    header("Location: dashboard.php?cooldown=1");
+    exit;
 }
 
 $stmtUser = $pdo->prepare("SELECT nama, username, kelas FROM users WHERE id = ?");
