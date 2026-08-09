@@ -30,7 +30,7 @@ $selectedStudentId = filter_input(INPUT_GET, 'student_id', FILTER_VALIDATE_INT);
 $selectedStudent = null;
 $selectedHistory = [];
 $selectedLatest = null;
-$selectedInsights = [];
+$selectedPresentation = null;
 $selectedChart = ['labels' => [], 'series' => []];
 if ($selectedStudentId) {
     $selectedStudent = $repository->student((int) $selectedStudentId);
@@ -42,9 +42,15 @@ if ($selectedStudentId) {
     $selectedLatest = $selectedHistory
         ? $selectedHistory[array_key_last($selectedHistory)]
         : null;
-    $selectedInsights = $selectedLatest
-        ? $insightService->forResponse($selectedLatest)
-        : [];
+    $selectedDetection = $repository->latestDetectionForStudent(
+        (int) $selectedStudentId
+    );
+    $selectedPresentation = $selectedLatest
+        ? (new QuestionnaireResultPresenter())->forResult(
+            $selectedLatest,
+            $selectedDetection
+        )
+        : null;
     $selectedChart = $insightService->historyChart($selectedHistory);
 }
 
@@ -107,20 +113,10 @@ renderSuperadminHeader('Hasil Kuesioner', 'questionnaires');
         <?php else: ?>
             <div style="height: 320px"><canvas id="masterStudentChart"></canvas></div>
             <div class="mt-4">
-                <?php renderQuestionnaireInsights(
-                    $selectedInsights,
-                    $insightService->disclaimer()
+                <?php renderQuestionnaireResult(
+                    $selectedPresentation,
+                    $selectedLatest
                 ); ?>
-            </div>
-            <div class="mt-4">
-                <h3 class="h6">Hasil lab pada pengisian terakhir</h3>
-                <?php renderLabSummary($selectedLatest); ?>
-
-                <h3 class="h6 mt-4">Riwayat Menstruasi</h3>
-                <?php renderMenstruationSummary($selectedLatest); ?>
-
-                <h3 class="h6 mt-4">Pola Makan</h3>
-                <?php renderDietSummary($selectedLatest); ?>
             </div>
         <?php endif; ?>
     </section>

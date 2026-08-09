@@ -11,7 +11,7 @@ $kuesioner = null;
 $hasil = null;
 $kepatuhan = [];
 $questionnaireHistory = [];
-$scoreInsights = [];
+$resultPresentation = null;
 $historyChart = ['labels' => [], 'series' => []];
 
 $questionnaireRepository = new QuestionnaireAnalyticsRepository($pdo);
@@ -24,13 +24,13 @@ if ($anak) {
     $kuesioner = $questionnaireHistory
         ? $questionnaireHistory[array_key_last($questionnaireHistory)]
         : null;
-    $scoreInsights = $kuesioner
-        ? $questionnaireInsights->forResponse($kuesioner)
-        : [];
     $historyChart = $questionnaireInsights->historyChart($questionnaireHistory);
         
     // Latest Risk Detection
     $hasil = $questionnaireRepository->latestDetectionForStudent($anak_id);
+    $resultPresentation = $kuesioner
+        ? (new QuestionnaireResultPresenter())->forResult($kuesioner, $hasil)
+        : null;
         
     // TTD History (Last 5)
     $stmt = $pdo->prepare("SELECT * FROM konsumsi_ttd WHERE user_id = ? ORDER BY tanggal DESC LIMIT 5");
@@ -104,7 +104,7 @@ if ($anak) {
                             if ($hasil) {
                                 if ($hasil['kategori_risiko'] == 'tinggi') { $risk_badge = 'bg-danger'; $risk_text = 'Risiko Tinggi Anemia'; }
                                 elseif ($hasil['kategori_risiko'] == 'sedang') { $risk_badge = 'bg-warning text-dark'; $risk_text = 'Risiko Sedang'; }
-                                else { $risk_badge = 'bg-success'; $risk_text = 'Bebas Anemia'; }
+                                else { $risk_badge = 'bg-success'; $risk_text = 'Risiko Rendah'; }
                             }
                         ?>
                         <div class="badge <?= $risk_badge ?> fs-6 p-2 rounded-pill shadow-sm w-100">Status: <?= $risk_text ?></div>
@@ -121,30 +121,12 @@ if ($anak) {
                         </h5>
                         
                         <?php if ($kuesioner): ?>
-                            <div class="row mb-4 text-center">
-                                <div class="col-4">
-                                    <h3 class="mb-0 fw-bold text-danger"><?= $kuesioner['skor_gejala'] ?></h3>
-                                    <small class="text-muted">Skor Keluhan (5L)</small>
-                                </div>
-                                <div class="col-4">
-                                    <h3 class="mb-0 fw-bold text-warning"><?= $kuesioner['skor_makan'] ?></h3>
-                                    <small class="text-muted">Skor Gizi</small>
-                                </div>
-                                <div class="col-4">
-                                    <h3 class="mb-0 fw-bold text-info"><?= $kuesioner['skor_sikap'] ?></h3>
-                                    <small class="text-muted">Skor Kedisiplinan</small>
-                                </div>
-                            </div>
+                            <?php renderQuestionnaireResult($resultPresentation, $kuesioner); ?>
                             <h6 class="fw-bold">Perkembangan semua pengisian</h6>
                             <p class="small text-muted">Grafik hanya memuat hasil dari akun siswa yang telah tertaut dan disetujui.</p>
                             <div class="mb-4" style="height: 300px">
                                 <canvas id="parentQuestionnaireChart"></canvas>
                             </div>
-                            <h6 class="fw-bold">Penjelasan pengisian terakhir</h6>
-                            <?php renderQuestionnaireInsights(
-                                $scoreInsights,
-                                $questionnaireInsights->disclaimer()
-                            ); ?>
                         <?php else: ?>
                             <p class="text-muted">Anak Anda belum pernah mengisi kuesioner *screening* Anemia.</p>
                         <?php endif; ?>

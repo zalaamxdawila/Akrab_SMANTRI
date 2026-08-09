@@ -29,15 +29,13 @@ $questionnaireHistory = $questionnaireRepository->historyForStudent($siswa_id);
 $kuesioner = $questionnaireHistory
     ? $questionnaireHistory[array_key_last($questionnaireHistory)]
     : null;
-$scoreInsights = $kuesioner
-    ? $questionnaireInsights->forResponse($kuesioner)
-    : [];
 $historyChart = $questionnaireInsights->historyChart($questionnaireHistory);
 
-// 3. Fetch Latest Deteksi
-$stmt = $pdo->prepare("SELECT * FROM hasil_deteksi WHERE user_id = ? ORDER BY tanggal DESC, id DESC LIMIT 1");
-$stmt->execute([$siswa_id]);
-$hasil = $stmt->fetch();
+// 3. Fetch Latest Active Detection
+$hasil = $questionnaireRepository->latestDetectionForStudent($siswa_id);
+$resultPresentation = $kuesioner
+    ? (new QuestionnaireResultPresenter())->forResult($kuesioner, $hasil)
+    : null;
 
 // 4. Fetch TTD Consumption
 $stmt = $pdo->prepare("SELECT * FROM konsumsi_ttd WHERE user_id = ? ORDER BY tanggal DESC LIMIT 10");
@@ -158,40 +156,12 @@ $total_ttd = $stmt->fetch()['total'];
                             <h4 class="text-muted">Data Kuesioner Kosong</h4>
                         </div>
                     <?php else: ?>
-                        <h5 class="text-primary border-bottom pb-2 mb-3">1. Data Laboratorium (Kaggle Features)</h5>
-                        <div class="row mb-4">
-                            <div class="col-6 col-md-3"><strong>Hemoglobin (Hb):</strong><br><?= $kuesioner['kadar_hb'] ? $kuesioner['kadar_hb'].' gr%' : '<span class="text-muted">-</span>' ?></div>
-                            <div class="col-6 col-md-3"><strong>MCHC:</strong><br><?= $kuesioner['kadar_mchc'] ? $kuesioner['kadar_mchc'] : '<span class="text-muted">-</span>' ?></div>
-                            <div class="col-6 col-md-3"><strong>MCV:</strong><br><?= $kuesioner['kadar_mcv'] ? $kuesioner['kadar_mcv'] : '<span class="text-muted">-</span>' ?></div>
-                            <div class="col-6 col-md-3"><strong>MCH:</strong><br><?= $kuesioner['kadar_mch'] ? $kuesioner['kadar_mch'] : '<span class="text-muted">-</span>' ?></div>
-                        </div>
+                        <?php renderQuestionnaireResult($resultPresentation, $kuesioner); ?>
 
-                        <h5 class="text-primary border-bottom pb-2 mb-3">2. Diagram Perkembangan Kuesioner</h5>
+                        <h5 class="text-primary border-bottom pb-2 mb-3">Perkembangan Kuesioner</h5>
                         <p class="small text-muted">Grafik memuat semua pengisian aktif siswa ini dan menormalkan setiap skor ke skala 0–100%.</p>
                         <div class="mb-4" style="height: 320px">
                             <canvas id="studentQuestionnaireChart"></canvas>
-                        </div>
-
-                        <h5 class="text-primary border-bottom pb-2 mb-3">3. Penjelasan Pengisian Terakhir</h5>
-                        <div class="mb-4">
-                            <?php renderQuestionnaireInsights(
-                                $scoreInsights,
-                                $questionnaireInsights->disclaimer()
-                            ); ?>
-                        </div>
-
-                        <h5 class="text-primary border-bottom pb-2 mb-3">4. Riwayat Menstruasi</h5>
-                        <div class="row mb-4">
-                            <div class="col-md-3"><strong>Sudah Menstruasi:</strong><br><?= ucfirst($kuesioner['mens_sudah'] ?? '-') ?></div>
-                            <div class="col-md-3"><strong>Siklus Teratur:</strong><br><?= ucfirst($kuesioner['mens_teratur'] ?? '-') ?></div>
-                            <div class="col-md-3"><strong>Lama Hari:</strong><br><?= $kuesioner['mens_lama_hari'] ? $kuesioner['mens_lama_hari'].' Hari' : '-' ?></div>
-                            <div class="col-md-3"><strong>Jarak Siklus:</strong><br><?= $kuesioner['mens_jarak_siklus'] ? $kuesioner['mens_jarak_siklus'].' Hari' : '-' ?></div>
-                        </div>
-
-                        <h5 class="text-primary border-bottom pb-2 mb-3">5. Pola Makan</h5>
-                        <div class="row mb-4">
-                            <div class="col-md-3"><strong>Skor Makan:</strong><br><?= $kuesioner['skor_makan'] ?? '-' ?></div>
-                            <div class="col-md-9"><strong>Makanan Sering Dikonsumsi:</strong><br><?= nl2br(htmlspecialchars($kuesioner['makanan_dikonsumsi'] ?? '-')) ?></div>
                         </div>
                     <?php endif; ?>
                 </div>

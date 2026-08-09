@@ -54,8 +54,27 @@ final class QuestionnaireAnalyticsBoundaryTest extends TestCase
                 $contents,
                 $relativePath
             );
+        }
+        self::assertStringContainsString('disclaimer', $sharedView);
+    }
+
+    public function testParentUksAndSuperadminUseCompleteResultPresenter(): void
+    {
+        $root = dirname(__DIR__, 2);
+        foreach ([
+            '/orangtua/dashboard.php',
+            '/uks/detail_siswa.php',
+            '/superadmin/questionnaire_results.php',
+        ] as $relativePath) {
+            $contents = file_get_contents($root . $relativePath);
+            self::assertNotFalse($contents);
             self::assertStringContainsString(
-                '->disclaimer()',
+                'QuestionnaireResultPresenter',
+                $contents,
+                $relativePath
+            );
+            self::assertStringContainsString(
+                'renderQuestionnaireResult(',
                 $contents,
                 $relativePath
             );
