@@ -3,6 +3,128 @@
 declare(strict_types=1);
 
 /**
+ * @param array<string, mixed> $presentation
+ * @param array<string, mixed> $response
+ */
+function renderQuestionnaireResult(array $presentation, array $response): void
+{
+    $risk = $presentation['risk'];
+    ?>
+    <section class="questionnaire-result" aria-labelledby="questionnaire-summary-title">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body p-4">
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+                    <div>
+                        <p class="text-uppercase small fw-semibold text-muted mb-1">Hasil Ringkas</p>
+                        <h2 class="h4 mb-1" id="questionnaire-summary-title">Ringkasan skrining terakhir</h2>
+                        <p class="text-muted mb-0">Fokus utama dan langkah yang dapat dilakukan berikutnya.</p>
+                    </div>
+                    <div class="text-md-end" aria-label="Kategori risiko">
+                        <span class="badge text-bg-<?= escape_output((string) $risk['tone']) ?> fs-6 mb-1">
+                            Risiko <?= escape_output((string) $risk['label']) ?>
+                        </span>
+                        <div class="small text-muted">
+                            Probabilitas <?= escape_output((string) $risk['probability_label']) ?>
+                            · <?= escape_output((string) $risk['date_label']) ?>
+                        </div>
+                    </div>
+                </div>
+
+                <?php renderQuestionnaireInsights($presentation['scores'], '', true); ?>
+
+                <div class="row g-4 mt-1">
+                    <div class="col-lg-6">
+                        <h3 class="h6">Faktor yang paling perlu diperhatikan</h3>
+                        <ol class="list-group list-group-numbered">
+                            <?php foreach ($presentation['priorities'] as $priority): ?>
+                                <li class="list-group-item">
+                                    <strong><?= escape_output((string) $priority['label']) ?></strong>
+                                    <span class="d-block small text-muted">
+                                        <?= escape_output((string) $priority['level']) ?> —
+                                        <?= escape_output((string) $priority['explanation']) ?>
+                                    </span>
+                                </li>
+                            <?php endforeach; ?>
+                        </ol>
+                    </div>
+                    <div class="col-lg-6">
+                        <h3 class="h6">Langkah berikutnya</h3>
+                        <ul class="list-group">
+                            <?php foreach ($presentation['actions'] as $action): ?>
+                                <li class="list-group-item d-flex gap-2">
+                                    <span class="text-primary" aria-hidden="true">✓</span>
+                                    <span><?= escape_output((string) $action) ?></span>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="alert alert-secondary small mt-4 mb-0" role="note">
+                    <?= escape_output((string) $presentation['disclaimer']) ?>
+                </div>
+            </div>
+        </div>
+
+        <details class="card shadow-sm border-0 mb-4">
+            <summary class="card-header bg-white p-3 p-md-4 d-flex flex-column gap-1">
+                <span class="h5 mb-0">Hasil Lengkap</span>
+                <span class="small text-muted">Buka rincian skor, data pendukung, serta pertanyaan dan jawaban.</span>
+            </summary>
+            <div class="card-body p-4">
+                <section aria-labelledby="complete-score-title">
+                    <h3 class="h5" id="complete-score-title">Rincian skor per aspek</h3>
+                    <?php renderQuestionnaireInsights($presentation['scores'], '', true); ?>
+                </section>
+
+                <section class="mt-4 pt-3 border-top" aria-labelledby="complete-lab-title">
+                    <h3 class="h5" id="complete-lab-title">Data laboratorium</h3>
+                    <?php renderLabSummary($response); ?>
+                </section>
+
+                <section class="mt-4 pt-3 border-top" aria-labelledby="complete-menstruation-title">
+                    <h3 class="h5" id="complete-menstruation-title">Data menstruasi</h3>
+                    <?php renderMenstruationSummary($response); ?>
+                </section>
+
+                <section class="mt-4 pt-3 border-top" aria-labelledby="complete-diet-title">
+                    <h3 class="h5" id="complete-diet-title">Catatan pola makan</h3>
+                    <?php renderDietSummary($response); ?>
+                </section>
+
+                <section class="mt-4 pt-3 border-top" aria-labelledby="complete-answer-title">
+                    <h3 class="h5" id="complete-answer-title">Pertanyaan dan jawaban</h3>
+                    <?php if (!$presentation['answers']['available']): ?>
+                        <div class="alert alert-info mb-0" role="status">
+                            <?= escape_output((string) $presentation['answers']['message']) ?>
+                        </div>
+                    <?php else: ?>
+                        <?php foreach ($presentation['answers']['sections'] as $section): ?>
+                            <section class="mt-3" aria-label="<?= escape_output((string) $section['label']) ?>">
+                                <h4 class="h6 text-primary"><?= escape_output((string) $section['label']) ?></h4>
+                                <dl class="list-group mb-0">
+                                    <?php foreach ($section['items'] as $item): ?>
+                                        <div class="list-group-item">
+                                            <dt class="fw-semibold"><?= escape_output((string) $item['question']) ?></dt>
+                                            <dd class="mb-0 text-muted"><?= escape_output((string) $item['answer']) ?></dd>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </dl>
+                            </section>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </section>
+
+                <div class="alert alert-secondary small mt-4 mb-0" role="note">
+                    <?= escape_output((string) $presentation['disclaimer']) ?>
+                </div>
+            </div>
+        </details>
+    </section>
+    <?php
+}
+
+/**
  * @param array<string, array<string, mixed>> $insights
  */
 function renderQuestionnaireInsights(
@@ -43,9 +165,11 @@ function renderQuestionnaireInsights(
             </div>
         <?php endforeach; ?>
     </div>
-    <div class="alert alert-secondary small mt-3 mb-0" role="note">
-        <?= escape_output($disclaimer) ?>
-    </div>
+    <?php if ($disclaimer !== ''): ?>
+        <div class="alert alert-secondary small mt-3 mb-0" role="note">
+            <?= escape_output($disclaimer) ?>
+        </div>
+    <?php endif; ?>
     <?php
 }
 
