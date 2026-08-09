@@ -251,6 +251,18 @@ function renderDietSummary(array $response): void
 function renderQuestionnaireHistoryChartScript(string $canvasId, array $chart): void
 {
     $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
+    $singleResponse = count($chart['labels']) === 1;
+    $displayLabels = $singleResponse
+        ? ['Keluhan & gejala', 'Pola makan', 'Pengetahuan', 'Sikap & kesadaran']
+        : $chart['labels'];
+    $singleResponseValues = $singleResponse
+        ? [
+            $chart['series']['gejala'][0] ?? 0,
+            $chart['series']['makan'][0] ?? 0,
+            $chart['series']['pengetahuan'][0] ?? 0,
+            $chart['series']['sikap'][0] ?? 0,
+        ]
+        : [];
     ?>
     <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -263,13 +275,36 @@ function renderQuestionnaireHistoryChartScript(string $canvasId, array $chart): 
         const chart = new Chart(canvas, {
             type: 'line',
             data: {
-                labels: <?= json_encode($chart['labels'], $jsonFlags) ?>,
+                labels: <?= json_encode($displayLabels, $jsonFlags) ?>,
                 datasets: [
+                    <?php if ($singleResponse): ?>
+                    {
+                        label: <?= json_encode('Hasil '.$chart['labels'][0], $jsonFlags) ?>,
+                        data: <?= json_encode($singleResponseValues, $jsonFlags) ?>,
+                        borderColor: '#0d6efd',
+                        backgroundColor: 'rgba(13, 110, 253, .12)',
+                        showLine: true,
+                        borderWidth: 3,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        pointBorderWidth: 2,
+                        pointBackgroundColor: '#ffffff',
+                        fill: false,
+                        tension: .25
+                    }
+                    <?php else: ?>
                     {
                         label: 'Keluhan & gejala',
                         data: <?= json_encode($chart['series']['gejala'], $jsonFlags) ?>,
                         borderColor: '#dc3545',
                         backgroundColor: 'rgba(220, 53, 69, .12)',
+                        showLine: true,
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointBorderWidth: 2,
+                        pointBackgroundColor: '#ffffff',
+                        fill: false,
                         tension: .25
                     },
                     {
@@ -277,6 +312,13 @@ function renderQuestionnaireHistoryChartScript(string $canvasId, array $chart): 
                         data: <?= json_encode($chart['series']['makan'], $jsonFlags) ?>,
                         borderColor: '#198754',
                         backgroundColor: 'rgba(25, 135, 84, .12)',
+                        showLine: true,
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointBorderWidth: 2,
+                        pointBackgroundColor: '#ffffff',
+                        fill: false,
                         tension: .25
                     },
                     {
@@ -284,6 +326,13 @@ function renderQuestionnaireHistoryChartScript(string $canvasId, array $chart): 
                         data: <?= json_encode($chart['series']['pengetahuan'], $jsonFlags) ?>,
                         borderColor: '#0dcaf0',
                         backgroundColor: 'rgba(13, 202, 240, .12)',
+                        showLine: true,
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointBorderWidth: 2,
+                        pointBackgroundColor: '#ffffff',
+                        fill: false,
                         tension: .25
                     },
                     {
@@ -291,8 +340,16 @@ function renderQuestionnaireHistoryChartScript(string $canvasId, array $chart): 
                         data: <?= json_encode($chart['series']['sikap'], $jsonFlags) ?>,
                         borderColor: '#6f42c1',
                         backgroundColor: 'rgba(111, 66, 193, .12)',
+                        showLine: true,
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointBorderWidth: 2,
+                        pointBackgroundColor: '#ffffff',
+                        fill: false,
                         tension: .25
                     }
+                    <?php endif; ?>
                 ]
             },
             options: {

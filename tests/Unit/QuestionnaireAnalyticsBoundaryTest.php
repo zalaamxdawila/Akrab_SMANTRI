@@ -58,6 +58,34 @@ final class QuestionnaireAnalyticsBoundaryTest extends TestCase
         self::assertStringContainsString('disclaimer', $sharedView);
     }
 
+    public function testSingleResponseChartConnectsTheFourScoreAspects(): void
+    {
+        require_once dirname(__DIR__, 2) . '/views/questionnaire_analytics.php';
+
+        ob_start();
+        renderQuestionnaireHistoryChartScript('studentChart', [
+            'labels' => ['01 Agu 2026'],
+            'series' => [
+                'gejala' => [25.0],
+                'makan' => [50.0],
+                'pengetahuan' => [75.0],
+                'sikap' => [100.0],
+            ],
+        ]);
+        $output = (string) ob_get_clean();
+
+        self::assertStringContainsString(
+            'labels: ["Keluhan \\u0026 gejala","Pola makan","Pengetahuan","Sikap \\u0026 kesadaran"]',
+            $output
+        );
+        self::assertStringContainsString(
+            'data: [25,50,75,100]',
+            $output
+        );
+        self::assertStringContainsString('showLine: true', $output);
+        self::assertStringContainsString('borderWidth: 3', $output);
+    }
+
     public function testParentUksAndSuperadminUseCompleteResultPresenter(): void
     {
         $root = dirname(__DIR__, 2);
