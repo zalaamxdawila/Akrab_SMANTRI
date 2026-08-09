@@ -995,3 +995,43 @@ review, dan rollback drill.
 - Data owner/sekolah: kebijakan akses orang tua, retensi, audit.
 - Technical reviewer: schema, security, migration, rollback.
 - Deployment owner: akses hosting, secret, backup, dan Go/No-Go.
+
+## Addendum 2026-08-09 — Hasil Kuesioner Ringkas/Lengkap
+
+Spesifikasi: `docs/specs/questionnaire-results.md`
+
+Keputusan data: `docs/decisions/0002-questionnaire-answer-snapshots.md`
+
+### Dependency graph
+
+```text
+Eligibility 17 Agustus
+  -> penyimpanan snapshot jawaban
+      -> presentasi hasil bersama
+          -> siswa
+          -> parent / UKS / superadmin
+              -> full quality + migration rehearsal + browser UAT
+```
+
+### Tahap implementasi
+
+1. Ekstrak aturan eligibility agar tanggal 17 Agustus dan cooldown enam bulan
+   diuji dengan clock deterministik.
+2. Tambahkan migrasi additive dan snapshot jawaban versioned dalam transaksi
+   pengiriman kuesioner.
+3. Tambahkan service presentasi dan renderer bersama untuk Hasil Ringkas serta
+   Hasil Lengkap, termasuk fallback data lama.
+4. Integrasikan ke siswa, parent, detail UKS, dan detail superadmin tanpa
+   memperluas hak akses.
+5. Jalankan lint/test, rehearsal migrasi fresh-existing-idempotent, security
+   review, serta browser UAT. Deployment produksi tetap menunggu GO eksplisit.
+
+### Risiko dan mitigasi
+
+| Risiko | Dampak | Mitigasi |
+|---|---|---|
+| Snapshot memuat data kesehatan sensitif | Tinggi | Boundary role existing, output encoding, tanpa logging |
+| Data historis tidak punya jawaban | Sedang | Fallback eksplisit; tidak merekonstruksi jawaban |
+| Siswa mengisi berulang pada 17 Agustus | Tinggi | Pengisian pada/setelah cutoff memulai cooldown baru |
+| Perubahan memengaruhi model klinis | Kritis | Tidak mengubah input, formula, threshold, atau flag model |
+| Migrasi production gagal | Tinggi | Additive migration, clone rehearsal, backup, explicit GO |

@@ -662,3 +662,50 @@ Aturan eksekusi:
   - Depends: SA32.4 dan explicit production GO.
   - Files: `docs/releases/superadmin-release.md`,
     `tasks/checkpoints/CP-20.md`, `tasks/todo.md`.
+
+### Addendum — Hasil Kuesioner Ringkas/Lengkap
+
+- [ ] **QR1 — Aturan buka ulang 17 Agustus 2026**
+  - Acceptance: mulai cutoff semua pengisian lama eligible; pengisian baru
+    memulai cooldown enam bulan; dashboard dan route submit konsisten.
+  - Verify: focused boundary tests sebelum/pada/setelah cutoff.
+  - Depends: none.
+  - Files: eligibility service, `siswa/dashboard.php`, `siswa/kuesioner.php`,
+    unit test.
+
+- [ ] **QR2 — Snapshot jawaban versioned dan additive migration**
+  - Acceptance: hanya jawaban visible+validated disimpan secara atomik; data
+    lama tetap valid dengan snapshot null; skor/model tidak berubah.
+  - Verify: integration transaction test dan migration fresh/rerun test.
+  - Depends: QR1.
+  - Files: snapshot service, questionnaire service, migration 015,
+    `database/schema.sql`, integration tests.
+
+- [ ] **QR3 — Presenter Hasil Ringkas dan Hasil Lengkap**
+  - Acceptance: ringkasan memberi kategori, empat aspek, prioritas, dan tindak
+    lanjut; detail memberi jawaban/lab/menstruasi/pola makan serta fallback lama.
+  - Verify: unit tests untuk kategori, prioritas, fallback, dan output encoding.
+  - Depends: QR2.
+  - Files: insight/presenter service, shared renderer, unit tests.
+
+- [ ] **QR4 — Integrasi hasil siswa**
+  - Acceptance: siswa hanya membaca hasil sendiri; ringkasan langsung terbaca;
+    detail dapat dibuka dengan keyboard; disclaimer selalu tampil.
+  - Verify: route contract test dan browser smoke siswa.
+  - Depends: QR3.
+  - Files: `siswa/hasil_deteksi.php`, result route tests.
+
+- [ ] **QR5 — Integrasi parent, UKS, dan superadmin**
+  - Acceptance: parent hanya linked student; UKS/superadmin semua siswa melalui
+    guard yang ada; akses kesehatan tetap diaudit.
+  - Verify: role-boundary tests dan browser smoke tiap audience.
+  - Depends: QR3.
+  - Files: parent dashboard, UKS detail, superadmin results, boundary tests.
+
+- [ ] **QR6 — Quality gate dan kesiapan rilis**
+  - Acceptance: lint/test/security clean; migration rehearsal tercatat;
+    deployment package dapat dibangun; produksi belum diubah tanpa GO.
+  - Verify: `composer quality`, Python regression, migration rehearsal,
+    browser UAT, diff/secret scan.
+  - Depends: QR1–QR5.
+  - Files: checkpoint/release evidence bila diperlukan.
