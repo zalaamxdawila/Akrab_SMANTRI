@@ -60,4 +60,31 @@ final class QuestionnaireBoundaryTest extends TestCase
         self::assertStringContainsString('archived_at IS NULL', $questionnaire);
         self::assertStringContainsString('archived_at IS NULL', $dashboard);
     }
+
+    public function testWizardRevealsHiddenInvalidFieldsBeforeSubmission(): void
+    {
+        $contents = file_get_contents(dirname(__DIR__, 2) . '/siswa/kuesioner.php');
+
+        self::assertStringContainsString("form.addEventListener('invalid'", $contents);
+        self::assertStringContainsString('showInvalidInput', $contents);
+        self::assertStringContainsString("form.querySelector(':invalid')", $contents);
+        self::assertStringContainsString("typeof invalidInput.reportValidity === 'function'", $contents);
+        self::assertDoesNotMatchRegularExpression(
+            '/<button type="submit"[^>]*class="[^"]*\\bbtn-next\\b[^"]*"/',
+            $contents
+        );
+    }
+
+    public function testQuestionnaireCanBeCollectedWithoutBypassingTheClinicalGate(): void
+    {
+        $contents = file_get_contents(dirname(__DIR__, 2) . '/siswa/kuesioner.php');
+
+        self::assertStringContainsString('if ($clinicalRiskEnabled)', $contents);
+        self::assertStringContainsString('->collect($user_id, $submission)', $contents);
+        self::assertStringContainsString('hasil risiko belum tersedia', strtolower($contents));
+        self::assertDoesNotMatchRegularExpression(
+            '/<button type="submit"[^>]*\\bdisabled\\b/',
+            $contents
+        );
+    }
 }

@@ -11,7 +11,10 @@ $questionnaireHistory = $questionnaireRepository->historyForStudent((int) $user_
 $kuesioner = $questionnaireHistory
     ? $questionnaireHistory[array_key_last($questionnaireHistory)]
     : null;
-$hasil = $questionnaireRepository->latestDetectionForStudent((int) $user_id);
+$hasil = $questionnaireRepository->latestDetectionForStudent(
+    (int) $user_id,
+    (int) ($kuesioner['id'] ?? 0)
+);
 
 if (!$hasil) {
     header("Location: kuesioner.php");

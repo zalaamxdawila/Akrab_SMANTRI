@@ -49,17 +49,21 @@ if (preg_match('/^(Kelas\s+(VII|VIII|IX|X|XI|XII))\s*(.*)$/i', $user_kelas, $mat
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    if (!$clinicalRiskEnabled) {
-        $error = "Skrining risiko sedang dinonaktifkan sampai model selesai divalidasi. Tidak ada data yang disimpan.";
-    } else {
     try {
         $submission = $_POST;
         $submission['inisial'] = $inisial;
         $submission['pendidikan'] = $pendidikan;
         $submission['jurusan'] = $jurusan;
         $submission['tanggal_wawancara'] = date('Y-m-d');
-        (new QuestionnaireService($pdo))->submit($user_id, $submission);
-        header("Location: hasil_deteksi.php");
+        $questionnaireService = new QuestionnaireService($pdo);
+        if ($clinicalRiskEnabled) {
+            $questionnaireService->submit($user_id, $submission);
+            header("Location: hasil_deteksi.php");
+            exit;
+        }
+
+        $questionnaireService->collect($user_id, $submission);
+        header("Location: dashboard.php?questionnaire_saved=1");
         exit;
     } catch (Exception $e) {
         if ($pdo->inTransaction()) {
@@ -67,7 +71,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
         akrabLog('warn', 'questionnaire_submission_failed', ['exception_class' => get_class($e), 'outcome' => 'rejected']);
         $error = $e instanceof InvalidArgumentException ? $e->getMessage() : publicErrorMessage();
-    }
     }
 }
 ?>
@@ -163,8 +166,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     <?php if (!$clinicalRiskEnabled): ?>
         <div class="alert alert-warning border-warning shadow-sm" role="alert">
-            <strong>Fitur skrining sedang dinonaktifkan.</strong>
-            Model perhitungan risiko masih dalam proses validasi klinis. Form dapat dibaca, tetapi belum dapat dikirim dan tidak boleh digunakan sebagai diagnosis.
+            <strong>Jawaban akan disimpan tanpa perhitungan risiko.</strong>
+            Model masih dalam proses validasi klinis. Data kuesioner dapat dikirim untuk evaluasi, tetapi hasil risiko belum tersedia dan data ini tidak boleh digunakan sebagai diagnosis.
         </div>
     <?php endif; ?>
     
@@ -474,7 +477,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             
             <div class="d-flex justify-content-between">
                 <button type="button" class="btn btn-outline-secondary rounded-pill px-4 btn-prev"><i data-lucide="arrow-left" style="width: 18px;"></i> Kembali</button>
-                <button type="submit" class="btn btn-success rounded-pill px-4 btn-next fw-bold shadow-lg" style="background: var(--primary-color);" <?= !$clinicalRiskEnabled ? 'disabled aria-disabled="true"' : '' ?>>Simpan Kuesioner <i data-lucide="check-circle" style="width: 18px;" class="ms-1"></i></button>
+                <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold shadow-lg" style="background: var(--primary-color);">Simpan Kuesioner <i data-lucide="check-circle" style="width: 18px;" class="ms-1"></i></button>
             </div>
         </div>
 
@@ -509,11 +512,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // Multi-step Wizard Logic
     document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('kuesionerForm');
         const steps = document.querySelectorAll('.step-container');
         const nextBtns = document.querySelectorAll('.btn-next');
         const prevBtns = document.querySelectorAll('.btn-prev');
+        const submitBtn = form.querySelector('button[type="submit"]');
         const progressBar = document.getElementById('wizardProgress');
         let currentStep = 0;
+        let handlingInvalidInput = false;
 
         function updateWizard() {
             steps.forEach((step, index) => {
@@ -527,31 +533,41 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             const progressPercentage = ((currentStep + 1) / steps.length) * 100;
             progressBar.style.width = progressPercentage + '%';
             
-            // Scroll to top of container smoothly
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // Numeric arguments remain compatible with older Android WebViews.
+            window.scrollTo(0, 0);
+        }
+
+        function showInvalidInput(invalidInput) {
+            if (!invalidInput) return;
+
+            let invalidStep = invalidInput.parentElement;
+            while (invalidStep && invalidStep !== form && !invalidStep.classList.contains('step-container')) {
+                invalidStep = invalidStep.parentElement;
+            }
+
+            const invalidStepIndex = Array.prototype.indexOf.call(steps, invalidStep);
+            if (invalidStepIndex >= 0) {
+                currentStep = invalidStepIndex;
+                updateWizard();
+            }
+
+            window.setTimeout(function() {
+                invalidInput.focus();
+                if (typeof invalidInput.reportValidity === 'function') {
+                    invalidInput.reportValidity();
+                }
+            }, 0);
         }
 
         nextBtns.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 if(btn.getAttribute('type') === 'submit') return; // let form submit
                 
-                // Simple validation for current step before proceeding (optional)
                 const currentStepEl = steps[currentStep];
-                const requiredInputs = currentStepEl.querySelectorAll('[required]');
-                let isValid = true;
-                
-                requiredInputs.forEach(input => {
-                    if(input.type === 'radio') {
-                        const radioGroup = currentStepEl.querySelectorAll(`input[name="${input.name}"]:checked`);
-                        if(radioGroup.length === 0) isValid = false;
-                    } else if (!input.value) {
-                        isValid = false;
-                    }
-                });
-                
-                if(!isValid) {
-                    // Force browser validation to show up
-                    currentStepEl.querySelector('input:invalid, select:invalid').reportValidity();
+                const invalidInput = currentStepEl.querySelector(':invalid');
+
+                if (invalidInput) {
+                    showInvalidInput(invalidInput);
                     return;
                 }
                 
@@ -569,6 +585,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     updateWizard();
                 }
             });
+        });
+
+        form.addEventListener('invalid', function(event) {
+            if (handlingInvalidInput) return;
+
+            handlingInvalidInput = true;
+            showInvalidInput(event.target);
+            window.setTimeout(function() {
+                handlingInvalidInput = false;
+            }, 0);
+        }, true);
+
+        submitBtn.addEventListener('click', function(event) {
+            const invalidInput = form.querySelector(':invalid');
+            if (!invalidInput) return;
+
+            event.preventDefault();
+            showInvalidInput(invalidInput);
+        });
+
+        form.addEventListener('submit', function() {
+            submitBtn.disabled = true;
+            submitBtn.setAttribute('aria-busy', 'true');
+            submitBtn.textContent = 'Menyimpan...';
         });
         
         // Initial setup

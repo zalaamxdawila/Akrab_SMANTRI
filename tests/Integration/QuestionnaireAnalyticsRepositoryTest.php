@@ -43,6 +43,16 @@ final class QuestionnaireAnalyticsRepositoryTest extends TestCase
                 skor_makan INTEGER NOT NULL,
                 created_at TEXT NOT NULL,
                 archived_at TEXT
+            );
+            CREATE TABLE hasil_deteksi (
+                id INTEGER PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                probabilitas_risiko REAL NOT NULL,
+                kategori_risiko TEXT NOT NULL,
+                questionnaire_id INTEGER,
+                tanggal TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                archived_at TEXT
             )"
         );
         $this->pdo->exec(
@@ -56,10 +66,26 @@ final class QuestionnaireAnalyticsRepositoryTest extends TestCase
                 (1, 1, 12.5, 33, 85, 29, 20, 30, 24, 12, '2026-06-01 08:00:00', NULL),
                 (2, 1, 12.7, 34, 86, 30, 30, 32, 28, 15, '2026-07-01 08:00:00', NULL),
                 (3, 2, NULL, NULL, NULL, NULL, 40, 20, 20, 9, '2026-07-02 08:00:00', NULL),
-                (4, 2, 11, 30, 75, 24, 90, 10, 10, 6, '2026-05-01 08:00:00', '2026-05-03')"
+                (4, 2, 11, 30, 75, 24, 90, 10, 10, 6, '2026-05-01 08:00:00', '2026-05-03');
+             INSERT INTO hasil_deteksi VALUES
+                (1, 1, 0.2500, 'rendah', 1, '2026-06-01', '2026-06-01 08:00:01', NULL)"
         );
 
         $this->repository = new QuestionnaireAnalyticsRepository($this->pdo);
+    }
+
+    protected function tearDown(): void
+    {
+        foreach ([
+            'CLINICAL_RISK_ENABLED',
+            'CLINICAL_OWNER_APPROVED',
+            'CLINICAL_MODEL_APPROVED',
+            'CLINICAL_SPEC_VERSION',
+            'CLINICAL_MODEL_VERSION',
+            'CLINICAL_MODEL_CHECKSUM',
+        ] as $name) {
+            putenv($name);
+        }
     }
 
     public function testAggregateUsesAllNonArchivedResponses(): void
@@ -96,5 +122,71 @@ final class QuestionnaireAnalyticsRepositoryTest extends TestCase
             "UPDATE parent_student_links SET archived_at = '2026-07-03' WHERE id = 1"
         );
         self::assertNull($this->repository->approvedStudentForParent(3));
+    }
+
+    public function testDetectionMustBelongToTheCurrentQuestionnaireWindow(): void
+    {
+        self::assertNull($this->repository->latestDetectionForStudent(1, 0));
+        self::assertNull($this->repository->latestDetectionForStudent(1, 2));
+
+        $this->pdo->exec(
+            "INSERT INTO hasil_deteksi VALUES
+                (2, 1, 0.4000, 'sedang', 2, '2026-07-01', '2026-07-01 08:00:01', NULL)"
+        );
+
+        self::assertNull($this->repository->latestDetectionForStudent(1, 2));
+
+        $this->enableClinicalGate();
+        $current = $this->repository->latestDetectionForStudent(1, 2);
+        self::assertSame(2, (int) $current['id']);
+    }
+
+    public function testLatestStudentRowsIncludeOnlyCurrentRiskResult(): void
+    {
+        $latestByStudent = array_column(
+            $this->repository->latestByStudentForExport(),
+            null,
+            'student_id'
+        );
+
+        self::assertNull($latestByStudent[1]['kategori_risiko']);
+        self::assertNull($latestByStudent[2]['kategori_risiko']);
+
+        $this->pdo->exec(
+            "INSERT INTO hasil_deteksi VALUES
+                (2, 1, 0.4000, 'sedang', 2, '2026-07-01', '2026-07-01 08:00:01', NULL)"
+        );
+
+        $latestByStudent = array_column(
+            $this->repository->latestByStudentForExport(),
+            null,
+            'student_id'
+        );
+        self::assertNull($latestByStudent[1]['probabilitas_risiko']);
+        self::assertNull($latestByStudent[1]['kategori_risiko']);
+
+        $this->enableClinicalGate();
+        $latestByStudent = array_column(
+            $this->repository->latestByStudentForExport(),
+            null,
+            'student_id'
+        );
+        self::assertEqualsWithDelta(
+            0.4,
+            (float) $latestByStudent[1]['probabilitas_risiko'],
+            0.0001
+        );
+        self::assertSame('sedang', $latestByStudent[1]['kategori_risiko']);
+
+    }
+
+    private function enableClinicalGate(): void
+    {
+        putenv('CLINICAL_RISK_ENABLED=true');
+        putenv('CLINICAL_OWNER_APPROVED=true');
+        putenv('CLINICAL_MODEL_APPROVED=true');
+        putenv('CLINICAL_SPEC_VERSION=spec-v1');
+        putenv('CLINICAL_MODEL_VERSION=model-v1');
+        putenv('CLINICAL_MODEL_CHECKSUM=' . str_repeat('a', 64));
     }
 }

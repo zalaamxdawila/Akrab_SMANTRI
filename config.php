@@ -112,7 +112,12 @@ if (
     && $actorContext->isImpersonating()
     && in_array(
         basename((string) ($_SERVER['SCRIPT_NAME'] ?? '')),
-        ['export_calendar.php', 'export_csv.php'],
+        [
+            'export_calendar.php',
+            'export_csv.php',
+            'export_questionnaire.php',
+            'questionnaire_export.php',
+        ],
         true
     )
 ) {

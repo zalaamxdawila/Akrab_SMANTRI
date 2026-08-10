@@ -39,7 +39,7 @@ final class QuestionnaireServiceIntegrationTest extends TestCase
         $this->pdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY)');
         $this->pdo->exec('INSERT INTO users (id) VALUES (42)');
         $this->pdo->exec('CREATE TABLE kuesioner (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, tanggal_wawancara TEXT, nomor_responden TEXT, inisial_responden TEXT, tanggal_lahir TEXT, tempat_lahir TEXT, alamat TEXT, pendidikan TEXT, kadar_hb REAL, kadar_mchc REAL, kadar_mcv REAL, kadar_mch REAL, skor_gejala INTEGER, skor_sikap INTEGER, skor_pengetahuan INTEGER, mens_sudah TEXT, mens_usia_th INTEGER, mens_teratur TEXT, mens_lama_hari INTEGER, mens_jarak_siklus INTEGER, skor_makan INTEGER, makanan_dikonsumsi TEXT, answers_snapshot TEXT, archived_at TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)');
-        $this->pdo->exec('CREATE TABLE hasil_deteksi (user_id INTEGER, probabilitas_risiko REAL, kategori_risiko TEXT, model_version TEXT, model_checksum TEXT, tanggal TEXT)');
+        $this->pdo->exec('CREATE TABLE hasil_deteksi (user_id INTEGER, questionnaire_id INTEGER, probabilitas_risiko REAL, kategori_risiko TEXT, model_version TEXT, model_checksum TEXT, tanggal TEXT)');
     }
 
     protected function tearDown(): void
@@ -59,6 +59,10 @@ final class QuestionnaireServiceIntegrationTest extends TestCase
         self::assertSame('model-v1', $result['model_version']);
         self::assertSame(1, (int) $this->pdo->query('SELECT COUNT(*) FROM kuesioner')->fetchColumn());
         self::assertSame(1, (int) $this->pdo->query('SELECT COUNT(*) FROM hasil_deteksi')->fetchColumn());
+        self::assertSame(
+            (int) $this->pdo->query('SELECT id FROM kuesioner')->fetchColumn(),
+            (int) $this->pdo->query('SELECT questionnaire_id FROM hasil_deteksi')->fetchColumn()
+        );
         $snapshot = json_decode(
             (string) $this->pdo->query('SELECT answers_snapshot FROM kuesioner')->fetchColumn(),
             true,
@@ -92,6 +96,18 @@ final class QuestionnaireServiceIntegrationTest extends TestCase
             1,
             (int) $this->pdo->query('SELECT COUNT(*) FROM hasil_deteksi')->fetchColumn()
         );
+    }
+
+    public function testCollectionStoresValidatedAnswersWithoutCreatingClinicalResult(): void
+    {
+        foreach (['CLINICAL_RISK_ENABLED', 'CLINICAL_OWNER_APPROVED', 'CLINICAL_MODEL_APPROVED', 'CLINICAL_SPEC_VERSION', 'CLINICAL_MODEL_VERSION', 'CLINICAL_MODEL_CHECKSUM'] as $name) {
+            putenv($name);
+        }
+
+        (new QuestionnaireService($this->pdo))->collect(42, $this->validInput());
+
+        self::assertSame(1, (int) $this->pdo->query('SELECT COUNT(*) FROM kuesioner')->fetchColumn());
+        self::assertSame(0, (int) $this->pdo->query('SELECT COUNT(*) FROM hasil_deteksi')->fetchColumn());
     }
 
     /** @return array<string, mixed> */

@@ -68,7 +68,14 @@ recordAuditEvent(
             <h1 class="h3 mb-1">Hasil Kuesioner Seluruh Siswa</h1>
             <p class="text-muted mb-0">Agregat memakai semua pengisian aktif; tabel menampilkan pengisian terbaru tiap siswa.</p>
         </div>
-        <a class="btn btn-outline-primary" href="data_siswa.php">Buka data siswa</a>
+        <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-success d-inline-flex align-items-center gap-2"
+               href="export_questionnaire.php">
+                <i data-lucide="file-spreadsheet" aria-hidden="true"></i>
+                Export ke Excel (.csv)
+            </a>
+            <a class="btn btn-outline-primary" href="data_siswa.php">Buka data siswa</a>
+        </div>
     </div>
 
     <section class="row g-3 mb-4" aria-label="Ringkasan pengisian">

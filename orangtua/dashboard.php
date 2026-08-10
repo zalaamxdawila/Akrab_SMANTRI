@@ -27,7 +27,10 @@ if ($anak) {
     $historyChart = $questionnaireInsights->historyChart($questionnaireHistory);
         
     // Latest Risk Detection
-    $hasil = $questionnaireRepository->latestDetectionForStudent($anak_id);
+    $hasil = $questionnaireRepository->latestDetectionForStudent(
+        $anak_id,
+        (int) ($kuesioner['id'] ?? 0)
+    );
     $resultPresentation = $kuesioner
         ? (new QuestionnaireResultPresenter())->forResult($kuesioner, $hasil)
         : null;

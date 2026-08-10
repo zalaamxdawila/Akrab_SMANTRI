@@ -15,7 +15,8 @@ final class QuestionnaireStudentResultPageTest extends TestCase
         self::assertNotFalse($route);
         self::assertStringContainsString("check_role('siswa')", $route);
         self::assertStringContainsString('historyForStudent((int) $user_id)', $route);
-        self::assertStringContainsString('latestDetectionForStudent((int) $user_id)', $route);
+        self::assertStringContainsString('latestDetectionForStudent(', $route);
+        self::assertStringContainsString("(int) (\$kuesioner['id'] ?? 0)", $route);
         self::assertStringContainsString('new QuestionnaireResultPresenter()', $route);
         self::assertStringContainsString('renderQuestionnaireResult(', $route);
         self::assertStringContainsString("require_once '../views/questionnaire_analytics.php'", $route);

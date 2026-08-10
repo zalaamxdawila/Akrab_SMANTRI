@@ -47,11 +47,39 @@ final class QuestionnaireAnalyticsRepository
     /** @return list<array<string, mixed>> */
     public function latestByStudent(): array
     {
+        return $this->latestStudentRows(false);
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function latestByStudentForExport(): array
+    {
+        return $this->latestStudentRows(clinicalApprovalGatePassed());
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function latestStudentRows(bool $includeClinicalRisk): array
+    {
+        $riskColumns = 'NULL probabilitas_risiko, NULL kategori_risiko';
+        $riskJoin = '';
+        if ($includeClinicalRisk) {
+            $riskColumns = 'hd.probabilitas_risiko, hd.kategori_risiko';
+            $riskJoin = "LEFT JOIN hasil_deteksi hd ON hd.id = (
+                SELECT hd2.id
+                FROM hasil_deteksi hd2
+                WHERE hd2.user_id = u.id
+                  AND hd2.questionnaire_id = k.id
+                  AND hd2.archived_at IS NULL
+                ORDER BY hd2.created_at DESC, hd2.tanggal DESC, hd2.id DESC
+                LIMIT 1
+             )";
+        }
+
         return $this->pdo->query(
             "SELECT u.id student_id, u.nama, u.username, u.kelas,
                     k.id questionnaire_id, k.kadar_hb, k.kadar_mchc,
                     k.kadar_mcv, k.kadar_mch, k.skor_gejala, k.skor_makan,
-                    k.skor_pengetahuan, k.skor_sikap, k.created_at
+                    k.skor_pengetahuan, k.skor_sikap, k.created_at,
+                    {$riskColumns}
              FROM users u
              JOIN kuesioner k ON k.id = (
                 SELECT k2.id
@@ -60,6 +88,7 @@ final class QuestionnaireAnalyticsRepository
                 ORDER BY k2.created_at DESC, k2.id DESC
                 LIMIT 1
              )
+             {$riskJoin}
              WHERE u.role = 'siswa' AND u.status = 'active'
              ORDER BY u.nama, u.id"
         )->fetchAll();
@@ -111,16 +140,21 @@ final class QuestionnaireAnalyticsRepository
     }
 
     /** @return array<string, mixed>|null */
-    public function latestDetectionForStudent(int $studentId): ?array
+    public function latestDetectionForStudent(int $studentId, int $questionnaireId): ?array
     {
-        $statement = $this->pdo->prepare(
-            'SELECT *
+        if ($questionnaireId <= 0 || !clinicalApprovalGatePassed()) {
+            return null;
+        }
+
+        $sql = 'SELECT *
              FROM hasil_deteksi
-             WHERE user_id = ? AND archived_at IS NULL
-             ORDER BY tanggal DESC, id DESC
-             LIMIT 1'
-        );
-        $statement->execute([$studentId]);
+             WHERE user_id = ? AND questionnaire_id = ?
+               AND archived_at IS NULL';
+        $parameters = [$studentId, $questionnaireId];
+        $sql .= ' ORDER BY created_at DESC, tanggal DESC, id DESC LIMIT 1';
+
+        $statement = $this->pdo->prepare($sql);
+        $statement->execute($parameters);
         $detection = $statement->fetch();
         return $detection ?: null;
     }

@@ -9,7 +9,9 @@ const AKRAB_CSV_MAX_LINE_LENGTH = 4_096;
 function csvSafeCell(mixed $value): string
 {
     $value = (string) $value;
-    return preg_match('/^[=+\-@]/', $value) === 1 ? "'" . $value : $value;
+    return preg_match('/^[\x00-\x20]*[=+\-@]/', $value) === 1
+        ? "'" . $value
+        : $value;
 }
 
 function csvHeaderIsValid(array $header): bool

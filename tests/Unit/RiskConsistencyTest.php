@@ -17,16 +17,16 @@ final class RiskConsistencyTest extends TestCase
 
     public function testLatestQueriesUseDateAndIdTieBreakers(): void
     {
-        foreach (['siswa/dashboard.php', 'uks/export_csv.php'] as $path) {
-            $contents = file_get_contents(dirname(__DIR__, 2) . '/' . $path);
-            self::assertStringContainsString('ORDER BY tanggal DESC, id DESC', $contents, $path);
-        }
+        $export = file_get_contents(dirname(__DIR__, 2) . '/uks/export_csv.php');
+        self::assertStringContainsString('ORDER BY tanggal DESC, id DESC', $export);
+        $dashboard = file_get_contents(dirname(__DIR__, 2) . '/siswa/dashboard.php');
+        self::assertStringContainsString('latestDetectionForStudent(', $dashboard);
         $repository = file_get_contents(
             dirname(__DIR__, 2)
                 . '/app/Repositories/QuestionnaireAnalyticsRepository.php'
         );
         self::assertStringContainsString(
-            'ORDER BY tanggal DESC, id DESC',
+            'ORDER BY created_at DESC, tanggal DESC, id DESC',
             $repository
         );
     }

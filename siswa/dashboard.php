@@ -50,10 +50,13 @@ $next_kuesioner_date = $questionnaireEligibility['next_eligible_at']
     ? $questionnaireEligibility['next_eligible_at']->format('d M Y')
     : null;
 
-// Check latest risk detection
-$stmt = $pdo->prepare("SELECT * FROM hasil_deteksi WHERE user_id = ? ORDER BY tanggal DESC, id DESC LIMIT 1");
-$stmt->execute([$user_id]);
-$hasil_deteksi = $stmt->fetch();
+// A result is current only when it was created with the latest questionnaire.
+$hasil_deteksi = $kuesioner
+    ? (new QuestionnaireAnalyticsRepository($pdo))->latestDetectionForStudent(
+        (int) $user_id,
+        (int) ($kuesioner['id'] ?? 0)
+    )
+    : null;
 
 // Handle TTD consumption confirmation
 if (isset($_POST['confirm_ttd'])) {
@@ -189,6 +192,9 @@ if (empty($news)) {
     <?php endif; ?>
     <?php if (isset($_GET['cooldown'])): ?>
         <div class="alert alert-warning alert-auto-dismiss border-warning shadow-sm"><i data-lucide="lock" style="width: 18px;" class="me-1"></i> Anda sudah mengisi kuesioner semester ini. Kuesioner akan terbuka otomatis pada jadwal pengecekan kesehatan berikutnya.</div>
+    <?php endif; ?>
+    <?php if (isset($_GET['questionnaire_saved'])): ?>
+        <div class="alert alert-success alert-auto-dismiss" role="status">Jawaban kuesioner berhasil disimpan. Hasil risiko belum tersedia sampai model selesai divalidasi klinis.</div>
     <?php endif; ?>
 
     <div class="row g-4 animate-fade-in-up delay-100">

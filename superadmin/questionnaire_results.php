@@ -43,7 +43,8 @@ if ($selectedStudentId) {
         ? $selectedHistory[array_key_last($selectedHistory)]
         : null;
     $selectedDetection = $repository->latestDetectionForStudent(
-        (int) $selectedStudentId
+        (int) $selectedStudentId,
+        (int) ($selectedLatest['id'] ?? 0)
     );
     $selectedPresentation = $selectedLatest
         ? (new QuestionnaireResultPresenter())->forResult(
@@ -66,6 +67,17 @@ recordAuditEvent(
 renderSuperadminHeader('Hasil Kuesioner', 'questionnaires');
 ?>
 <script src="/assets/vendor/chart.umd.min.js"></script>
+
+<div class="d-flex justify-content-end mb-3">
+    <form method="post" action="questionnaire_export.php">
+        <?= csrfInput() ?>
+        <button class="btn btn-success d-inline-flex align-items-center gap-2"
+                type="submit">
+            <i data-lucide="file-spreadsheet" aria-hidden="true"></i>
+            Export ke Excel (.csv)
+        </button>
+    </form>
+</div>
 
 <section class="row g-3 mb-4" aria-label="Ringkasan hasil kuesioner">
     <?php foreach ([

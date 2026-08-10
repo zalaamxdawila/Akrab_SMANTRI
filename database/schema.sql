@@ -154,6 +154,7 @@ CREATE TABLE IF NOT EXISTS kuesioner (
 CREATE TABLE IF NOT EXISTS hasil_deteksi (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
+    questionnaire_id INT NULL,
     probabilitas_risiko DECIMAL(5,4) NOT NULL,
     kategori_risiko ENUM('rendah', 'sedang', 'tinggi') NOT NULL,
     model_version VARCHAR(80) NULL,
@@ -167,7 +168,10 @@ CREATE TABLE IF NOT EXISTS hasil_deteksi (
     archive_reason VARCHAR(500) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     KEY idx_hasil_deteksi_archive (archived_at, user_id),
+    KEY idx_detection_questionnaire (questionnaire_id, archived_at),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_detection_questionnaire FOREIGN KEY (questionnaire_id)
+        REFERENCES kuesioner(id) ON DELETE SET NULL,
     FOREIGN KEY (corrected_by) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (archived_by) REFERENCES users(id) ON DELETE SET NULL
 );

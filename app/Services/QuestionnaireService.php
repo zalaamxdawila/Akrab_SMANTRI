@@ -15,13 +15,7 @@ final class QuestionnaireService
     /** @return array{probability: float, category: string, model_version: string, model_checksum: string} */
     public function submit(int $userId, array $input): array
     {
-        $validated = validateQuestionnaireInput($input);
-        if (!$validated['valid']) {
-            throw new InvalidArgumentException(implode(' ', $validated['errors']));
-        }
-
-        $values = $validated['values'];
-        $answersSnapshot = $this->answerSnapshot->encode($input);
+        [$values, $answersSnapshot] = $this->validatedSubmission($input);
         $risk = $this->riskService->evaluate([
             'kadar_hb' => $values['kadar_hb'],
             'kadar_mchc' => $values['kadar_mchc'],
@@ -31,6 +25,35 @@ final class QuestionnaireService
             'skor_makan' => $values['skor_makan'],
             'mens_teratur' => $values['mens_teratur'],
         ]);
+
+        $this->persist($userId, $values, $answersSnapshot, $risk);
+
+        return $risk;
+    }
+
+    public function collect(int $userId, array $input): void
+    {
+        [$values, $answersSnapshot] = $this->validatedSubmission($input);
+        $this->persist($userId, $values, $answersSnapshot, null);
+    }
+
+    /** @return array{0: array<string, mixed>, 1: string} */
+    private function validatedSubmission(array $input): array
+    {
+        $validated = validateQuestionnaireInput($input);
+        if (!$validated['valid']) {
+            throw new InvalidArgumentException(implode(' ', $validated['errors']));
+        }
+
+        return [$validated['values'], $this->answerSnapshot->encode($input)];
+    }
+
+    /**
+     * @param array<string, mixed> $values
+     * @param array{probability: float, category: string, model_version: string, model_checksum: string}|null $risk
+     */
+    private function persist(int $userId, array $values, string $answersSnapshot, ?array $risk): void
+    {
 
         $this->pdo->beginTransaction();
         try {
@@ -51,11 +74,22 @@ final class QuestionnaireService
                 $values['mens_lama_hari'], $values['mens_jarak_siklus'], $values['skor_makan'], $values['makanan_dikonsumsi'],
                 $answersSnapshot,
             ]);
+            $questionnaireId = (int) $this->pdo->lastInsertId();
 
-            $result = $this->pdo->prepare('INSERT INTO hasil_deteksi
-                (user_id, probabilitas_risiko, kategori_risiko, model_version, model_checksum, tanggal)
-                VALUES (?, ?, ?, ?, ?, CURDATE())');
-            $result->execute([$userId, $risk['probability'], $risk['category'], $risk['model_version'], $risk['model_checksum']]);
+            if ($risk !== null) {
+                $result = $this->pdo->prepare('INSERT INTO hasil_deteksi
+                    (user_id, questionnaire_id, probabilitas_risiko, kategori_risiko,
+                     model_version, model_checksum, tanggal)
+                    VALUES (?, ?, ?, ?, ?, ?, CURDATE())');
+                $result->execute([
+                    $userId,
+                    $questionnaireId,
+                    $risk['probability'],
+                    $risk['category'],
+                    $risk['model_version'],
+                    $risk['model_checksum'],
+                ]);
+            }
             $this->pdo->commit();
         } catch (Throwable $exception) {
             if ($this->pdo->inTransaction()) {
@@ -64,7 +98,6 @@ final class QuestionnaireService
             throw $exception;
         }
 
-        return $risk;
     }
 
     private function lockStudentAndAssertEligibility(int $userId): void

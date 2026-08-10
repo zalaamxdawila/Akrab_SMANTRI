@@ -32,7 +32,10 @@ $kuesioner = $questionnaireHistory
 $historyChart = $questionnaireInsights->historyChart($questionnaireHistory);
 
 // 3. Fetch Latest Active Detection
-$hasil = $questionnaireRepository->latestDetectionForStudent($siswa_id);
+$hasil = $questionnaireRepository->latestDetectionForStudent(
+    $siswa_id,
+    (int) ($kuesioner['id'] ?? 0)
+);
 $resultPresentation = $kuesioner
     ? (new QuestionnaireResultPresenter())->forResult($kuesioner, $hasil)
     : null;
