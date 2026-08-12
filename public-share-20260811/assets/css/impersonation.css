@@ -1,0 +1,18 @@
+.impersonation-banner {
+    align-items: center;
+    background: #7c2d12;
+    color: #fff;
+    display: flex;
+    flex-wrap: wrap;
+    font: 600 0.9rem/1.4 system-ui, sans-serif;
+    gap: .75rem 1.25rem;
+    justify-content: space-between;
+    padding: .65rem 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 1090;
+}
+
+.impersonation-banner form {
+    margin: 0;
+}

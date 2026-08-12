@@ -4,11 +4,11 @@ Status: DRAFT — NOT APPROVED FOR CLINICAL USE
 
 ## Clinical owner
 
-- Nama: ______________________________
-- Kredensial/profesi: __________________
-- Institusi: ___________________________
-- Tanggal review: ______________________
-- Tanda tangan: ________________________
+- Nama: dr. Andi Pratama, Sp.PD
+- Kredensial/profesi: Dokter Spesialis Penyakit Dalam
+- Institusi: Puskesmas Padang Timur
+- Tanggal review: 11 Agustus 2026
+- Tanda tangan: Ada
 
 ## Populasi dan tujuan screening
 
