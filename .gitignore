@@ -6,8 +6,23 @@
 config.local.php
 *.key
 *.pem
+*.secret
 
-# Runtime output
+# Private data, dumps, exports, and user uploads
+*.sql
+!database/schema.sql
+!deployment/explain_queries.sql
+!tests/Fixtures/seed.sql
+!public-share-20260811/database/schema.sql
+*.csv
+*.xlsx
+*.dump
+uploads/
+storage/
+exports/
+data/
+
+# Runtime output and logs
 *.log
 logs/
 cache/
@@ -20,6 +35,7 @@ backups/
 
 # Generated deployment archives
 *.zip
+*.tar.gz
 
 # Dependencies and test output
 vendor/
