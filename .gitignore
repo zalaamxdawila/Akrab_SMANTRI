@@ -13,7 +13,6 @@ config.local.php
 !database/schema.sql
 !deployment/explain_queries.sql
 !tests/Fixtures/seed.sql
-!public-share-20260811/database/schema.sql
 *.csv
 *.xlsx
 *.dump
@@ -21,6 +20,7 @@ uploads/
 storage/
 exports/
 data/
+public-share-*/
 
 # Runtime output and logs
 *.log
