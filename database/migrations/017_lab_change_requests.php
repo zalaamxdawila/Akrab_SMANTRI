@@ -8,15 +8,15 @@ return [
     'up' => function (PDO $pdo): void {
         $pdo->exec(
             "CREATE TABLE IF NOT EXISTS lab_change_requests (
-                id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-                questionnaire_id BIGINT UNSIGNED NOT NULL,
-                student_id BIGINT UNSIGNED NOT NULL,
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                questionnaire_id INT NOT NULL,
+                student_id INT NOT NULL,
                 kadar_hb DECIMAL(5,2) NOT NULL,
                 kadar_mchc DECIMAL(6,2) NOT NULL,
                 kadar_mcv DECIMAL(6,2) NOT NULL,
                 kadar_mch DECIMAL(6,2) NOT NULL,
                 status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
-                reviewed_by BIGINT UNSIGNED NULL,
+                reviewed_by INT NULL,
                 reviewer_role ENUM('uks', 'superadmin') NULL,
                 reviewed_at DATETIME NULL,
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
