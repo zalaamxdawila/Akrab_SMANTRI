@@ -41,9 +41,86 @@ final class QuestionnaireExportTest extends TestCase
         self::assertSame('Kategori Risiko', $headers[array_key_last($headers)]);
         self::assertSame("'=HYPERLINK(\"https://example.test\")", $row[1]);
         self::assertSame("\t0001234567", $row[2]);
-        self::assertSame('', $row[10]);
-        self::assertSame('42,5%', $row[13]);
-        self::assertSame('SEDANG', $row[14]);
+        self::assertSame('', $row[32]);
+        self::assertSame('42,5%', $row[35]);
+        self::assertSame('SEDANG', $row[36]);
+    }
+
+    public function testCsvExportsEveryQuestionnaireAnswerInItsOwnColumn(): void
+    {
+        $stream = fopen('php://temp', 'w+b');
+        self::assertIsResource($stream);
+
+        $snapshot = json_encode([
+            'version' => '2026-08-17.v1',
+            'sections' => [
+                'makan' => ['items' => [
+                    ['key' => 'makan_1', 'question' => 'Sarapan pagi', 'answer' => 'Selalu'],
+                ]],
+                'gejala' => ['items' => [
+                    ['key' => 'gejala_1', 'question' => 'Cepat lelah bila beraktivitas', 'answer' => '4 dari 10'],
+                    ['key' => 'gejala_2', 'question' => 'Merasa pusing', 'answer' => '5 dari 10'],
+                ]],
+                'sikap' => ['items' => [
+                    ['key' => 'sikap_1', 'question' => 'Anemia merupakan kondisi sel darah merah di bawah normal', 'answer' => 'Setuju'],
+                ]],
+                'pengetahuan' => ['items' => [
+                    ['key' => 'pengetahuan_1', 'question' => 'Zat gizi apa yang menjadi penyebab utama anemia?', 'answer' => 'Zat Besi (Fe)'],
+                ]],
+            ],
+        ], JSON_THROW_ON_ERROR);
+
+        (new QuestionnaireExport())->writeCsv($stream, [[
+            'student_id' => 8,
+            'nama' => 'Siti',
+            'username' => '00123',
+            'kelas' => 'X-B',
+            'created_at' => '2026-08-14 10:00:00',
+            'answers_snapshot' => $snapshot,
+            'skor_gejala' => 9,
+            'skor_makan' => 3,
+            'skor_pengetahuan' => 10,
+            'skor_sikap' => 3,
+        ]]);
+
+        rewind($stream);
+        fread($stream, 3);
+        $headers = fgetcsv($stream, null, ',', '"', '');
+        $row = fgetcsv($stream, null, ',', '"', '');
+        fclose($stream);
+
+        self::assertCount(37, $headers);
+        self::assertSame('Pola Makan 1 - Sarapan pagi', $headers[5]);
+        self::assertSame('Gejala 1 - Cepat lelah bila beraktivitas', $headers[11]);
+        self::assertSame('Gejala 2 - Merasa pusing', $headers[12]);
+        self::assertSame('Pengetahuan 1 - Zat gizi apa yang menjadi penyebab utama anemia?', $headers[26]);
+        self::assertSame('Selalu', $row[5]);
+        self::assertSame('4', $row[11]);
+        self::assertSame('5', $row[12]);
+        self::assertSame('Setuju', $row[21]);
+        self::assertSame('Zat Besi (Fe)', $row[26]);
+        self::assertSame('9', $row[27]);
+    }
+
+    public function testCsvLeavesPerQuestionAnswersBlankForLegacyOrInvalidSnapshots(): void
+    {
+        $stream = fopen('php://temp', 'w+b');
+        self::assertIsResource($stream);
+
+        (new QuestionnaireExport())->writeCsv($stream, [
+            ['student_id' => 1, 'answers_snapshot' => null],
+            ['student_id' => 2, 'answers_snapshot' => '{invalid-json'],
+        ]);
+
+        rewind($stream);
+        fread($stream, 3);
+        fgetcsv($stream, null, ',', '"', '');
+        $legacyRow = fgetcsv($stream, null, ',', '"', '');
+        $invalidRow = fgetcsv($stream, null, ',', '"', '');
+        fclose($stream);
+
+        self::assertSame(array_fill(0, 22, ''), array_slice($legacyRow, 5, 22));
+        self::assertSame(array_fill(0, 22, ''), array_slice($invalidRow, 5, 22));
     }
 
     public function testCsvNeutralizesFormulaMarkersAfterLeadingWhitespace(): void

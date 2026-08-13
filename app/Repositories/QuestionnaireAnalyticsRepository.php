@@ -78,7 +78,7 @@ final class QuestionnaireAnalyticsRepository
             "SELECT u.id student_id, u.nama, u.username, u.kelas,
                     k.id questionnaire_id, k.kadar_hb, k.kadar_mchc,
                     k.kadar_mcv, k.kadar_mch, k.skor_gejala, k.skor_makan,
-                    k.skor_pengetahuan, k.skor_sikap, k.created_at,
+                    k.skor_pengetahuan, k.skor_sikap, k.answers_snapshot, k.created_at,
                     {$riskColumns}
              FROM users u
              JOIN kuesioner k ON k.id = (

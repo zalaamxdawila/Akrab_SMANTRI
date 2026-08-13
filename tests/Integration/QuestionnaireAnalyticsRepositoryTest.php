@@ -41,6 +41,7 @@ final class QuestionnaireAnalyticsRepositoryTest extends TestCase
                 skor_sikap INTEGER NOT NULL,
                 skor_pengetahuan INTEGER NOT NULL,
                 skor_makan INTEGER NOT NULL,
+                answers_snapshot TEXT,
                 created_at TEXT NOT NULL,
                 archived_at TEXT
             );
@@ -63,10 +64,10 @@ final class QuestionnaireAnalyticsRepositoryTest extends TestCase
              INSERT INTO parent_student_links VALUES
                 (1, 3, 1, 'approved', NULL);
              INSERT INTO kuesioner VALUES
-                (1, 1, 12.5, 33, 85, 29, 20, 30, 24, 12, '2026-06-01 08:00:00', NULL),
-                (2, 1, 12.7, 34, 86, 30, 30, 32, 28, 15, '2026-07-01 08:00:00', NULL),
-                (3, 2, NULL, NULL, NULL, NULL, 40, 20, 20, 9, '2026-07-02 08:00:00', NULL),
-                (4, 2, 11, 30, 75, 24, 90, 10, 10, 6, '2026-05-01 08:00:00', '2026-05-03');
+                (1, 1, 12.5, 33, 85, 29, 20, 30, 24, 12, NULL, '2026-06-01 08:00:00', NULL),
+                (2, 1, 12.7, 34, 86, 30, 30, 32, 28, 15, 'snapshot-test', '2026-07-01 08:00:00', NULL),
+                (3, 2, NULL, NULL, NULL, NULL, 40, 20, 20, 9, NULL, '2026-07-02 08:00:00', NULL),
+                (4, 2, 11, 30, 75, 24, 90, 10, 10, 6, NULL, '2026-05-01 08:00:00', '2026-05-03');
              INSERT INTO hasil_deteksi VALUES
                 (1, 1, 0.2500, 'rendah', 1, '2026-06-01', '2026-06-01 08:00:01', NULL)"
         );
@@ -106,6 +107,7 @@ final class QuestionnaireAnalyticsRepositoryTest extends TestCase
         self::assertCount(2, $latest);
         $latestByStudent = array_column($latest, null, 'student_id');
         self::assertSame(2, (int) $latestByStudent[1]['questionnaire_id']);
+        self::assertSame('snapshot-test', $latestByStudent[1]['answers_snapshot']);
         self::assertCount(2, $history);
         self::assertSame([1, 1], array_map(
             static fn (array $row): int => (int) $row['user_id'],
