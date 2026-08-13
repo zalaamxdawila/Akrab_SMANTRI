@@ -1,5 +1,5 @@
 # AKRAB (Akrab_SMANTRI)
-> **Aplikasi Kesehatan Remaja Bebas Anemia** — Sistem Pemantauan TTD, Kuesioner Digital, Deteksi Risiko Anemia & Dashboard UKS
+> **Aplikasi Kesehatan Remaja Bebas Anemia** — Pemantauan TTD, kuesioner digital, simulasi regresi logistik, dan tata kelola kesehatan sekolah
 
 [![Repository](https://img.shields.io/badge/GitHub-Akrab__SMANTRI-blue?logo=github)](https://github.com/zalaamxdawila/Akrab_SMANTRI)
 [![PHP Version](https://img.shields.io/badge/PHP-8.2%2B-777BB4?logo=php)](https://php.net)
@@ -12,10 +12,60 @@
 **AKRAB** (`Akrab_SMANTRI`) adalah aplikasi berbasis web & PWA (Progressive Web App) yang dirancang untuk mendukung program pencegahan anemia remaja di lingkungan sekolah. Sistem ini memfasilitasi:
 
 1. **Pencatatan & Pemantauan TTD**: Integrasi pencatatan konsumsi Tablet Tambah Darah (TTD) mingguan siswa.
-2. **Kuesioner Digital & Deteksi Risiko Anemia**: Pemodelan skrining anemia yang aman dan dikendalikan feature flag (*fail-closed*).
+2. **Kuesioner Digital & Simulasi Regresi Logistik**: Perhitungan transparan dari Hb, MCH, MCHC, dan MCV yang dikendalikan feature flag (*fail-closed*).
 3. **Konsultasi Siswa – UKS**: Layanan komunikasi interaktif antara siswa dan pembina UKS/Tenaga Kesehatan.
 4. **Portal Orang Tua / Wali**: Akses terverifikasi untuk memantau perkembangan kesehatan remaja.
 5. **Dashboard Analytics UKS & Superadmin**: Visualisasi tren kepatuhan TTD, ekspor laporan CSV/Excel, dan audit log komprehensif.
+6. **Onboarding Siswa Terarah**: Setelah login, siswa diarahkan berurutan untuk melengkapi email, kuesioner, dan data laboratorium yang belum lengkap.
+7. **Pemulihan Password Berbasis Email**: Permintaan dapat diajukan menggunakan email atau Username/NISN dengan token reset yang disimpan dalam bentuk hash dan memiliki masa berlaku.
+
+---
+
+## 🧭 Alur Onboarding Siswa
+
+Untuk memastikan hasil kuesioner dapat diproses secara lengkap, aplikasi menerapkan urutan berikut:
+
+```text
+Login
+  └─ Email belum tersedia → Lengkapi email
+       └─ Kuesioner belum tersedia → Isi kuesioner
+            └─ Hb/MCHC/MCV/MCH belum lengkap → Lengkapi data laboratorium
+                 └─ Data lengkap → Dashboard dan hasil kuesioner
+```
+
+- Pengisian data laboratorium pertama dapat dilakukan langsung oleh siswa.
+- Hb, MCHC, MCV, dan MCH wajib diisi bersamaan.
+- Setelah tersimpan, siswa tidak dapat mengubah data secara langsung.
+- Perubahan berikutnya harus diajukan dan disetujui oleh UKS atau Superadmin.
+- UKS dan Superadmin tidak terkena redirect onboarding siswa.
+
+---
+
+## 📊 Simulasi Regresi Logistik
+
+Model penelitian aktif menggunakan formula terpusat berikut:
+
+```text
+z = 15,5 − 1,5(Hb)
+         − 0,1(MCH − 29,5)
+         − 0,1(MCHC − 33,2)
+         − 0,05(MCV − 90)
+
+P = 1 / (1 + e⁻ᶻ)
+```
+
+Kategori simulasi:
+
+| Probabilitas | Kategori |
+|---:|---|
+| `< 33%` | Rendah |
+| `33% – < 66%` | Sedang |
+| `≥ 66%` | Tinggi |
+
+Halaman hasil menjelaskan nilai input, nilai acuan, nilai terpusat, koefisien, kontribusi setiap variabel, nilai linear `z`, fungsi sigmoid, probabilitas, dan kategori. Versi formula saat ini adalah `AKRAB-RESEARCH-CENTERED-v1.1`.
+
+> [!IMPORTANT]
+> Hasil merupakan **simulasi model penelitian**, bukan diagnosis medis, rekomendasi pengobatan, atau pengganti pemeriksaan tenaga kesehatan. Formula dan batas kategori belum dinyatakan sebagai model klinis tervalidasi.
 
 ---
 
@@ -27,7 +77,7 @@
 | **Backend** | PHP 8.2+ Native (MVC Architecture) | Fast, robust, aman, support session & `password_hash()` bcrypt |
 | **Database** | MySQL / MariaDB (InnoDB, JSON support) | Penyimpanan data relasional dan audit trail |
 | **Penerbitan/Build** | Composer | Dependency & Quality tooling (`phpstan`, `phpunit`) |
-| **Autentikasi & Security** | WebAuthn / Passkey, Fail-Closed Risk Gate, CSRF Protection | Perlindungan data kesehatan sensitif |
+| **Autentikasi & Security** | Session hardening, WebAuthn/Passkey, CSRF, rate limiting, token reset ter-hash | Perlindungan akun dan data kesehatan sensitif |
 
 ---
 
@@ -55,6 +105,7 @@
    ```env
    AKRAB_APP_ENV=development
    CLINICAL_RISK_ENABLED=false
+   AKRAB_RESEARCH_MODEL_ENABLED=false
    ```
 3. **Install Dependensi & Migrasi**:
    ```bash
@@ -75,6 +126,8 @@
 |---|---|
 | `composer lint` | Running PHPStan / Linter seluruh file PHP |
 | `composer test` | Unit test & Integration test suite |
+| `php tools/lint.php` | Memeriksa sintaks seluruh file PHP |
+| `php tools/preflight.php` | Memeriksa kesiapan environment tanpa menampilkan secret |
 | `php tools/migrate.php` | Menjalankan migrasi database (Development / Staging) |
 | `php tools/migrate.php --allow-production` | Menjalankan migrasi produksi dengan persetujuan eksplisit |
 | `php cron/purge_audit_log.php` | Otomasi penghapusan audit event yang melewati masa retensi |
@@ -103,11 +156,15 @@ Akrab_SMANTRI/
 ## 📋 Panduan Operasional
 
 Dokumentasi rinci seputar pengoperasian sistem dapat diakses pada:
+
 - 📖 [Deployment & Rollback Runbook](docs/operations/deployment-runbook.md)
 - 💾 [Backup & Restore Database](docs/operations/backup-restore.md)
 - 🚨 [Incident Management & Rotasi Secret](docs/operations/incident-secret-rotation.md)
 - 🔒 [Retensi Data & Hak Subjek Data](docs/operations/data-retention.md)
 - ✅ [Release Checklist & Governance](docs/operations/release-checklist.md)
+- 📊 [Spesifikasi Simulasi Regresi Logistik](docs/specs/research-logistic-regression.md)
+- 🧪 [Pipeline Pelatihan Model](docs/model-training.md)
+- 🗂️ [Model Card](docs/model-card.md)
 
 ---
 
@@ -115,6 +172,8 @@ Dokumentasi rinci seputar pengoperasian sistem dapat diakses pada:
 
 Seluruh role pengguna (Siswa, UKS, Orang Tua, Superadmin) menggunakan origin produksi resmi:  
 🔗 **[https://akrab.portodq.com/](https://akrab.portodq.com/)**
+
+Deployment produksi harus menggunakan paket allowlist dari `deployment/include.txt`, membuat backup terlebih dahulu, menjalankan migrasi dengan persetujuan eksplisit, dan memverifikasi endpoint `health.php`. Jangan menyalin atau menghapus direktori proyek/domain lain pada akun hosting yang sama.
 
 ---
 
