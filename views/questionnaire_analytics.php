@@ -66,6 +66,8 @@ function renderQuestionnaireResult(array $presentation, array $response): void
             </div>
         </div>
 
+        <?php renderQuestionnaireAnswerOverview($presentation['answers']); ?>
+
         <details class="card shadow-sm border-0 mb-4">
             <summary class="card-header bg-white p-3 p-md-4 d-flex flex-column gap-1">
                 <span class="h5 mb-0">Hasil Lengkap</span>
@@ -92,34 +94,90 @@ function renderQuestionnaireResult(array $presentation, array $response): void
                     <?php renderDietSummary($response); ?>
                 </section>
 
-                <section class="mt-4 pt-3 border-top" aria-labelledby="complete-answer-title">
-                    <h3 class="h5" id="complete-answer-title">Pertanyaan dan jawaban</h3>
-                    <?php if (!$presentation['answers']['available']): ?>
-                        <div class="alert alert-info mb-0" role="status">
-                            <?= escape_output((string) $presentation['answers']['message']) ?>
-                        </div>
-                    <?php else: ?>
-                        <?php foreach ($presentation['answers']['sections'] as $section): ?>
-                            <section class="mt-3" aria-label="<?= escape_output((string) $section['label']) ?>">
-                                <h4 class="h6 text-primary"><?= escape_output((string) $section['label']) ?></h4>
-                                <dl class="list-group mb-0">
-                                    <?php foreach ($section['items'] as $item): ?>
-                                        <div class="list-group-item">
-                                            <dt class="fw-semibold"><?= escape_output((string) $item['question']) ?></dt>
-                                            <dd class="mb-0 text-muted"><?= escape_output((string) $item['answer']) ?></dd>
-                                        </div>
-                                    <?php endforeach; ?>
-                                </dl>
-                            </section>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </section>
-
                 <div class="alert alert-secondary small mt-4 mb-0" role="note">
                     <?= escape_output((string) $presentation['disclaimer']) ?>
                 </div>
             </div>
         </details>
+    </section>
+    <?php
+}
+
+/** @param array<string, mixed> $answers */
+function renderQuestionnaireAnswerOverview(array $answers): void
+{
+    $answerCount = 0;
+    foreach (($answers['sections'] ?? []) as $section) {
+        $answerCount += count($section['items'] ?? []);
+    }
+    ?>
+    <section class="card shadow-sm border-0 mb-4 question-answer-overview"
+             aria-labelledby="question-answer-title">
+        <div class="card-header bg-white border-bottom p-3 p-md-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                <div>
+                    <p class="text-uppercase small fw-semibold text-primary mb-1">Rincian respons</p>
+                    <h2 class="h4 mb-1" id="question-answer-title">Pertanyaan dan jawaban</h2>
+                    <p class="text-muted mb-0">
+                        Nilai yang diberikan pada setiap pertanyaan saat pengisian terakhir.
+                    </p>
+                </div>
+                <?php if ($answers['available']): ?>
+                    <span class="badge rounded-pill text-bg-primary px-3 py-2">
+                        <?= $answerCount ?> jawaban tercatat
+                    </span>
+                <?php endif; ?>
+            </div>
+        </div>
+        <div class="card-body p-3 p-md-4">
+            <?php if (!$answers['available']): ?>
+                <div class="alert alert-info d-flex gap-2 mb-0" role="status">
+                    <i data-lucide="info" aria-hidden="true"></i>
+                    <span><?= escape_output((string) $answers['message']) ?></span>
+                </div>
+            <?php else: ?>
+                <div class="row g-3 g-xl-4">
+                    <?php foreach ($answers['sections'] as $section): ?>
+                        <div class="col-12 col-xl-6">
+                            <article class="border rounded-3 h-100 overflow-hidden">
+                                <header class="bg-light border-bottom px-3 py-3 d-flex justify-content-between align-items-center gap-2">
+                                    <h3 class="h6 fw-bold mb-0">
+                                        <?= escape_output((string) $section['label']) ?>
+                                    </h3>
+                                    <span class="badge text-bg-secondary">
+                                        <?= count($section['items']) ?> butir
+                                    </span>
+                                </header>
+                                <ol class="list-group list-group-numbered list-group-flush mb-0">
+                                    <?php foreach ($section['items'] as $item): ?>
+                                        <li class="list-group-item d-flex gap-3 py-3"
+                                            data-answer-key="<?= escape_output((string) $item['key']) ?>">
+                                            <div class="ms-2 flex-grow-1">
+                                                <p class="fw-semibold mb-2">
+                                                    <?= escape_output((string) $item['question']) ?>
+                                                </p>
+                                                <div class="bg-light border rounded-2 px-3 py-2">
+                                                    <span class="d-block small text-uppercase text-muted fw-semibold mb-1">
+                                                        Jawaban
+                                                    </span>
+                                                    <span class="fw-bold text-body">
+                                                        <?= escape_output((string) $item['answer']) ?>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    <?php endforeach; ?>
+                                </ol>
+                            </article>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                <p class="small text-muted mt-3 mb-0">
+                    Rincian mengikuti versi pertanyaan saat data diisi
+                    <?= $answers['version'] ? ' (' . escape_output((string) $answers['version']) . ')' : '' ?>.
+                </p>
+            <?php endif; ?>
+        </div>
     </section>
     <?php
 }

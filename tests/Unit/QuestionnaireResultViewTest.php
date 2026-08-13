@@ -56,6 +56,13 @@ final class QuestionnaireResultViewTest extends TestCase
         self::assertStringContainsString('Hasil Ringkas', $html);
         self::assertStringContainsString('<details', $html);
         self::assertStringContainsString('Hasil Lengkap', $html);
+        self::assertStringContainsString('question-answer-overview', $html);
+        self::assertStringContainsString('1 jawaban tercatat', $html);
+        self::assertLessThan(
+            strpos($html, '<details'),
+            strpos($html, 'question-answer-overview')
+        );
+        self::assertSame(1, substr_count($html, 'Pertanyaan dan jawaban'));
         self::assertStringContainsString('&lt;script&gt;tidak aman&lt;/script&gt;', $html);
         self::assertStringNotContainsString('<script>tidak aman</script>', $html);
         self::assertStringContainsString('bukan diagnosis', $html);
