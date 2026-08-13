@@ -15,3 +15,19 @@ function clinicalApprovalGatePassed(): bool
     $checksum = trim((string) (environmentValue('CLINICAL_MODEL_CHECKSUM') ?: ''));
     return $feature && $owner && $model && $specVersion !== '' && $modelVersion !== '' && $checksum !== '';
 }
+
+function researchSimulationGatePassed(): bool
+{
+    return filter_var(
+        environmentValue('AKRAB_RESEARCH_MODEL_ENABLED') ?: 'false',
+        FILTER_VALIDATE_BOOLEAN,
+        FILTER_NULL_ON_FAILURE
+    ) === true
+        && trim((string) (environmentValue('CLINICAL_MODEL_VERSION') ?: '')) !== ''
+        && trim((string) (environmentValue('CLINICAL_MODEL_CHECKSUM') ?: '')) !== '';
+}
+
+function modelExecutionGatePassed(): bool
+{
+    return clinicalApprovalGatePassed() || researchSimulationGatePassed();
+}

@@ -68,6 +68,8 @@ function renderQuestionnaireResult(array $presentation, array $response): void
 
         <?php renderQuestionnaireAnswerOverview($presentation['answers']); ?>
 
+        <?php renderLogisticRegressionExplanation($presentation['logistic'] ?? null); ?>
+
         <details class="card shadow-sm border-0 mb-4">
             <summary class="card-header bg-white p-3 p-md-4 d-flex flex-column gap-1">
                 <span class="h5 mb-0">Hasil Lengkap</span>
@@ -99,6 +101,72 @@ function renderQuestionnaireResult(array $presentation, array $response): void
                 </div>
             </div>
         </details>
+    </section>
+    <?php
+}
+
+/** @param array<string, mixed>|null $model */
+function renderLogisticRegressionExplanation(?array $model): void
+{
+    ?>
+    <section class="card shadow-sm border-0 mb-4" aria-labelledby="logistic-model-title">
+        <div class="card-header bg-white border-bottom p-3 p-md-4">
+            <p class="text-uppercase small fw-semibold text-primary mb-1">Simulasi Model Penelitian</p>
+            <h2 class="h4 mb-1" id="logistic-model-title">Cara regresi logistik menghitung risiko</h2>
+            <p class="text-muted mb-0">Model mengubah empat nilai laboratorium menjadi probabilitas 0–100% melalui fungsi sigmoid.</p>
+        </div>
+        <div class="card-body p-3 p-md-4">
+            <?php if ($model === null): ?>
+                <div class="alert alert-warning mb-0" role="status">
+                    Regresi logistik belum dapat dihitung. Lengkapi Hb, MCHC, MCV, dan MCH terlebih dahulu.
+                </div>
+            <?php else: ?>
+                <div class="row g-3 mb-4 text-center" aria-label="Tahapan regresi logistik">
+                    <?php foreach ([
+                        ['1', 'Data laboratorium', 'Empat nilai diperiksa dan dimasukkan ke model.'],
+                        ['2', 'Hitung nilai z', 'Setiap nilai dikalikan koefisien lalu dijumlahkan.'],
+                        ['3', 'Fungsi sigmoid', 'Nilai z diubah menjadi probabilitas 0–100%.'],
+                        ['4', 'Kategori hasil', 'Probabilitas dipetakan menjadi rendah, sedang, atau tinggi.'],
+                    ] as [$number, $title, $description]): ?>
+                        <div class="col-6 col-lg-3"><div class="border rounded-3 p-3 h-100 bg-light">
+                            <span class="badge rounded-pill text-bg-primary mb-2"><?= $number ?></span>
+                            <h3 class="h6 mb-1"><?= escape_output($title) ?></h3>
+                            <p class="small text-muted mb-0"><?= escape_output($description) ?></p>
+                        </div></div>
+                    <?php endforeach; ?>
+                </div>
+                <div class="row g-4">
+                    <div class="col-lg-7">
+                        <h3 class="h6">Kontribusi variabel pada persamaan</h3>
+                        <div class="table-responsive"><table class="table table-sm align-middle">
+                            <thead><tr><th>Variabel</th><th>Nilai</th><th>Koefisien</th><th>Kontribusi</th></tr></thead>
+                            <tbody><?php foreach ($model['terms'] as $term): ?><tr>
+                                <th><?= escape_output((string) $term['label']) ?></th>
+                                <td><?= escape_output(number_format((float) $term['value'], 2, ',', '.')) ?> <?= escape_output((string) $term['unit']) ?></td>
+                                <td><?= escape_output(number_format((float) $term['coefficient'], 2, ',', '.')) ?></td>
+                                <td><?= escape_output(number_format((float) $term['contribution'], 3, ',', '.')) ?></td>
+                            </tr><?php endforeach; ?></tbody>
+                        </table></div>
+                        <div class="bg-light border rounded-3 p-3 font-monospace small">
+                            z = <?= escape_output(number_format((float) $model['intercept'], 2, ',', '.')) ?> + kontribusi variabel<br>
+                            z = <?= escape_output(number_format((float) $model['z'], 4, ',', '.')) ?><br>
+                            <?= escape_output((string) $model['equation']) ?>
+                        </div>
+                    </div>
+                    <div class="col-lg-5">
+                        <div class="border rounded-3 p-4 h-100 d-flex flex-column justify-content-center text-center">
+                            <p class="small text-uppercase fw-semibold text-muted mb-1">Probabilitas simulasi</p>
+                            <p class="display-5 fw-bold text-primary mb-1"><?= escape_output(number_format((float) $model['probability'] * 100, 2, ',', '.')) ?>%</p>
+                            <p class="mb-3">Kategori <strong><?= escape_output(ucfirst((string) $model['category'])) ?></strong></p>
+                            <p class="small text-muted mb-0">Rendah &lt;33% · Sedang 33–&lt;66% · Tinggi ≥66%</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="alert alert-secondary small mt-4 mb-0" role="note">
+                    Simulasi Model Penelitian — bukan diagnosis medis dan belum menggantikan penilaian tenaga kesehatan.
+                </div>
+            <?php endif; ?>
+        </div>
     </section>
     <?php
 }

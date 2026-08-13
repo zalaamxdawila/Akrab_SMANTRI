@@ -53,7 +53,7 @@ final class QuestionnaireAnalyticsRepository
     /** @return list<array<string, mixed>> */
     public function latestByStudentForExport(): array
     {
-        return $this->latestStudentRows(clinicalApprovalGatePassed());
+        return $this->latestStudentRows(modelExecutionGatePassed());
     }
 
     /** @return list<array<string, mixed>> */
@@ -142,7 +142,7 @@ final class QuestionnaireAnalyticsRepository
     /** @return array<string, mixed>|null */
     public function latestDetectionForStudent(int $studentId, int $questionnaireId): ?array
     {
-        if ($questionnaireId <= 0 || !clinicalApprovalGatePassed()) {
+        if ($questionnaireId <= 0 || !modelExecutionGatePassed()) {
             return null;
         }
 

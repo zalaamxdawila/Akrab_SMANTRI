@@ -146,7 +146,7 @@ final class QuestionnaireExportTest extends TestCase
         self::assertStringContainsString('latestByStudentForExport', $uksExport);
         self::assertStringContainsString('latestByStudentForExport', $superadminExport);
         self::assertStringContainsString(
-            'clinicalApprovalGatePassed()',
+            'modelExecutionGatePassed()',
             file_get_contents(
                 $root . '/app/Repositories/QuestionnaireAnalyticsRepository.php'
             )

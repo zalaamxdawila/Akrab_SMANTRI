@@ -69,6 +69,7 @@ recordAuditEvent(
             <p class="text-muted mb-0">Agregat memakai semua pengisian aktif; tabel menampilkan pengisian terbaru tiap siswa.</p>
         </div>
         <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-outline-warning" href="permintaan_lab.php">Permintaan perubahan lab</a>
             <a class="btn btn-success d-inline-flex align-items-center gap-2"
                href="export_questionnaire.php">
                 <i data-lucide="file-spreadsheet" aria-hidden="true"></i>

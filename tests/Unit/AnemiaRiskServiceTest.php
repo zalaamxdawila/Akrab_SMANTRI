@@ -23,10 +23,30 @@ final class AnemiaRiskServiceTest extends TestCase
         }
     }
 
-    public function testEvaluationReturnsVersionedBoundedResult(): void
+    public function testResearchSimulationCanRunWithoutClinicalApproval(): void
+    {
+        putenv('CLINICAL_RISK_ENABLED=false');
+        putenv('CLINICAL_OWNER_APPROVED=false');
+        putenv('CLINICAL_MODEL_APPROVED=false');
+        putenv('AKRAB_RESEARCH_MODEL_ENABLED=true');
+        try {
+            $result = (new AnemiaRiskService())->evaluate([
+                'kadar_hb'=>12, 'kadar_mchc'=>33, 'kadar_mcv'=>85, 'kadar_mch'=>29,
+                'skor_gejala'=>10, 'skor_makan'=>12, 'mens_teratur'=>'ya',
+            ]);
+            self::assertSame('rendah', $result['category']);
+        } finally {
+            putenv('AKRAB_RESEARCH_MODEL_ENABLED');
+        }
+    }
+
+    public function testEvaluationReturnsVersionedBoundedLogisticResult(): void
     {
         $result = (new AnemiaRiskService())->evaluate([
-            'kadar_hb' => null,
+            'kadar_hb' => 12,
+            'kadar_mchc' => 33,
+            'kadar_mcv' => 85,
+            'kadar_mch' => 29,
             'skor_gejala' => 10,
             'skor_makan' => 12,
             'mens_teratur' => 'ya',
@@ -37,9 +57,17 @@ final class AnemiaRiskServiceTest extends TestCase
         self::assertSame(64, strlen($result['model_checksum']));
         self::assertGreaterThanOrEqual(0, $result['probability']);
         self::assertLessThanOrEqual(0.99, $result['probability']);
-        $golden = json_decode(file_get_contents(dirname(__DIR__) . '/fixtures/model_golden.json'), true, flags: JSON_THROW_ON_ERROR);
-        self::assertEqualsWithDelta($golden['expected_probability'], $result['probability'], $golden['tolerance']);
-        self::assertSame($golden['expected_category'], $result['category']);
+        self::assertEqualsWithDelta(1 / (1 + exp(12.95)), $result['probability'], 0.000001);
+        self::assertSame('rendah', $result['category']);
+    }
+
+    public function testEvaluationRejectsIncompleteLabInsteadOfUsingHeuristicRisk(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        (new AnemiaRiskService())->evaluate([
+            'kadar_hb' => null, 'skor_gejala' => 10,
+            'skor_makan' => 12, 'mens_teratur' => 'ya',
+        ]);
     }
 
     public function testExtremeInputIsRejected(): void
@@ -50,6 +78,36 @@ final class AnemiaRiskServiceTest extends TestCase
             'skor_gejala' => 10,
             'skor_makan' => 12,
             'mens_teratur' => 'ya',
+        ]);
+    }
+
+    public function testLogisticExplanationExposesTransparentResearchCalculation(): void
+    {
+        $result = (new AnemiaRiskService())->explainLogistic([
+            'kadar_hb' => 12,
+            'kadar_mchc' => 33,
+            'kadar_mcv' => 85,
+            'kadar_mch' => 29,
+        ]);
+
+        self::assertEqualsWithDelta(-12.95, $result['z'], 0.0001);
+        self::assertEqualsWithDelta(
+            1 / (1 + exp(12.95)),
+            $result['probability'],
+            0.000001
+        );
+        self::assertSame('rendah', $result['category']);
+        self::assertSame('Simulasi Model Penelitian', $result['status_label']);
+        self::assertCount(4, $result['terms']);
+    }
+
+    public function testLogisticExplanationRequiresAllFourLaboratoryValues(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        (new AnemiaRiskService())->explainLogistic([
+            'kadar_hb' => 12,
+            'kadar_mchc' => 33,
+            'kadar_mcv' => 85,
         ]);
     }
 

@@ -45,8 +45,22 @@ final class QuestionnaireResultPresenter
             'priorities' => $priorities,
             'actions' => array_values(array_unique($actions)),
             'answers' => $this->answers($response['answers_snapshot'] ?? null),
+            'logistic' => $this->logistic($response),
             'disclaimer' => $this->insights->disclaimer(),
         ];
+    }
+
+    /** @return array<string, mixed>|null */
+    private function logistic(array $response): ?array
+    {
+        foreach (['kadar_hb', 'kadar_mchc', 'kadar_mcv', 'kadar_mch'] as $field) {
+            if (($response[$field] ?? null) === null || $response[$field] === '') return null;
+        }
+        try {
+            return (new AnemiaRiskService())->explainLogistic($response);
+        } catch (InvalidArgumentException) {
+            return null;
+        }
     }
 
     /** @return array{key:string,label:string,tone:string,probability_label:string,date_label:string} */

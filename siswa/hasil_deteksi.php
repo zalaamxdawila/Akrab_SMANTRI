@@ -17,7 +17,7 @@ $hasil = $questionnaireRepository->latestDetectionForStudent(
 );
 
 if (!$hasil) {
-    header("Location: kuesioner.php");
+    header("Location: data_laboratorium.php");
     exit;
 }
 

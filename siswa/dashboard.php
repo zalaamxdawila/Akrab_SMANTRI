@@ -279,8 +279,13 @@ if (empty($news)) {
                     </div>
                 <?php else: ?>
                     <div class="text-center my-4">
-                        <p class="text-muted">Belum ada data. Silakan isi kuesioner terlebih dahulu.</p>
-                        <a href="kuesioner.php" class="btn btn-primary">Isi Kuesioner Sekarang</a>
+                        <?php if ($kuesioner): ?>
+                            <p class="text-muted">Kuesioner sudah tersimpan. Lengkapi empat nilai laboratorium untuk menjalankan simulasi regresi logistik.</p>
+                            <a href="data_laboratorium.php" class="btn btn-primary">Lengkapi Data Laboratorium</a>
+                        <?php else: ?>
+                            <p class="text-muted">Belum ada data. Silakan isi kuesioner terlebih dahulu.</p>
+                            <a href="kuesioner.php" class="btn btn-primary">Isi Kuesioner Sekarang</a>
+                        <?php endif; ?>
                     </div>
                 <?php endif; ?>
             </div>

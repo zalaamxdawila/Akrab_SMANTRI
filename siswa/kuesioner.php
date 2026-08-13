@@ -57,13 +57,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $submission['tanggal_wawancara'] = date('Y-m-d');
         $questionnaireService = new QuestionnaireService($pdo);
         if ($clinicalRiskEnabled) {
-            $questionnaireService->submit($user_id, $submission);
-            header("Location: hasil_deteksi.php");
-            exit;
+            if (($submission['lab_status'] ?? '') === 'tersedia') {
+                $questionnaireService->submit($user_id, $submission);
+                header("Location: hasil_deteksi.php");
+                exit;
+            }
         }
 
         $questionnaireService->collect($user_id, $submission);
-        header("Location: dashboard.php?questionnaire_saved=1");
+        header("Location: data_laboratorium.php?questionnaire_saved=1");
         exit;
     } catch (Exception $e) {
         if ($pdo->inTransaction()) {

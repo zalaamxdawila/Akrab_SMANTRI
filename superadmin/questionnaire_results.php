@@ -69,6 +69,7 @@ renderSuperadminHeader('Hasil Kuesioner', 'questionnaires');
 <script src="/assets/vendor/chart.umd.min.js"></script>
 
 <div class="d-flex justify-content-end mb-3">
+    <a class="btn btn-outline-warning me-2" href="lab_requests.php">Permintaan perubahan lab</a>
     <form method="post" action="questionnaire_export.php">
         <?= csrfInput() ?>
         <button class="btn btn-success d-inline-flex align-items-center gap-2"
