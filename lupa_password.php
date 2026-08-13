@@ -11,17 +11,17 @@ $error = '';
 $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $usernameInput = $_POST['username'] ?? '';
-    $username = is_string($usernameInput) ? trim($usernameInput) : '';
+    $identifierInput = $_POST['identifier'] ?? '';
+    $identifier = is_string($identifierInput) ? strtolower(trim($identifierInput)) : '';
 
     if (!AuthAttemptLimiter::allows($_SESSION, 'password-reset-request')) {
         $success = 'Jika akun terdaftar, permintaan reset akan diteruskan ke Superadmin.';
-    } elseif (empty($username)) {
-        $error = "Username (NISN) wajib diisi.";
+    } elseif ($identifier === '' || strlen($identifier) > 254) {
+        $error = "Email atau Username/NISN wajib diisi.";
     } else {
         AuthAttemptLimiter::record($_SESSION, 'password-reset-request');
-        $stmt = $pdo->prepare("SELECT id, nama, role FROM users WHERE username = ?");
-        $stmt->execute([$username]);
+        $stmt = $pdo->prepare("SELECT id, nama, role FROM users WHERE username = ? OR email = ? LIMIT 1");
+        $stmt->execute([$identifier, $identifier]);
         $user = $stmt->fetch();
 
         if ($user) {
@@ -100,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <img src="assets/img/logo.png" alt="AKRAB Logo" style="width: 80px; height: 80px; object-fit: contain; border-radius: 16px; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25);">
             </div>
             <h2 class="h3 fw-bold mb-2" style="color: var(--primary-color);">Lupa Password?</h2>
-            <p class="text-muted small mb-0">Masukkan NISN/Username Anda untuk meminta reset password ke Superadmin.</p>
+            <p class="text-muted small mb-0">Masukkan email atau NISN/Username untuk meminta reset password ke Superadmin.</p>
         </div>
 
         <?php if ($error): ?>
@@ -117,8 +117,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <form method="POST" action="lupa_password.php" class="mt-4">
             <?= csrfInput() ?>
             <div class="form-floating mb-4">
-                <input type="text" class="form-control rounded-3 border-0 bg-light" id="floatingInput" name="username" placeholder="Username" autocomplete="username" required autofocus>
-                <label for="floatingInput" class="text-muted"><i data-lucide="user" style="width: 16px;" class="me-1"></i> Username / NISN</label>
+                <input type="text" class="form-control rounded-3 border-0 bg-light" id="floatingInput" name="identifier" maxlength="254" placeholder="Email atau Username" autocomplete="username" required autofocus>
+                <label for="floatingInput" class="text-muted"><i data-lucide="user" style="width: 16px;" class="me-1"></i> Email / Username / NISN</label>
             </div>
             <button class="w-100 btn btn-lg btn-primary rounded-pill fw-bold shadow-sm mb-3 d-flex justify-content-center align-items-center gap-2" type="submit">
                 <i data-lucide="send" style="width: 20px;"></i> Minta Reset

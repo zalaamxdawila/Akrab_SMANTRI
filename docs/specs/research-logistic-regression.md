@@ -24,7 +24,10 @@ diagnosis medis.
 ## Model presentation
 
 - Persamaan penelitian saat ini ditampilkan sebagai
-  `z = 15.5 - 1.5(Hb) - 0.1(MCH) - 0.1(MCHC) - 0.05(MCV)`.
+  `z = 15.5 - 1.5(Hb) - 0.1(MCH-29.5) - 0.1(MCHC-33.2) - 0.05(MCV-90)`.
+- MCH, MCHC, dan MCV dipusatkan terhadap nilai acuan model. Tanpa pemusatan,
+  ketiga indeks memberi penalti konstan sekitar `-10.02` dan membuat hampir
+  semua probabilitas dibulatkan menjadi `0.00%`.
 - Sigmoid ditampilkan sebagai `P = 1 / (1 + e^-z)`.
 - Batas kategori: rendah `<33%`, sedang `33–<66%`, tinggi `≥66%`.
 - UI menampilkan contoh perhitungan dari data siswa, diagram alur, versi model,

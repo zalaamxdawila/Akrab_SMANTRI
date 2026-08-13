@@ -56,7 +56,7 @@ final class QuestionnaireServiceIntegrationTest extends TestCase
             $this->validInput()
         );
 
-        self::assertSame('model-v1', $result['model_version']);
+        self::assertSame('AKRAB-RESEARCH-CENTERED-v1.1', $result['model_version']);
         self::assertSame(1, (int) $this->pdo->query('SELECT COUNT(*) FROM kuesioner')->fetchColumn());
         self::assertSame(1, (int) $this->pdo->query('SELECT COUNT(*) FROM hasil_deteksi')->fetchColumn());
         self::assertSame(

@@ -28,6 +28,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     $nama = sanitize_input($_POST['nama'] ?? '');
     $username = sanitize_input($_POST['username'] ?? '');
+    $emailRaw = $_POST['email'] ?? '';
+    $email = is_string($emailRaw) ? strtolower(trim($emailRaw)) : '';
     $password = trim($_POST['password'] ?? '');
     $role = sanitize_input($_POST['role'] ?? '');
     $kelas_tingkat = isset($_POST['kelas']) ? sanitize_input($_POST['kelas']) : '';
@@ -42,7 +44,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $error = 'Jenis akun tidak diizinkan untuk pendaftaran publik.';
     }
 
-    if (empty($error) && !empty($nama) && !empty($username) && !empty($password) && !empty($role)) {
+    if (empty($error) && (strlen($email) > 254 || filter_var($email, FILTER_VALIDATE_EMAIL) === false)) {
+        $error = 'Alamat email tidak valid.';
+    }
+
+    if (empty($error) && !empty($nama) && !empty($username) && !empty($email) && !empty($password) && !empty($role)) {
         // Validate if Orang Tua
         if ($role === 'orangtua') {
             if (empty($anak_username)) {
@@ -66,10 +72,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $pdo->beginTransaction();
                 try {
                     $stmt = $pdo->prepare(
-                        "INSERT INTO users (nama, role, username, password_hash, kelas)
-                         VALUES (?, ?, ?, ?, ?)"
+                        "INSERT INTO users (nama, role, username, email, password_hash, kelas)
+                         VALUES (?, ?, ?, ?, ?, ?)"
                     );
-                    $stmt->execute([$nama, $role, $username, $password_hash, $kelas]);
+                    $stmt->execute([$nama, $role, $username, $email, $password_hash, $kelas]);
                     $newUserId = (int) $pdo->lastInsertId();
 
                     if ($role === 'orangtua') {
@@ -176,6 +182,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <div class="mb-3">
                 <label for="username" class="form-label small text-muted fw-semibold">Username / NISN</label>
                 <input type="text" class="form-control rounded-3 border-0 bg-light" id="username" name="username" required>
+            </div>
+            <div class="mb-3">
+                <label for="email" class="form-label small text-muted fw-semibold">Email Aktif</label>
+                <input type="email" maxlength="254" autocomplete="email" class="form-control rounded-3 border-0 bg-light" id="email" name="email" required>
             </div>
             <div class="mb-3">
                 <label for="password" class="form-label small text-muted fw-semibold">Password</label>

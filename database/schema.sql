@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS users (
     nama VARCHAR(100) NOT NULL,
     role ENUM('siswa', 'uks', 'orangtua', 'superadmin') NOT NULL DEFAULT 'siswa',
     username VARCHAR(50) NOT NULL UNIQUE,
+    email VARCHAR(254) NULL,
     password_hash VARCHAR(255) NOT NULL,
     status ENUM('active', 'inactive', 'archived') NOT NULL DEFAULT 'active',
     status_changed_at TIMESTAMP NULL,
@@ -14,6 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
     anak_username VARCHAR(50) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_users_single_superadmin (superadmin_key),
+    UNIQUE KEY uq_users_email (email),
     KEY idx_users_status_changed (status, status_changed_at),
     FOREIGN KEY (status_changed_by) REFERENCES users(id) ON DELETE SET NULL
 );

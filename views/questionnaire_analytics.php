@@ -124,7 +124,7 @@ function renderLogisticRegressionExplanation(?array $model): void
                 <div class="row g-3 mb-4 text-center" aria-label="Tahapan regresi logistik">
                     <?php foreach ([
                         ['1', 'Data laboratorium', 'Empat nilai diperiksa dan dimasukkan ke model.'],
-                        ['2', 'Hitung nilai z', 'Setiap nilai dikalikan koefisien lalu dijumlahkan.'],
+                        ['2', 'Hitung nilai z', 'Indeks sel darah dipusatkan ke nilai acuan, lalu dikalikan koefisien.'],
                         ['3', 'Fungsi sigmoid', 'Nilai z diubah menjadi probabilitas 0–100%.'],
                         ['4', 'Kategori hasil', 'Probabilitas dipetakan menjadi rendah, sedang, atau tinggi.'],
                     ] as [$number, $title, $description]): ?>
@@ -139,16 +139,17 @@ function renderLogisticRegressionExplanation(?array $model): void
                     <div class="col-lg-7">
                         <h3 class="h6">Kontribusi variabel pada persamaan</h3>
                         <div class="table-responsive"><table class="table table-sm align-middle">
-                            <thead><tr><th>Variabel</th><th>Nilai</th><th>Koefisien</th><th>Kontribusi</th></tr></thead>
+                            <thead><tr><th>Variabel</th><th>Nilai</th><th>Nilai model</th><th>Koefisien</th><th>Kontribusi</th></tr></thead>
                             <tbody><?php foreach ($model['terms'] as $term): ?><tr>
                                 <th><?= escape_output((string) $term['label']) ?></th>
                                 <td><?= escape_output(number_format((float) $term['value'], 2, ',', '.')) ?> <?= escape_output((string) $term['unit']) ?></td>
+                                <td><?php if ((float) $term['reference_value'] === 0.0): ?><?= escape_output(number_format((float) $term['centered_value'], 2, ',', '.')) ?><?php else: ?>(<?= escape_output(number_format((float) $term['value'], 2, ',', '.')) ?> − <?= escape_output(number_format((float) $term['reference_value'], 2, ',', '.')) ?>) = <?= escape_output(number_format((float) $term['centered_value'], 2, ',', '.')) ?><?php endif; ?></td>
                                 <td><?= escape_output(number_format((float) $term['coefficient'], 2, ',', '.')) ?></td>
                                 <td><?= escape_output(number_format((float) $term['contribution'], 3, ',', '.')) ?></td>
                             </tr><?php endforeach; ?></tbody>
                         </table></div>
                         <div class="bg-light border rounded-3 p-3 font-monospace small">
-                            z = <?= escape_output(number_format((float) $model['intercept'], 2, ',', '.')) ?> + kontribusi variabel<br>
+                            z = <?= escape_output(number_format((float) $model['intercept'], 2, ',', '.')) ?> − 1,5(Hb) − 0,1(MCH−29,5) − 0,1(MCHC−33,2) − 0,05(MCV−90)<br>
                             z = <?= escape_output(number_format((float) $model['z'], 4, ',', '.')) ?><br>
                             <?= escape_output((string) $model['equation']) ?>
                         </div>

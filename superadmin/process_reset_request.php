@@ -28,8 +28,9 @@ if ($requestId === false || !in_array($action, ['generate_link', 'complete'], tr
 }
 
 $statement = $pdo->prepare(
-    "SELECT id, user_id FROM password_reset_requests
-     WHERE id = ? AND status = 'pending'"
+    "SELECT p.id, p.user_id, u.email FROM password_reset_requests p
+     JOIN users u ON u.id = p.user_id
+     WHERE p.id = ? AND p.status = 'pending'"
 );
 $statement->execute([$requestId]);
 $request = $statement->fetch();
@@ -50,6 +51,16 @@ if ($action === 'generate_link') {
         'request_id' => (int) $requestId,
         'url' => BASE_URL . 'reset_password.php?token=' . $issuedToken['token'],
     ];
+    if (filter_var($request['email'] ?? null, FILTER_VALIDATE_EMAIL)) {
+        $resetUrl = BASE_URL . 'reset_password.php?token=' . $issuedToken['token'];
+        $message = "Halo,\n\nLink reset password AKRAB Anda:\n{$resetUrl}\n\nLink berlaku selama 1 jam. Abaikan email ini jika Anda tidak meminta reset.";
+        @mail(
+            (string) $request['email'],
+            'Reset Password AKRAB',
+            $message,
+            "From: noreply@akrab.portodq.com\r\nReply-To: noreply@akrab.portodq.com"
+        );
+    }
     recordAuditEvent(
         $pdo,
         (int) $_SESSION['user_id'],

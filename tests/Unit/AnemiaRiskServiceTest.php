@@ -53,11 +53,11 @@ final class AnemiaRiskServiceTest extends TestCase
         ]);
         self::assertArrayHasKey('probability', $result);
         self::assertArrayHasKey('category', $result);
-        self::assertSame('model-v1', $result['model_version']);
+        self::assertSame('AKRAB-RESEARCH-CENTERED-v1.1', $result['model_version']);
         self::assertSame(64, strlen($result['model_checksum']));
         self::assertGreaterThanOrEqual(0, $result['probability']);
         self::assertLessThanOrEqual(0.99, $result['probability']);
-        self::assertEqualsWithDelta(1 / (1 + exp(12.95)), $result['probability'], 0.000001);
+        self::assertEqualsWithDelta(1 / (1 + exp(2.18)), $result['probability'], 0.000001);
         self::assertSame('rendah', $result['category']);
     }
 
@@ -90,15 +90,40 @@ final class AnemiaRiskServiceTest extends TestCase
             'kadar_mch' => 29,
         ]);
 
-        self::assertEqualsWithDelta(-12.95, $result['z'], 0.0001);
+        self::assertEqualsWithDelta(-2.18, $result['z'], 0.0001);
         self::assertEqualsWithDelta(
-            1 / (1 + exp(12.95)),
+            1 / (1 + exp(2.18)),
             $result['probability'],
             0.000001
         );
         self::assertSame('rendah', $result['category']);
         self::assertSame('Simulasi Model Penelitian', $result['status_label']);
         self::assertCount(4, $result['terms']);
+        self::assertSame(29.5, $result['terms'][1]['reference_value']);
+        self::assertEqualsWithDelta(-0.5, $result['terms'][1]['centered_value'], 0.0001);
+    }
+
+    public function testCenteredFormulaProducesUsefulSpreadAcrossPlausibleProfiles(): void
+    {
+        $service = new AnemiaRiskService();
+
+        $normal = $service->explainLogistic([
+            'kadar_hb' => 13, 'kadar_mch' => 30,
+            'kadar_mchc' => 34, 'kadar_mcv' => 92,
+        ]);
+        $borderline = $service->explainLogistic([
+            'kadar_hb' => 11, 'kadar_mch' => 27,
+            'kadar_mchc' => 31, 'kadar_mcv' => 80,
+        ]);
+        $low = $service->explainLogistic([
+            'kadar_hb' => 9, 'kadar_mch' => 23,
+            'kadar_mchc' => 29, 'kadar_mcv' => 70,
+        ]);
+
+        self::assertLessThan(0.10, $normal['probability']);
+        self::assertGreaterThan(0.33, $borderline['probability']);
+        self::assertLessThan(0.66, $borderline['probability']);
+        self::assertGreaterThan(0.90, $low['probability']);
     }
 
     public function testLogisticExplanationRequiresAllFourLaboratoryValues(): void
@@ -127,5 +152,18 @@ final class AnemiaRiskServiceTest extends TestCase
         self::assertStringContainsString('model_version', $service);
         self::assertStringContainsString('model_checksum', $service);
         self::assertStringContainsString('QuestionnaireService', $route);
+    }
+
+    public function testCenteredResultBackfillIsVersionedAndIdempotent(): void
+    {
+        $migration = file_get_contents(
+            dirname(__DIR__, 2) . '/database/migrations/018_recalculate_centered_logistic_results.php'
+        );
+
+        self::assertStringContainsString('AKRAB-RESEARCH-CENTERED-v1.1', $migration);
+        self::assertStringContainsString('(k.kadar_mch - 29.5)', $migration);
+        self::assertStringContainsString('(k.kadar_mchc - 33.2)', $migration);
+        self::assertStringContainsString('(k.kadar_mcv - 90.0)', $migration);
+        self::assertStringContainsString('NOT EXISTS', $migration);
     }
 }

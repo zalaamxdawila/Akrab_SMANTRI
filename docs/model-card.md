@@ -11,7 +11,8 @@ Status: DRAFT — NO PRODUCTION APPROVAL
 - Validation metrics: sensitivity 0,89, specificity 0,84, calibration 0,91.
 - Subgroup review: Evaluasi dilakukan berdasarkan kelompok usia dan jenis kelamin untuk memeriksa perbedaan performa model antar-subkelompok.
 - Known limitations and contraindications: Model tidak digunakan untuk diagnosis, rekomendasi pengobatan, emergency triage, atau keputusan rujukan otomatis. Performa dapat menurun pada data yang berbeda dari populasi pelatihan, data tidak lengkap, dan kondisi klinis yang tidak direpresentasikan dalam dataset. Kondisi gawat seperti sesak napas berat, pingsan, perdarahan banyak, atau nyeri dada harus segera mendapatkan pertolongan medis dan tidak boleh menunggu hasil screening.
-- Version/checksum: AKRAB-RISK-v1.0 / SHA-256: 7f3a9c2e8b614d5a91c7e34f8a2b6d10c4e8f6a3b9d7e1c5f2a8b6d4e9c3f7a1
+- Research simulation version/checksum: AKRAB-RESEARCH-CENTERED-v1.1 / SHA-256: 94e15b011a955aca8286041ab730ec47540c398987250e979700e3d9bc7198da
+- Formula correction: v1.1 centers MCH at 29.5, MCHC at 33.2, and MCV at 90.0. Earlier uncentered outputs are retained as history but must not be treated as the current result.
 - Clinical owner approval record: INTERNAL TESTING ONLY — dr. Andi Pratama, Dokter Spesialis Penyakit Dalam, 11 Agustus 2026. Belum merupakan persetujuan untuk penggunaan produksi.
 - Security review approval record: SECURITY-REVIEW-AKRAB-v1.0 / PASS — 11 Agustus 2026. Berlaku untuk environment staging dan pengujian internal.
 - Feature flag / kill switch tested: PASS — feature flag dan kill switch telah diuji pada environment staging. Production feature tetap disabled.

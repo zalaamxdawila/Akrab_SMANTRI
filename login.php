@@ -3,7 +3,10 @@ require_once 'config.php';
 require_once 'helpers.php';
 
 if (isset($_SESSION['user_id'])) {
-    header('Location: ' . BASE_URL . dashboardForRole($_SESSION['role']));
+    $destination = $_SESSION['role'] === 'siswa'
+        ? studentOnboardingDestination(studentOnboardingState($pdo, (int) $_SESSION['user_id']))
+        : null;
+    header('Location: ' . BASE_URL . ($destination ?? dashboardForRole($_SESSION['role'])));
     exit;
 }
 
@@ -39,7 +42,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             recordAuditEvent($pdo, (int) $user['id'], 'auth.login_succeeded', 'session', null, ['outcome' => 'success', 'actor_role' => $user['role']]);
             akrabLog('info', 'login_succeeded', ['outcome' => 'success', 'actor_role' => $user['role']]);
 
-            header('Location: ' . BASE_URL . dashboardForRole($user['role']));
+            $destination = $user['role'] === 'siswa'
+                ? studentOnboardingDestination(studentOnboardingState($pdo, (int) $user['id']))
+                : null;
+            header('Location: ' . BASE_URL . ($destination ?? dashboardForRole($user['role'])));
             exit;
         } else {
             AuthAttemptLimiter::record($_SESSION, 'password-login');

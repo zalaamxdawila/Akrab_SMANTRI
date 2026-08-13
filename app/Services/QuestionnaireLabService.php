@@ -177,8 +177,8 @@ final class QuestionnaireLabService
         );
         $statement->execute([
             $studentId, $questionnaireId, $risk['probability'], $risk['category'],
-            requireEnvironmentValue('CLINICAL_MODEL_VERSION'),
-            requireEnvironmentValue('CLINICAL_MODEL_CHECKSUM'),
+            $risk['model_version'],
+            $risk['model_checksum'],
         ]);
     }
 }

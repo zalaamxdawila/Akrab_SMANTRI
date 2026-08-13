@@ -41,6 +41,10 @@ function require_role($role) {
         echo 'Akses ditolak.';
         exit;
     }
+    if ($role === 'siswa') {
+        global $pdo;
+        enforceStudentOnboarding($pdo);
+    }
 }
 
 /**
@@ -50,71 +54,59 @@ function check_role($role) {
     require_role($role);
 }
 
+/** @param array<string, mixed> $state */
+function studentOnboardingDestination(array $state): ?string
+{
+    if (!is_string($state['email'] ?? null) || trim((string) $state['email']) === '') {
+        return 'siswa/lengkapi_email.php';
+    }
+    if (empty($state['questionnaire_id'])) {
+        return 'siswa/kuesioner.php';
+    }
+    foreach (['kadar_hb', 'kadar_mchc', 'kadar_mcv', 'kadar_mch'] as $field) {
+        if (($state[$field] ?? null) === null || $state[$field] === '') {
+            return 'siswa/data_laboratorium.php';
+        }
+    }
+    return null;
+}
+
+function studentOnboardingState(PDO $pdo, int $studentId): array
+{
+    $statement = $pdo->prepare(
+        'SELECT u.email, k.id questionnaire_id, k.kadar_hb, k.kadar_mchc,
+                k.kadar_mcv, k.kadar_mch
+         FROM users u
+         LEFT JOIN kuesioner k ON k.id = (
+             SELECT latest.id FROM kuesioner latest
+             WHERE latest.user_id = u.id AND latest.archived_at IS NULL
+             ORDER BY latest.created_at DESC, latest.id DESC LIMIT 1
+         )
+         WHERE u.id = ? AND u.role = \'siswa\''
+    );
+    $statement->execute([$studentId]);
+    return $statement->fetch() ?: [];
+}
+
+function enforceStudentOnboarding(PDO $pdo): void
+{
+    if (($_SESSION['role'] ?? '') !== 'siswa') return;
+    $destination = studentOnboardingDestination(
+        studentOnboardingState($pdo, (int) $_SESSION['user_id'])
+    );
+    if ($destination === null) return;
+    $currentPath = str_replace('\\', '/', (string) ($_SERVER['SCRIPT_NAME'] ?? ''));
+    if (str_ends_with($currentPath, '/' . $destination)) return;
+    header('Location: ' . BASE_URL . $destination, true, 303);
+    exit;
+}
+
 function requireActorAction(ActorContext $context, string $action): void
 {
     if (!actionAllowedForActor($context, $action)) {
         http_response_code(403);
         throw new DomainException('Aksi tidak diizinkan.');
     }
-}
-
-/**
- * Function to predict anemia risk
- * Uses Kaggle dataset Logistic Regression weights if lab data is available.
- * Otherwise, falls back to a heuristic based on the questionnaire scores.
- */
-function prediksiRisikoAnemia($input_data) {
-    if (clinicalApprovalGatePassed()) {
-        return (new AnemiaRiskService())->evaluate($input_data)['probability'];
-    }
-    /* Legacy calculation retained only for offline comparison; web callers must
-       use AnemiaRiskService and the approval gate. */
-    if (!empty($input_data['kadar_hb'])) {
-        // Mock coefficients trained from Kaggle anemia-dataset (biswaranjanrao)
-        // You can update these after running train_model.py
-        $koefisien = [
-            'b0' => 15.0, // Intercept
-            'gender' => 0.5, // 0: Male, 1: Female (Assuming all respondents are female 'remaja putri', so 1)
-            'hemoglobin' => -1.5, // Lower Hb = higher risk
-            'mch' => -0.1,
-            'mchc' => -0.1,
-            'mcv' => -0.05
-        ];
-
-        $z = $koefisien['b0'];
-        $z += $koefisien['gender'] * 1; 
-        $z += $koefisien['hemoglobin'] * (float)$input_data['kadar_hb'];
-        $z += $koefisien['mch'] * (isset($input_data['kadar_mch']) && $input_data['kadar_mch'] != '' ? (float)$input_data['kadar_mch'] : 29.5); // Default normal MCH
-        $z += $koefisien['mchc'] * (isset($input_data['kadar_mchc']) && $input_data['kadar_mchc'] != '' ? (float)$input_data['kadar_mchc'] : 33.2); // Default normal MCHC
-        $z += $koefisien['mcv'] * (isset($input_data['kadar_mcv']) && $input_data['kadar_mcv'] != '' ? (float)$input_data['kadar_mcv'] : 90.0); // Default normal MCV
-
-        // Sigmoid function
-        $probabilitas = 1 / (1 + exp(-$z));
-        return $probabilitas;
-    } 
-    
-    // Fallback: Heuristic based on the detailed questionnaire scores
-    // Gejala (Max 100), Sikap (Max 40), Pengetahuan (Max 10), Makan (Max 18)
-    $skor_gejala = isset($input_data['skor_gejala']) ? (int)$input_data['skor_gejala'] : 0;
-    $skor_makan = isset($input_data['skor_makan']) ? (int)$input_data['skor_makan'] : 10;
-    
-    // Base risk
-    $risk = 0.1;
-    
-    // High gejala increases risk significantly
-    if ($skor_gejala > 50) $risk += 0.4;
-    elseif ($skor_gejala > 25) $risk += 0.2;
-    
-    // Poor eating habits increases risk
-    if ($skor_makan < 9) $risk += 0.3;
-    elseif ($skor_makan < 14) $risk += 0.1;
-    
-    // Menstrual cycle factor
-    if (isset($input_data['mens_teratur']) && $input_data['mens_teratur'] == 'tidak') {
-        $risk += 0.15;
-    }
-    
-    return min($risk, 0.99);
 }
 
 /**
