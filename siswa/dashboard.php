@@ -5,6 +5,17 @@ require_once '../helpers.php';
 check_role('siswa');
 $user_id = $_SESSION['user_id'];
 
+// Check if email is missing
+$stmt = $pdo->prepare("SELECT email FROM users WHERE id = ?");
+$stmt->execute([$user_id]);
+$emailRow = $stmt->fetch();
+$hasEmail = !empty($emailRow['email']);
+
+// Fetch TTD notification schedule for display
+$stmt = $pdo->prepare("SELECT jam_pengingat, hari, aktif FROM jadwal_notifikasi WHERE siswa_id = ? AND archived_at IS NULL ORDER BY id DESC LIMIT 1");
+$stmt->execute([$user_id]);
+$jadwalInfo = $stmt->fetch();
+
 // Handle Menstrual Toggle
 if (isset($_POST['toggle_haid'])) {
     try {
@@ -183,7 +194,18 @@ if (empty($news)) {
             <?php endif; ?>
         </div>
     </div>
-    
+
+    <?php if (!$hasEmail): ?>
+    <div class="alert alert-warning d-flex align-items-center gap-2 shadow-sm border-warning animate-fade-in-up mb-3" role="alert">
+        <i data-lucide="mail-alert" style="width: 22px;" class="text-warning flex-shrink-0"></i>
+        <div class="flex-grow-1">
+            <strong>Email belum dilengkapi.</strong>
+            Tambahkan email di <a href="profil.php" class="fw-bold text-decoration-underline">profil</a> agar dapat mereset password jika lupa.
+        </div>
+        <a href="profil.php" class="btn btn-sm btn-warning rounded-pill fw-bold flex-shrink-0">Isi Sekarang</a>
+    </div>
+    <?php endif; ?>
+
     <?php if (isset($_GET['success'])): ?>
         <div class="alert alert-success alert-auto-dismiss">Terima kasih telah mencatat konsumsi TTD hari ini!</div>
     <?php endif; ?>
@@ -226,6 +248,26 @@ if (empty($news)) {
                                 <i data-lucide="calendar-clock" style="width: 18px; height: 18px;"></i> Set Alarm HP
                             </a>
                         </div>
+                        <?php if ($jadwalInfo && $jadwalInfo['aktif']): ?>
+                        <div class="mt-2 p-2 bg-white rounded-3 border border-light-subtle d-flex align-items-center gap-2">
+                            <i data-lucide="bell-ring" style="width: 16px; height: 16px;" class="text-primary"></i>
+                            <small class="text-muted">
+                                Pengingat:
+                                <?php if ($jadwalInfo['hari'] === 'harian'): ?>
+                                    Setiap hari jam <?= date('H:i', strtotime($jadwalInfo['jam_pengingat'])) ?>
+                                <?php elseif ($jadwalInfo['hari'] === 'mingguan'): ?>
+                                    Setiap minggu jam <?= date('H:i', strtotime($jadwalInfo['jam_pengingat'])) ?>
+                                <?php else: ?>
+                                    Saat menstruasi jam <?= date('H:i', strtotime($jadwalInfo['jam_pengingat'])) ?>
+                                <?php endif; ?>
+                                <a href="profil.php" class="ms-1 text-primary">Ubah</a>
+                            </small>
+                        </div>
+                        <?php elseif (!$jadwalInfo): ?>
+                        <div class="mt-2">
+                            <small class="text-muted"><i data-lucide="bell-off" style="width: 14px; height: 14px;" class="me-1"></i> <a href="profil.php" class="text-primary">Atur pengingat TTD</a></small>
+                        </div>
+                        <?php endif; ?>
                     </div>
                     <?php endif; ?>
                 </div>

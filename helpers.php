@@ -57,9 +57,6 @@ function check_role($role) {
 /** @param array<string, mixed> $state */
 function studentOnboardingDestination(array $state): ?string
 {
-    if (!is_string($state['email'] ?? null) || trim((string) $state['email']) === '') {
-        return 'siswa/lengkapi_email.php';
-    }
     if (empty($state['questionnaire_id'])) {
         return 'siswa/kuesioner.php';
     }
