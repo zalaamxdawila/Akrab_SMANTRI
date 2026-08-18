@@ -139,6 +139,53 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             border-color: var(--primary-color);
             background-color: #ecfdf5;
         }
+
+        /* Yes/No Toggle for Risk Factors */
+        .risk-toggle {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            background: var(--bg-white);
+            transition: all 0.2s;
+        }
+        .risk-toggle .risk-label {
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: block;
+            color: #1e293b;
+        }
+        .risk-toggle .btn-group-toggle .btn {
+            border-radius: 8px;
+            padding: 6px 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .risk-toggle .btn-group-toggle .btn-outline-danger {
+            border-color: #dc3545;
+            color: #dc3545;
+        }
+        .risk-toggle .btn-group-toggle .btn-outline-danger.active,
+        .risk-toggle .btn-group-toggle .btn-outline-danger:active {
+            background-color: #dc3545;
+            color: #fff;
+            border-color: #dc3545;
+        }
+        .risk-toggle .btn-group-toggle .btn-outline-success {
+            border-color: #198754;
+            color: #198754;
+        }
+        .risk-toggle .btn-group-toggle .btn-outline-success.active,
+        .risk-toggle .btn-group-toggle .btn-outline-success:active {
+            background-color: #198754;
+            color: #fff;
+            border-color: #198754;
+        }
+        .risk-toggle:has(.btn-check:checked) {
+            border-color: var(--primary-color);
+            background-color: #f0fdf4;
+        }
     </style>
 </head>
 <body class="bg-light">
@@ -385,11 +432,77 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </div>
         </div>
 
-        <!-- STEP 3: Gejala -->
+        <!-- STEP 3: Faktor Risiko -->
         <div class="step-container" id="step3">
             <div class="card mb-4 shadow-sm border-0">
                 <div class="card-header bg-white fw-bold d-flex align-items-center gap-2 border-bottom-0 pt-3">
-                    <span class="badge bg-primary rounded-circle px-2 py-2">3</span> Keluhan & Gejala Fisik
+                    <span class="badge bg-primary rounded-circle px-2 py-2">3</span> Faktor Risiko Anemia
+                </div>
+                <div class="card-body">
+                    <h6 class="text-primary mb-3 fw-bold">A. Faktor Risiko Internal</h6>
+                    <p class="small text-muted mb-3">Pilih "Ya" atau "Tidak" untuk setiap pernyataan berikut.</p>
+
+                    <?php
+                    $faktorInternal = [
+                        'Riwayat anemia sebelumnya',
+                        'Riwayat gangguan pencernaan',
+                        'Konsumsi suplemen zat besi',
+                        'Riwayat alergi makanan tertentu',
+                        'Gangguan penyerapan zat gizi',
+                    ];
+                    foreach ($faktorInternal as $idx => $f): ?>
+                    <div class="risk-toggle">
+                        <span class="risk-label"><?= ($idx + 1) . ". " . $f ?></span>
+                        <div class="btn-group btn-group-toggle" role="group" aria-label="<?= htmlspecialchars($f) ?>">
+                            <input class="btn-check" type="radio" name="faktor_internal_<?= $idx + 1 ?>" id="faktor_internal_<?= $idx + 1 ?>_ya" value="ya" autocomplete="off">
+                            <label class="btn btn-outline-danger" for="faktor_internal_<?= $idx + 1 ?>_ya">Ya</label>
+                            <input class="btn-check" type="radio" name="faktor_internal_<?= $idx + 1 ?>" id="faktor_internal_<?= $idx + 1 ?>_tidak" value="tidak" autocomplete="off" checked>
+                            <label class="btn btn-outline-success" for="faktor_internal_<?= $idx + 1 ?>_tidak">Tidak</label>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+
+                    <h6 class="text-primary mb-3 pt-3 border-top fw-bold">B. Faktor Risiko Eksternal</h6>
+                    <p class="small text-muted mb-3">Pilih tingkat yang paling sesuai untuk setiap pernyataan berikut.</p>
+
+                    <?php
+                    $faktorEksternal = [
+                        'Asupan zat besi dari makanan sehari-hari',
+                        'Frekuensi konsumsi makanan tinggi kalsium',
+                        'Pendapatan keluarga',
+                        'Asupan vitamin C',
+                        'Partisipasi dalam edukasi kesehatan',
+                    ];
+                    $opsiEksternal = ['rendah' => 'Rendah', 'sedang' => 'Sedang', 'tinggi' => 'Tinggi'];
+                    foreach ($faktorEksternal as $idx => $f): ?>
+                    <div class="mb-4">
+                        <label class="d-block fw-semibold mb-2"><?= ($idx + 1) . ". " . $f ?></label>
+                        <div class="row g-2">
+                            <?php foreach ($opsiEksternal as $val => $label): ?>
+                            <div class="col-4">
+                                <label class="w-100 form-check-custom d-flex align-items-center justify-content-center gap-2 m-0 h-100">
+                                    <input class="form-check-input mt-0" type="radio" name="faktor_eksternal_<?= $idx + 1 ?>" value="<?= $val ?>" required>
+                                    <span class="small lh-sm fw-medium"><?= $label ?></span>
+                                </label>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-4 btn-prev"><i data-lucide="arrow-left" style="width: 18px;"></i> Kembali</button>
+                <button type="button" class="btn btn-primary rounded-pill px-4 btn-next shadow-sm">Selanjutnya <i data-lucide="arrow-right" style="width: 18px;"></i></button>
+            </div>
+        </div>
+
+        <!-- STEP 4: Gejala -->
+        <div class="step-container" id="step4">
+            <div class="card mb-4 shadow-sm border-0">
+                <div class="card-header bg-white fw-bold d-flex align-items-center gap-2 border-bottom-0 pt-3">
+                    <span class="badge bg-primary rounded-circle px-2 py-2">4</span> Keluhan & Gejala Fisik
                 </div>
                 <div class="card-body">
                     <p class="small text-muted mb-4 border-bottom pb-3">Geser tombol biru ke kanan sesuai dengan tingkat keseringan atau keparahan gejala yang Anda rasakan.</p>
@@ -418,11 +531,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </div>
         </div>
         
-        <!-- STEP 4: Sikap & Pengetahuan -->
-        <div class="step-container" id="step4">
+        <!-- STEP 5: Sikap & Pengetahuan -->
+        <div class="step-container" id="step5">
             <div class="card mb-4 shadow-sm border-0">
                 <div class="card-header bg-white fw-bold d-flex align-items-center gap-2 border-bottom-0 pt-3">
-                    <span class="badge bg-primary rounded-circle px-2 py-2">4</span> Opini & Pengetahuan
+                    <span class="badge bg-primary rounded-circle px-2 py-2">5</span> Opini & Pengetahuan
                 </div>
                 <div class="card-body">
                     <h6 class="text-primary mb-3 fw-bold">A. Opini Terhadap Anemia</h6>

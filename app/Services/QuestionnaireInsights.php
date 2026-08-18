@@ -34,6 +34,18 @@ final class QuestionnaireInsights
                 'max' => 40.0,
                 'direction' => 'higher',
             ],
+            'faktor_internal' => [
+                'field' => 'skor_faktor_internal',
+                'label' => 'Faktor risiko internal',
+                'max' => 5.0,
+                'direction' => 'risk',
+            ],
+            'faktor_eksternal' => [
+                'field' => 'skor_faktor_eksternal',
+                'label' => 'Faktor risiko eksternal',
+                'max' => 15.0,
+                'direction' => 'higher',
+            ],
         ];
     }
 
@@ -56,6 +68,8 @@ final class QuestionnaireInsights
 
             if ($definition['direction'] === 'lower') {
                 [$level, $tone, $explanation] = $this->symptomExplanation($percentage);
+            } elseif ($definition['direction'] === 'risk') {
+                [$level, $tone, $explanation] = $this->riskFactorExplanation($key, $percentage);
             } else {
                 [$level, $tone, $explanation] = $this->protectiveExplanation(
                     $key,
@@ -90,6 +104,8 @@ final class QuestionnaireInsights
                 'makan' => [],
                 'pengetahuan' => [],
                 'sikap' => [],
+                'faktor_internal' => [],
+                'faktor_eksternal' => [],
             ],
         ];
         foreach ($history as $response) {
@@ -162,6 +178,37 @@ final class QuestionnaireInsights
             'Perlu penguatan',
             'danger',
             ucfirst($subject) . ' perlu mendapat perhatian dan edukasi tambahan.',
+        ];
+    }
+
+    /** @return array{string,string,string} */
+    private function riskFactorExplanation(string $key, float $percentage): array
+    {
+        $subject = $key === 'faktor_internal'
+            ? 'faktor risiko internal yang teridentifikasi'
+            : 'kondisi pelindung eksternal';
+
+        if ($percentage >= 67) {
+            $level = $key === 'faktor_internal' ? 'Banyak faktor risiko' : 'Kurang mendukung';
+            return [
+                $level,
+                'danger',
+                ucfirst($subject) . ' menunjukkan perlunya perhatian lebih.',
+            ];
+        }
+        if ($percentage >= 34) {
+            return [
+                'Sedang',
+                'warning',
+                ucfirst($subject) . ' pada tingkat sedang, pantau secara berkala.',
+            ];
+        }
+
+        $level = $key === 'faktor_internal' ? 'Sedikit faktor risiko' : 'Cukup mendukung';
+        return [
+            $level,
+            'success',
+            ucfirst($subject) . ' relatif baik.',
         ];
     }
 }

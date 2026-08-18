@@ -139,6 +139,10 @@ CREATE TABLE IF NOT EXISTS kuesioner (
     skor_makan INT NOT NULL DEFAULT 0,
     makanan_dikonsumsi TEXT NULL,
     answers_snapshot JSON NULL,
+
+    -- VIII. Faktor Risiko Anemia
+    skor_faktor_internal INT NOT NULL DEFAULT 0,
+    skor_faktor_eksternal INT NOT NULL DEFAULT 0,
     
     corrected_at TIMESTAMP NULL,
     corrected_by INT NULL,

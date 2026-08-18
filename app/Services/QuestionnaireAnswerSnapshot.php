@@ -4,7 +4,25 @@ declare(strict_types=1);
 
 final class QuestionnaireAnswerSnapshot
 {
-    public const VERSION = '2026-08-17.v1';
+    public const VERSION = '2026-08-17.v2';
+
+    /** @var list<string> */
+    private const FACTOR_INTERNAL_QUESTIONS = [
+        'Riwayat anemia sebelumnya',
+        'Riwayat gangguan pencernaan',
+        'Konsumsi suplemen zat besi',
+        'Riwayat alergi makanan tertentu',
+        'Gangguan penyerapan zat gizi',
+    ];
+
+    /** @var list<string> */
+    private const FACTOR_EXTERNAL_QUESTIONS = [
+        'Asupan zat besi dari makanan sehari-hari',
+        'Frekuensi konsumsi makanan tinggi kalsium',
+        'Pendapatan keluarga',
+        'Asupan vitamin C',
+        'Partisipasi dalam edukasi kesehatan',
+    ];
 
     /** @var list<string> */
     private const DIET_QUESTIONS = [
@@ -68,6 +86,14 @@ final class QuestionnaireAnswerSnapshot
                 'label' => 'Keluhan dan gejala',
                 'items' => [],
             ],
+            'faktor_internal' => [
+                'label' => 'Faktor risiko internal',
+                'items' => [],
+            ],
+            'faktor_eksternal' => [
+                'label' => 'Faktor risiko eksternal',
+                'items' => [],
+            ],
             'sikap' => [
                 'label' => 'Opini terhadap anemia',
                 'items' => [],
@@ -88,6 +114,37 @@ final class QuestionnaireAnswerSnapshot
                 'makan_' . $index,
                 $question,
                 $dietAnswers[$value]
+            );
+        }
+
+        foreach (self::FACTOR_INTERNAL_QUESTIONS as $offset => $question) {
+            $index = $offset + 1;
+            $value = enumValue(
+                $input['faktor_internal_' . $index] ?? null,
+                ['ya', 'tidak']
+            );
+            $sections['faktor_internal']['items'][] = $this->item(
+                'faktor_internal_' . $index,
+                $question,
+                $value === 'ya' ? 'Ya' : 'Tidak'
+            );
+        }
+
+        $externalLabels = [
+            'rendah' => 'Rendah',
+            'sedang' => 'Sedang',
+            'tinggi' => 'Tinggi',
+        ];
+        foreach (self::FACTOR_EXTERNAL_QUESTIONS as $offset => $question) {
+            $index = $offset + 1;
+            $value = enumValue(
+                $input['faktor_eksternal_' . $index] ?? null,
+                array_keys($externalLabels)
+            );
+            $sections['faktor_eksternal']['items'][] = $this->item(
+                'faktor_eksternal_' . $index,
+                $question,
+                $externalLabels[$value]
             );
         }
 

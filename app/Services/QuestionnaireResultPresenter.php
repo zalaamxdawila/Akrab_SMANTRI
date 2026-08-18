@@ -14,8 +14,9 @@ final class QuestionnaireResultPresenter
     {
         $scores = $this->insights->forResponse($response);
         $priorities = [];
+        $concernKeys = ['gejala', 'faktor_internal'];
         foreach ($scores as $key => $score) {
-            $concern = $key === 'gejala'
+            $concern = in_array($key, $concernKeys, true)
                 ? (float) $score['percentage']
                 : 100.0 - (float) $score['percentage'];
             $priorities[] = [
@@ -124,6 +125,8 @@ final class QuestionnaireResultPresenter
             'gejala' => 'Catat keluhan yang dirasakan dan sampaikan bila menetap, memburuk, atau mengganggu aktivitas.',
             'makan' => 'Perkuat kebiasaan makan teratur dan ikuti saran gizi dari petugas kesehatan.',
             'pengetahuan' => 'Pelajari kembali materi anemia agar pilihan pencegahan lebih mudah diterapkan.',
+            'faktor_internal' => 'Konsultasikan riwayat kesehatan pribadi yang menjadi faktor risiko dengan petugas UKS atau dokter.',
+            'faktor_eksternal' => 'Tingkatkan asupan zat besi, vitamin C, dan ikuti edukasi kesehatan yang tersedia.',
             default => 'Diskusikan sikap dan kebiasaan pencegahan yang masih sulit diterapkan.',
         };
     }

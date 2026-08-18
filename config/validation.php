@@ -169,10 +169,24 @@ function validateQuestionnaireInput(array $input): array
             }
             $pengetahuan += count(array_unique($answers));
         }
+        $faktorInternal = 0;
+        for ($i = 1; $i <= 5; $i++) {
+            $faktorInternal += enumValue($input['faktor_internal_' . $i] ?? null, ['ya', 'tidak']) === 'ya' ? 1 : 0;
+        }
+        $faktorEksternal = 0;
+        for ($i = 1; $i <= 5; $i++) {
+            $faktorEksternal += match (enumValue($input['faktor_eksternal_' . $i] ?? null, ['rendah', 'sedang', 'tinggi'])) {
+                'rendah' => 1,
+                'sedang' => 2,
+                'tinggi' => 3,
+            };
+        }
         $values['skor_gejala'] = $gejala;
         $values['skor_sikap'] = $sikap;
         $values['skor_pengetahuan'] = $pengetahuan;
         $values['skor_makan'] = $makan;
+        $values['skor_faktor_internal'] = $faktorInternal;
+        $values['skor_faktor_eksternal'] = $faktorEksternal;
         return ['valid' => true, 'errors' => [], 'values' => $values];
     } catch (InvalidArgumentException $exception) {
         return ['valid' => false, 'errors' => [$exception->getMessage()], 'values' => []];

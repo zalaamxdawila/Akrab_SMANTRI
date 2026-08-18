@@ -262,7 +262,7 @@ function renderQuestionnaireInsights(
     ?>
     <div class="row g-3 questionnaire-insights">
         <?php foreach ($insights as $insight): ?>
-            <div class="col-sm-6 col-xl-3">
+            <div class="col-sm-6 col-lg-4">
                 <article class="p-3 bg-light border rounded-3 h-100">
                     <div class="d-flex justify-content-between gap-2">
                         <h3 class="h6 mb-1"><?= escape_output((string) $insight['label']) ?></h3>
@@ -380,7 +380,7 @@ function renderQuestionnaireHistoryChartScript(string $canvasId, array $chart): 
     $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
     $singleResponse = count($chart['labels']) === 1;
     $displayLabels = $singleResponse
-        ? ['Keluhan & gejala', 'Pola makan', 'Pengetahuan', 'Sikap & kesadaran']
+        ? ['Keluhan & gejala', 'Pola makan', 'Pengetahuan', 'Sikap & kesadaran', 'Faktor Internal', 'Faktor Eksternal']
         : $chart['labels'];
     $singleResponseValues = $singleResponse
         ? [
@@ -388,6 +388,8 @@ function renderQuestionnaireHistoryChartScript(string $canvasId, array $chart): 
             $chart['series']['makan'][0] ?? 0,
             $chart['series']['pengetahuan'][0] ?? 0,
             $chart['series']['sikap'][0] ?? 0,
+            $chart['series']['faktor_internal'][0] ?? 0,
+            $chart['series']['faktor_eksternal'][0] ?? 0,
         ]
         : [];
     ?>
@@ -475,6 +477,34 @@ function renderQuestionnaireHistoryChartScript(string $canvasId, array $chart): 
                         pointBackgroundColor: '#ffffff',
                         fill: false,
                         tension: .25
+                    },
+                    {
+                        label: 'Faktor Internal',
+                        data: <?= json_encode($chart['series']['faktor_internal'] ?? [], $jsonFlags) ?>,
+                        borderColor: '#fd7e14',
+                        backgroundColor: 'rgba(253, 126, 20, .12)',
+                        showLine: true,
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointBorderWidth: 2,
+                        pointBackgroundColor: '#ffffff',
+                        fill: false,
+                        tension: .25
+                    },
+                    {
+                        label: 'Faktor Eksternal',
+                        data: <?= json_encode($chart['series']['faktor_eksternal'] ?? [], $jsonFlags) ?>,
+                        borderColor: '#20c997',
+                        backgroundColor: 'rgba(32, 201, 151, .12)',
+                        showLine: true,
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointBorderWidth: 2,
+                        pointBackgroundColor: '#ffffff',
+                        fill: false,
+                        tension: .25
                     }
                     <?php endif; ?>
                 ]
@@ -547,7 +577,7 @@ function renderQuestionnaireAverageChartScript(string $canvasId, array $insights
                 datasets: [{
                     label: 'Rata-rata seluruh pengisian',
                     data: <?= json_encode($values, $jsonFlags) ?>,
-                    backgroundColor: ['#dc3545cc', '#198754cc', '#0dcaf0cc', '#6f42c1cc'],
+                    backgroundColor: ['#dc3545cc', '#198754cc', '#0dcaf0cc', '#6f42c1cc', '#fd7e14cc', '#20c997cc'],
                     borderRadius: 8
                 }]
             },
