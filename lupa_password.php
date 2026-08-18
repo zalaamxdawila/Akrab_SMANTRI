@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Bootstrap CSS -->
     <link href="/assets/vendor/bootstrap.min.css" rel="stylesheet">
     <!-- Custom CSS -->
-    <link href="assets/css/style.css?v=20260729" rel="stylesheet">
+    <link href="assets/css/style.css?v=20260818" rel="stylesheet">
     <!-- Lucide Icons -->
     <script src="/assets/vendor/lucide.min.js"></script>
     <style>
@@ -135,6 +135,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <script src="/assets/vendor/bootstrap.bundle.min.js"></script>
 <script>lucide.createIcons();</script>
-<script src="assets/js/main.js?v=20260729"></script>
+<script src="assets/js/main.js?v=20260818"></script>
 </body>
 </html>

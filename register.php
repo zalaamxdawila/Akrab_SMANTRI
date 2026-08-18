@@ -119,83 +119,70 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daftar - Aplikasi AKRAB</title>
-    <!-- Bootstrap CSS -->
+    <title>Daftar - AKRAB</title>
+    <link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
     <link href="/assets/vendor/bootstrap.min.css" rel="stylesheet">
-    <!-- Custom CSS -->
-    <link href="assets/css/style.css?v=20260729" rel="stylesheet">
-    <!-- Lucide Icons -->
+    <link href="assets/css/style.css?v=20260818" rel="stylesheet">
     <script src="/assets/vendor/lucide.min.js"></script>
-    <style>
-        .login-bg {
-            background: url('assets/img/bg.png') no-repeat center center fixed;
-            background-size: cover;
-        }
-        .login-card {
-            background: var(--bg-white);
-            border-radius: 1rem;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            border: 1px solid rgba(255,255,255,0.8);
-            backdrop-filter: blur(10px);
-        }
-    </style>
 </head>
-<body class="d-flex align-items-center py-4 login-bg" style="min-height: 100vh;">
-    
-<main class="form-signin w-100 m-auto animate-fade-in-up" style="max-width: 450px; padding: 15px;">
+<body class="login-bg d-flex align-items-center py-4" style="min-height: 100vh;">
+
+<main class="form-signin w-100 m-auto animate-fade-in-up" style="max-width: 460px; padding: 15px;">
     <div class="login-card p-4 p-md-5">
-        <div class="text-center mb-4">
+        <div class="card-accent"></div>
+        <div class="text-center mb-4 pt-3">
             <div class="mb-3">
-                <img src="assets/img/logo.png" alt="AKRAB Logo" style="width: 80px; height: 80px; object-fit: contain; border-radius: 16px; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25);">
+                <img src="assets/img/logo.png" alt="AKRAB Logo" style="width: 72px; height: 72px; object-fit: contain; border-radius: 14px; box-shadow: 0 8px 24px rgba(16, 185, 129, 0.2);">
             </div>
-            <h2 class="h3 mb-2 fw-bold" style="color: var(--primary-color);">Daftar Akun Baru</h2>
-            <p class="text-muted small">Aplikasi Kesehatan Remaja Bebas Anemia</p>
+            <h2 class="h4 mb-1 fw-bold" style="color: var(--primary-dark);">Daftar Akun Baru</h2>
+            <p class="text-muted small mb-0">Aplikasi Kesehatan Remaja Bebas Anemia</p>
         </div>
-        
+
         <?php if ($error): ?>
-            <div class="alert alert-danger alert-auto-dismiss border-0 shadow-sm rounded-3 py-2 text-center small fw-medium d-flex align-items-center justify-content-center gap-2" role="alert">
-                <i data-lucide="alert-circle" style="width: 18px;"></i> <?= htmlspecialchars($error) ?>
+            <div class="alert alert-danger alert-auto-dismiss border-0 rounded-3 py-2 text-center small fw-medium d-flex align-items-center justify-content-center gap-2" role="alert" style="background: rgba(239, 68, 68, 0.1); color: #dc2626;">
+                <i data-lucide="alert-circle" style="width: 16px;"></i> <?= htmlspecialchars($error) ?>
             </div>
         <?php endif; ?>
-        
+
         <?php if ($success): ?>
-            <div class="alert alert-success border-0 shadow-sm rounded-3 text-center" role="alert">
-                <div class="mb-2"><i data-lucide="check-circle" class="text-success" style="width: 40px; height: 40px;"></i></div>
-                <p class="mb-3 fw-medium"><?= htmlspecialchars($success) ?></p>
-                <a href="login.php" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm">Menuju Login</a>
+            <div class="text-center py-4" role="alert">
+                <div class="mb-3"><i data-lucide="check-circle" style="width: 48px; height: 48px; color: var(--primary-color);"></i></div>
+                <p class="fw-bold mb-3" style="color: var(--primary-dark);">Pendaftaran Berhasil!</p>
+                <p class="text-muted small mb-3"><?= htmlspecialchars($success) ?></p>
+                <a href="login.php" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm">Menuju Login</a>
             </div>
         <?php else: ?>
-        
-        <form action="register.php" method="POST">
+
+        <form action="register.php" method="POST" class="mt-2">
             <?= csrfInput() ?>
             <div class="mb-3">
                 <label for="role" class="form-label small text-muted fw-semibold">Daftar Sebagai</label>
-                <select class="form-select rounded-3 border-0 bg-light" id="role" name="role" required onchange="toggleFields()">
+                <select class="form-select rounded-3" id="role" name="role" required onchange="toggleFields()" style="background: var(--surface-muted);">
                     <option value="siswa">Siswa</option>
                     <option value="orangtua">Orang Tua / Wali Murid</option>
                 </select>
             </div>
             <div class="mb-3">
                 <label for="nama" class="form-label small text-muted fw-semibold">Nama Lengkap</label>
-                <input type="text" class="form-control rounded-3 border-0 bg-light" id="nama" name="nama" required>
+                <input type="text" class="form-control rounded-3" id="nama" name="nama" required style="background: var(--surface-muted);">
             </div>
             <div class="mb-3">
                 <label for="username" class="form-label small text-muted fw-semibold">Username / NISN</label>
-                <input type="text" class="form-control rounded-3 border-0 bg-light" id="username" name="username" required>
+                <input type="text" class="form-control rounded-3" id="username" name="username" required style="background: var(--surface-muted);">
             </div>
             <div class="mb-3">
-                <label for="email" class="form-label small text-muted fw-semibold">Email Aktif <span class="text-muted">(Opsional)</span></label>
-                <input type="email" maxlength="254" autocomplete="email" class="form-control rounded-3 border-0 bg-light" id="email" name="email" placeholder="Untuk pemulihan password">
+                <label for="email" class="form-label small text-muted fw-semibold">Email <span class="text-muted fw-normal">(Opsional)</span></label>
+                <input type="email" maxlength="254" autocomplete="email" class="form-control rounded-3" id="email" name="email" placeholder="Untuk pemulihan password" style="background: var(--surface-muted);">
             </div>
             <div class="mb-3">
                 <label for="password" class="form-label small text-muted fw-semibold">Password</label>
-                <input type="password" class="form-control rounded-3 border-0 bg-light" id="password" name="password" required>
+                <input type="password" class="form-control rounded-3" id="password" name="password" required style="background: var(--surface-muted);">
             </div>
             <div class="mb-4" id="field-kelas">
                 <div class="row g-2">
                     <div class="col-md-6">
                         <label for="kelas" class="form-label small text-muted fw-semibold">Tingkat Kelas</label>
-                        <select class="form-select rounded-3 border-0 bg-light" id="kelas" name="kelas">
+                        <select class="form-select rounded-3" id="kelas" name="kelas" style="background: var(--surface-muted);">
                             <option value="">Pilih Tingkat</option>
                             <option value="Kelas VII">Kelas VII (SMP)</option>
                             <option value="Kelas VIII">Kelas VIII (SMP)</option>
@@ -206,21 +193,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         </select>
                     </div>
                     <div class="col-md-6">
-                        <label for="jurusan" class="form-label small text-muted fw-semibold">Jurusan/Nama Opsional</label>
-                        <input type="text" class="form-control rounded-3 border-0 bg-light" id="jurusan" name="jurusan" placeholder="Cth: MIPA 1, A, dll">
+                        <label for="jurusan" class="form-label small text-muted fw-semibold">Jurusan</label>
+                        <input type="text" class="form-control rounded-3" id="jurusan" name="jurusan" placeholder="Cth: MIPA 1" style="background: var(--surface-muted);">
                     </div>
                 </div>
             </div>
             <div class="mb-4" id="field-anak" style="display: none;">
-                <label for="anak_username" class="form-label small text-muted fw-semibold">NISN Anak (Untuk ditautkan)</label>
-                <input type="text" class="form-control rounded-3 border-0 bg-light" id="anak_username" name="anak_username" placeholder="Masukkan NISN Anak Anda">
-                <small class="text-primary mt-1 d-block"><i data-lucide="info" style="width: 14px; margin-right: 4px;"></i>Pastikan anak Anda sudah terdaftar terlebih dahulu.</small>
+                <label for="anak_username" class="form-label small text-muted fw-semibold">NISN Anak</label>
+                <input type="text" class="form-control rounded-3" id="anak_username" name="anak_username" placeholder="Masukkan NISN Anak Anda" style="background: var(--surface-muted);">
+                <small class="text-muted mt-1 d-block"><i data-lucide="info" style="width: 14px;" class="me-1"></i>Pastikan anak Anda sudah terdaftar terlebih dahulu.</small>
             </div>
             <button class="w-100 btn btn-lg btn-primary rounded-pill fw-bold shadow-sm mb-3" type="submit">Daftar Sekarang</button>
         </form>
-        
-        <div class="text-center mt-3 pt-3 border-top">
-            <p class="text-muted small mb-0">Sudah punya akun? <a href="login.php" class="text-decoration-none fw-semibold" style="color: var(--primary-color);">Login di sini</a></p>
+
+        <div class="text-center pt-3 border-top" style="border-color: var(--border-color) !important;">
+            <p class="text-muted small mb-0">Sudah punya akun? <a href="login.php" class="text-decoration-none fw-bold" style="color: var(--primary-color);">Masuk di sini</a></p>
         </div>
         <?php endif; ?>
     </div>
@@ -232,15 +219,10 @@ function toggleFields() {
     const role = document.getElementById('role').value;
     const fieldKelas = document.getElementById('field-kelas');
     const fieldAnak = document.getElementById('field-anak');
-    
-    // Reset all displays
     fieldKelas.style.display = 'none';
     fieldAnak.style.display = 'none';
-    
-    // Reset all required flags
     document.getElementById('kelas').required = false;
     document.getElementById('anak_username').required = false;
-    
     if (role === 'siswa') {
         fieldKelas.style.display = 'block';
         document.getElementById('kelas').required = true;
@@ -250,10 +232,9 @@ function toggleFields() {
     }
 }
 lucide.createIcons();
-// Initialize fields on load just in case (e.g. browser back button caching form values)
 window.addEventListener('load', toggleFields);
 </script>
-<script src="assets/js/main.js?v=20260729"></script>
-<script src="assets/js/app-init.js?v=20260729"></script>
+<script src="assets/js/main.js?v=20260818"></script>
+<script src="assets/js/app-init.js?v=20260818"></script>
 </body>
 </html>

@@ -49,7 +49,7 @@ if ($anak) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal Orang Tua - AKRAB</title>
     <link href="/assets/vendor/bootstrap.min.css" rel="stylesheet">
-    <link href="../assets/css/style.css?v=20260729" rel="stylesheet">
+    <link href="../assets/css/style.css?v=20260818" rel="stylesheet">
     <script src="/assets/vendor/chart.umd.min.js"></script>
     <script src="/assets/vendor/lucide.min.js"></script>
 </head>
@@ -167,7 +167,7 @@ if ($anak) {
 <script>
   lucide.createIcons();
 </script>
-<script src="../assets/js/app-init.js?v=20260729"></script>
+<script src="../assets/js/app-init.js?v=20260818"></script>
 <?php if ($questionnaireHistory): ?>
     <?php renderQuestionnaireHistoryChartScript('parentQuestionnaireChart', $historyChart); ?>
 <?php endif; ?>

@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 <!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Data Laboratorium - AKRAB</title><link href="/assets/vendor/bootstrap.min.css" rel="stylesheet"><link href="../assets/css/style.css?v=20260729" rel="stylesheet"></head>
+<title>Data Laboratorium - AKRAB</title><link href="/assets/vendor/bootstrap.min.css" rel="stylesheet"><link href="../assets/css/style.css?v=20260818" rel="stylesheet"></head>
 <body class="bg-light"><main class="container py-5" style="max-width:760px">
 <a href="dashboard.php" class="btn btn-sm btn-outline-secondary mb-3">Kembali</a>
 <section class="card shadow-sm border-0"><div class="card-body p-4 p-md-5">

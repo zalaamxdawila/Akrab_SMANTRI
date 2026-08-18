@@ -11,33 +11,19 @@ $dashboard_url = $is_logged_in
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AKRAB - Aplikasi Kesehatan Remaja Bebas Anemia</title>
-    <!-- Bootstrap CSS -->
+    <title>AKRAB — Aplikasi Kesehatan Remaja Bebas Anemia</title>
+    <link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
     <link href="/assets/vendor/bootstrap.min.css" rel="stylesheet">
-    <link href="assets/css/style.css?v=20260729" rel="stylesheet">
+    <link href="assets/css/style.css?v=20260818" rel="stylesheet">
     <script src="/assets/vendor/lucide.min.js"></script>
-    <style>
-        .hero-section {
-            background: linear-gradient(135deg, var(--primary-color) 0%, #3a7bd5 100%);
-            color: white;
-            padding: 100px 0;
-            border-bottom-left-radius: 50px;
-            border-bottom-right-radius: 50px;
-        }
-        .feature-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            color: var(--primary-color);
-        }
-    </style>
 </head>
 <body class="bg-light">
 
 <!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm py-3">
+<nav class="navbar navbar-expand-lg sticky-top">
     <div class="container">
-        <a class="navbar-brand text-primary fw-bold fs-4 d-flex align-items-center gap-2" href="index.php">
-            <i data-lucide="heart-pulse" class="text-danger"></i> AKRAB
+        <a class="navbar-brand fw-bold fs-4 d-flex align-items-center gap-2" href="index.php">
+            <i data-lucide="heart-pulse" style="width: 24px; height: 24px;"></i> AKRAB
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
@@ -46,11 +32,12 @@ $dashboard_url = $is_logged_in
             <ul class="navbar-nav ms-auto align-items-center">
                 <li class="nav-item"><a class="nav-link" href="#tentang">Tentang</a></li>
                 <li class="nav-item"><a class="nav-link" href="#fitur">Fitur</a></li>
+                <li class="nav-item"><a class="nav-link" href="#cara-kerja">Cara Kerja</a></li>
                 <?php if ($is_logged_in): ?>
-                    <li class="nav-item ms-lg-3"><a class="btn btn-primary px-4 rounded-pill" href="<?= $dashboard_url ?>">Ke Dashboard</a></li>
+                    <li class="nav-item ms-lg-3"><a class="btn btn-primary px-4 rounded-pill" href="<?= $dashboard_url ?>">Dashboard</a></li>
                 <?php else: ?>
-                    <li class="nav-item ms-lg-3"><a class="btn btn-outline-primary px-4 rounded-pill me-2" href="login.php">Masuk</a></li>
-                    <li class="nav-item mt-2 mt-lg-0"><a class="btn btn-primary px-4 rounded-pill" href="register.php">Daftar</a></li>
+                    <li class="nav-item ms-lg-3"><a class="btn btn-outline-primary px-4 rounded-pill" href="login.php">Masuk</a></li>
+                    <li class="nav-item ms-2"><a class="btn btn-primary px-4 rounded-pill" href="register.php">Daftar</a></li>
                 <?php endif; ?>
             </ul>
         </div>
@@ -60,88 +47,213 @@ $dashboard_url = $is_logged_in
 <!-- Hero Section -->
 <header class="hero-section text-center">
     <div class="container">
-        <h1 class="display-4 fw-bold mb-4">Wujudkan Generasi Remaja Cerdas, Sehat, Bebas Anemia!</h1>
-        <p class="lead mb-4 px-md-5">AKRAB (Aplikasi Kesehatan Remaja Bebas Anemia) hadir untuk mendampingi sekolah dalam memantau kesehatan siswa dan mengingatkan konsumsi Tablet Tambah Darah (TTD).</p>
-        <div class="alert alert-info mx-auto mb-5 text-start" style="max-width: 760px;" role="alert">
-            <strong>Perhatian:</strong> AKRAB adalah alat bantu skrining risiko, bukan alat diagnosis medis. Hasil dari aplikasi ini tidak menggantikan pemeriksaan langsung oleh tenaga kesehatan.
+        <div class="mb-3">
+            <span class="badge bg-white text-primary px-3 py-2 rounded-pill fw-bold shadow-sm" style="font-size: 0.85rem;">
+                <i data-lucide="sparkles" style="width: 14px; height: 14px; display: inline;"></i> SMAN 3 Padang Health Platform
+            </span>
         </div>
-        
+        <h1 class="mb-4">Wujudkan Generasi Remaja<br>Cerdas & Sehat Bebas Anemia</h1>
+        <p class="lead mb-5">AKRAB mendampingi sekolah dalam memantau kesehatan siswa, mendeteksi risiko anemia secara dini, dan mengingatkan konsumsi Tablet Tambah Darah (TTD) secara berkala.</p>
+
         <?php if ($is_logged_in): ?>
-            <a href="<?= $dashboard_url ?>" class="btn btn-light text-primary btn-lg px-5 rounded-pill shadow-sm fw-bold">Kembali ke Dashboard</a>
+            <a href="<?= $dashboard_url ?>" class="btn btn-light btn-lg px-5 rounded-pill shadow fw-bold text-primary">
+                <i data-lucide="layout-dashboard" style="width: 20px;"></i> Buka Dashboard
+            </a>
         <?php else: ?>
-            <a href="register.php" class="btn btn-light text-primary btn-lg px-5 rounded-pill shadow-sm fw-bold me-3">Mulai Sekarang</a>
-            <a href="login.php" class="btn btn-outline-light btn-lg px-5 rounded-pill">Masuk</a>
+            <div class="d-flex flex-wrap justify-content-center gap-3">
+                <a href="register.php" class="btn btn-light btn-lg px-5 rounded-pill shadow fw-bold text-primary">
+                    <i data-lucide="user-plus" style="width: 20px;"></i> Daftar Gratis
+                </a>
+                <a href="login.php" class="btn btn-outline-light btn-lg px-5 rounded-pill">
+                    <i data-lucide="log-in" style="width: 20px;"></i> Masuk
+                </a>
+            </div>
         <?php endif; ?>
     </div>
 </header>
 
+<!-- Stats Bar -->
+<section class="container" style="margin-top: -45px; position: relative; z-index: 2;">
+    <div class="stats-bar shadow-lg">
+        <div class="row g-0">
+            <div class="col-6 col-md-3">
+                <div class="stat-item">
+                    <div class="stat-number">3<span class="text-primary">Fitur</span></div>
+                    <div class="stat-label">Unggulan Utama</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-item border-start border-end border-bottom border-md-0" style="border-color: var(--border-color) !important;">
+                    <div class="stat-number">10<span class="text-primary">+</span></div>
+                    <div class="stat-label">Pertanyaan Skrining</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-item border-bottom border-md-0" style="border-color: var(--border-color) !important;">
+                    <div class="stat-number">24/7</div>
+                    <div class="stat-label">Monitoring Kesehatan</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-item border-start border-bottom border-md-0" style="border-color: var(--border-color) !important;">
+                    <div class="stat-number">100<span class="text-primary">%</span></div>
+                    <div class="stat-label">Gratis & Aman</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
 <!-- Tentang Section -->
-<section id="tentang" class="py-5 mt-4">
-    <div class="container text-center">
-        <h2 class="fw-bold mb-4">Mengapa AKRAB Penting?</h2>
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <p class="fs-5 text-muted">Anemia pada remaja, khususnya remaja putri, merupakan masalah serius di Indonesia yang dapat menurunkan konsentrasi belajar, menghambat pertumbuhan, dan menyebabkan gejala 5L (Lemah, Letih, Lesu, Lelah, Lalai). AKRAB adalah jembatan pintar antara siswa dan Unit Kesehatan Sekolah (UKS) untuk menuntaskan masalah ini bersama-sama.</p>
+<section id="tentang" class="py-5 mt-5">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+                <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold mb-3" style="font-size: 0.8rem;">TENTANG AKRAB</span>
+                <h2 class="fw-bold mb-3" style="font-size: 2rem;">Mengapa AKRAB Penting?</h2>
+                <p class="text-muted mb-4" style="font-size: 1.05rem; line-height: 1.8;">
+                    Anemia pada remaja merupakan masalah serius di Indonesia yang dapat menurunkan konsentrasi belajar,
+                    menghambat pertumbuhan, dan menyebabkan gejala <strong>5L</strong> — Lemah, Letih, Lesu, Lelah, dan Lalai.
+                </p>
+                <p class="text-muted mb-4" style="font-size: 1.05rem; line-height: 1.8;">
+                    AKRAB adalah jembatan pintar antara siswa dan Unit Kesehatan Sekolah (UKS) untuk mendeteksi dini,
+                    memantau, dan mencegah anemia bersama-sama.
+                </p>
+                <div class="d-flex flex-wrap gap-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="rounded-circle bg-primary bg-opacity-10 p-2"><i data-lucide="shield-check" style="width: 20px; height: 20px; color: var(--primary-color);"></i></div>
+                        <span class="fw-semibold small">Data Tercatat Aman</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="rounded-circle bg-primary bg-opacity-10 p-2"><i data-lucide="smartphone" style="width: 20px; height: 20px; color: var(--primary-color);"></i></div>
+                        <span class="fw-semibold small">Akses dari HP</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="rounded-circle bg-primary bg-opacity-10 p-2"><i data-lucide="bell-ring" style="width: 20px; height: 20px; color: var(--primary-color);"></i></div>
+                        <span class="fw-semibold small">Pengingat TTD</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 text-center">
+                <div class="p-4 rounded-4" style="background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(59,130,246,0.05));">
+                    <i data-lucide="heart-pulse" style="width: 120px; height: 120px; color: var(--primary-color); opacity: 0.8;" class="animate-float"></i>
+                    <div class="mt-3">
+                        <span class="badge bg-primary text-white px-3 py-2 rounded-pill fw-bold">SMAN 3 Padang</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </section>
 
 <!-- Fitur Section -->
-<section id="fitur" class="py-5 bg-white">
+<section id="fitur" class="py-5">
     <div class="container">
-        <h2 class="fw-bold text-center mb-5">Fitur Unggulan</h2>
-        <div class="row g-4 text-center">
+        <div class="text-center mb-5">
+            <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold mb-3" style="font-size: 0.8rem;">FITUR UNGGULAN</span>
+            <h2 class="fw-bold" style="font-size: 2rem;">Kemampuan AKRAB</h2>
+            <p class="text-muted mx-auto" style="max-width: 560px;">Semua yang dibutuhkan untuk skrining dan pencegahan anemia tersedia dalam satu aplikasi.</p>
+        </div>
+        <div class="row g-4">
             <div class="col-md-4">
-                <div class="p-4">
-                    <div class="feature-icon d-flex justify-content-center"><i data-lucide="brain-circuit" style="width: 48px; height: 48px;"></i></div>
-                    <h4 class="fw-bold">Deteksi Dini Cerdas</h4>
-                    <p class="text-muted">Menggunakan perhitungan algoritma untuk memprediksi tingkat risiko anemia berdasarkan pola hidup, gejala klinis, dan hasil laboratorium.</p>
+                <div class="feature-card">
+                    <div class="feature-icon-wrap">
+                        <i data-lucide="brain-circuit" style="width: 36px; height: 36px;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Deteksi Dini Cerdas</h5>
+                    <p class="text-muted mb-0 small" style="line-height: 1.7;">Menggunakan algoritma regresi logistik untuk memprediksi risiko anemia berdasarkan pola hidup, gejala klinis, dan data laboratorium siswa.</p>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="p-4">
-                    <div class="feature-icon d-flex justify-content-center"><i data-lucide="alarm-clock" style="width: 48px; height: 48px;"></i></div>
-                    <h4 class="fw-bold">Pengingat Otomatis TTD</h4>
-                    <p class="text-muted">Sistem akan mengingatkan siswa secara berkala untuk meminum Tablet Tambah Darah, dilengkapi grafik kepatuhan untuk UKS.</p>
+                <div class="feature-card">
+                    <div class="feature-icon-wrap">
+                        <i data-lucide="alarm-clock" style="width: 36px; height: 36px;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Pengingat TTD Otomatis</h5>
+                    <p class="text-muted mb-0 small" style="line-height: 1.7;">Sistem mengingatkan siswa secara berkala untuk minum Tablet Tambah Darah, dilengkapi grafik kepatuhan untuk pemantauan UKS.</p>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="p-4">
-                    <div class="feature-icon d-flex justify-content-center"><i data-lucide="message-square-heart" style="width: 48px; height: 48px;"></i></div>
-                    <h4 class="fw-bold">Konsultasi Terpadu</h4>
-                    <p class="text-muted">Siswa yang ragu dengan kondisi kesehatannya dapat langsung berkonsultasi dua arah secara pribadi dengan petugas UKS.</p>
+                <div class="feature-card">
+                    <div class="feature-icon-wrap">
+                        <i data-lucide="message-square-heart" style="width: 36px; height: 36px;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Konsultasi Terpadu</h5>
+                    <p class="text-muted mb-0 small" style="line-height: 1.7;">Siswa dapat berkonsultasi dua arah secara pribadi dengan petugas UKS tentang kondisi kesehatannya kapan saja.</p>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Call to Action -->
-<section class="py-5 text-center">
+<!-- Cara Kerja -->
+<section id="cara-kerja" class="py-5 bg-white">
     <div class="container">
-        <h2 class="fw-bold mb-3">Siap Mendukung Kesehatan Remaja?</h2>
-        <p class="text-muted mb-4">Bergabunglah dengan AKRAB dan jadilah bagian dari revolusi kesehatan sekolah digital.</p>
-        <?php if (!$is_logged_in): ?>
-            <a href="register.php" class="btn btn-primary btn-lg px-5 rounded-pill mb-2">Daftar Gratis</a>
-        <?php endif; ?>
-        <a href="Panduan_Instalasi_PWA_AKRAB.pdf" target="_blank" class="btn btn-outline-dark btn-lg px-4 rounded-pill mb-2 d-inline-flex align-items-center gap-2">
-            <i data-lucide="smartphone"></i> Panduan Instalasi Aplikasi (PWA)
-        </a>
+        <div class="text-center mb-5">
+            <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold mb-3" style="font-size: 0.8rem;">CARA KERJA</span>
+            <h2 class="fw-bold" style="font-size: 2rem;">Langkah Mudah Memulai</h2>
+        </div>
+        <div class="row g-4 text-center">
+            <div class="col-md-3">
+                <div class="step-number">1</div>
+                <h6 class="fw-bold">Daftar Akun</h6>
+                <p class="text-muted small mb-0">Buat akun siswa dengan NISN dan nama lengkap Anda.</p>
+            </div>
+            <div class="col-md-3">
+                <div class="step-number">2</div>
+                <h6 class="fw-bold">Isi Kuesioner</h6>
+                <p class="text-muted small mb-0">Jawab pertanyaan skrining tentang gejala, pola makan, dan faktor risiko.</p>
+            </div>
+            <div class="col-md-3">
+                <div class="step-number">3</div>
+                <h6 class="fw-bold">Lihat Hasil</h6>
+                <p class="text-muted small mb-0">Dapatkan analisis risiko anemia dan saran tindak lanjut dari UKS.</p>
+            </div>
+            <div class="col-md-3">
+                <div class="step-number">4</div>
+                <h6 class="fw-bold">Pantau & Patuhi</h6>
+                <p class="text-muted small mb-0">Catat konsumsi TTD harian dan pantau perkembangan kesehatan Anda.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action -->
+<section class="py-5">
+    <div class="container">
+        <div class="cta-section text-center p-5 p-md-4">
+            <h2 class="fw-bold mb-3 text-white" style="font-size: 1.75rem; position: relative;">Siap Mendukung Kesehatan Remaja?</h2>
+            <p class="mb-4 opacity-90 text-white" style="max-width: 520px; margin: 0 auto; position: relative;">Bergabunglah dengan AKRAB dan jadilah bagian dari revolusi kesehatan sekolah digital.</p>
+            <div class="d-flex flex-wrap justify-content-center gap-3" style="position: relative;">
+                <?php if (!$is_logged_in): ?>
+                    <a href="register.php" class="btn btn-light btn-lg px-5 rounded-pill fw-bold text-primary shadow">
+                        <i data-lucide="user-plus" style="width: 20px;"></i> Daftar Gratis
+                    </a>
+                <?php endif; ?>
+                <a href="Panduan_Instalasi_PWA_AKRAB.pdf" target="_blank" class="btn btn-outline-light btn-lg px-4 rounded-pill">
+                    <i data-lucide="smartphone" style="width: 20px;"></i> Panduan PWA
+                </a>
+            </div>
+        </div>
     </div>
 </section>
 
 <!-- Footer -->
-<footer class="bg-dark text-white text-center py-4 mt-auto">
+<footer class="site-footer py-4 mt-auto">
     <div class="container">
-        <p class="mb-0">&copy; <?= date('Y') ?> Aplikasi AKRAB. Hak Cipta Dilindungi.</p>
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div class="d-flex align-items-center gap-2">
+                <i data-lucide="heart-pulse" style="width: 20px; height: 20px; color: var(--primary-color);"></i>
+                <span class="fw-bold text-white">AKRAB</span>
+                <span class="small opacity-75">— SMAN 3 Padang</span>
+            </div>
+            <p class="mb-0 small opacity-60">&copy; <?= date('Y') ?> Aplikasi AKRAB. Hak Cipta Dilindungi.</p>
+        </div>
     </div>
 </footer>
 
 <script src="/assets/vendor/bootstrap.bundle.min.js"></script>
-<script>
-  lucide.createIcons();
-</script>
-<script src="assets/js/app-init.js?v=20260729"></script>
+<script>lucide.createIcons();</script>
+<script src="assets/js/app-init.js?v=20260818"></script>
 </body>
 </html>

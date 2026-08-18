@@ -25,7 +25,7 @@ function renderSuperadminHeader(string $title, string $active): void
     <title><?= escape_output($title) ?> — Superadmin AKRAB</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23087f5b'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-size='36' fill='white' font-family='Arial'%3EA%3C/text%3E%3C/svg%3E">
     <link href="/assets/vendor/bootstrap.min.css" rel="stylesheet">
-    <link href="../assets/css/style.css?v=20260729" rel="stylesheet">
+    <link href="../assets/css/style.css?v=20260818" rel="stylesheet">
     <link href="../assets/css/superadmin.css?v=20260729" rel="stylesheet">
 </head>
 <body class="superadmin-body">
@@ -78,8 +78,8 @@ function renderSuperadminFooter(): void
     <span>Aktivitas sensitif dilindungi audit</span>
 </footer>
 <script src="/assets/vendor/bootstrap.bundle.min.js"></script>
-<script src="../assets/js/app-init.js?v=20260729"></script>
-<script src="../assets/js/main.js?v=20260729"></script>
+<script src="../assets/js/app-init.js?v=20260818"></script>
+<script src="../assets/js/main.js?v=20260818"></script>
 </body>
 </html>
 <?php

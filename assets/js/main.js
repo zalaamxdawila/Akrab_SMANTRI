@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 text: `Anda akan ${actionText}.`,
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#2e7d32',
+                confirmButtonColor: '#10b981',
                 cancelButtonColor: '#d33',
                 confirmButtonText: 'Ya, lanjutkan!'
             }).then((result) => {
@@ -64,8 +64,8 @@ function renderKepatuhanChart(ctxId, labels, dataPatuh, dataTidakPatuh) {
                 {
                     label: 'Patuh Minum TTD',
                     data: dataPatuh,
-                    backgroundColor: 'rgba(46, 125, 50, 0.7)',
-                    borderColor: 'rgba(46, 125, 50, 1)',
+                    backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                    borderColor: 'rgba(16, 185, 129, 1)',
                     borderWidth: 1
                 },
                 {

@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 <!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Lengkapi Email - AKRAB</title><link href="/assets/vendor/bootstrap.min.css" rel="stylesheet"><link href="../assets/css/style.css?v=20260729" rel="stylesheet"></head>
+<title>Lengkapi Email - AKRAB</title><link href="/assets/vendor/bootstrap.min.css" rel="stylesheet"><link href="../assets/css/style.css?v=20260818" rel="stylesheet"></head>
 <body class="bg-light"><main class="container py-5" style="max-width:620px"><section class="card border-0 shadow-sm"><div class="card-body p-4 p-md-5">
 <p class="text-uppercase small fw-semibold text-primary mb-1">Langkah 1 dari 3</p><h1 class="h3">Lengkapi email akun</h1>
 <p class="text-muted">Email diperlukan untuk pemulihan password dan keamanan akun. Setelah tersimpan, Anda akan diarahkan otomatis ke langkah berikutnya.</p>

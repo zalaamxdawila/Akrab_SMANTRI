@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 $requests = $service->pendingRequests();
 ?>
-<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Permintaan Perubahan Lab - AKRAB</title><link href="/assets/vendor/bootstrap.min.css" rel="stylesheet"><link href="../assets/css/style.css?v=20260729" rel="stylesheet"></head><body class="bg-light"><main class="container py-5">
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Permintaan Perubahan Lab - AKRAB</title><link href="/assets/vendor/bootstrap.min.css" rel="stylesheet"><link href="../assets/css/style.css?v=20260818" rel="stylesheet"></head><body class="bg-light"><main class="container py-5">
 <div class="d-flex justify-content-between align-items-start mb-4"><div><p class="text-uppercase small fw-semibold text-success mb-1">Verifikasi UKS</p><h1 class="h3">Permintaan perubahan data laboratorium</h1><p class="text-muted">Nilai baru baru berlaku setelah disetujui.</p></div><a class="btn btn-outline-secondary" href="hasil_kuesioner.php">Kembali</a></div>
 <?php if ($error): ?><div class="alert alert-danger"><?= escape_output($error) ?></div><?php endif; ?>
 <?php if (isset($_GET['processed'])): ?><div class="alert alert-success">Permintaan berhasil diproses.</div><?php endif; ?>
