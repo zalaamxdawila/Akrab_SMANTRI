@@ -16,6 +16,8 @@ final class QuestionnaireResultPresenterTest extends TestCase
             'skor_makan' => 6,
             'skor_pengetahuan' => 30,
             'skor_sikap' => 32,
+            'skor_faktor_internal' => 0,
+            'skor_faktor_eksternal' => 15,
             'answers_snapshot' => $snapshot,
         ], [
             'kategori_risiko' => 'tinggi',
@@ -32,6 +34,14 @@ final class QuestionnaireResultPresenterTest extends TestCase
         self::assertSame(
             'Sarapan pagi',
             $result['answers']['sections']['makan']['items'][0]['question']
+        );
+        self::assertSame(
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            $result['answer_charts']['sikap']['values']
+        );
+        self::assertSame(
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            $result['answer_charts']['pengetahuan']['values']
         );
         self::assertStringContainsString(
             'bukan diagnosis',
@@ -57,6 +67,25 @@ final class QuestionnaireResultPresenterTest extends TestCase
         self::assertSame('Belum tersedia', $result['risk']['label']);
     }
 
+    public function testVersionThreeAnswersAlsoProduceDiagrams(): void
+    {
+        $snapshot = (new QuestionnaireAnswerSnapshot())->fromInput($this->visibleAnswers());
+        $snapshot['version'] = '2026-08-21.v3';
+        foreach (['sikap', 'pengetahuan'] as $section) {
+            foreach ($snapshot['sections'][$section]['items'] as &$item) {
+                unset($item['chart_value']);
+            }
+            unset($item);
+        }
+
+        $result = (new QuestionnaireResultPresenter())->forResult([
+            'answers_snapshot' => json_encode($snapshot, JSON_THROW_ON_ERROR),
+        ], null);
+
+        self::assertSame(array_fill(0, 10, 1), $result['answer_charts']['sikap']['values']);
+        self::assertSame(array_fill(0, 10, 1), $result['answer_charts']['pengetahuan']['values']);
+    }
+
     public function testCorruptSnapshotFailsClosedWithoutRenderingRawContent(): void
     {
         $result = (new QuestionnaireResultPresenter())->forResult([
@@ -77,15 +106,18 @@ final class QuestionnaireResultPresenterTest extends TestCase
     /** @return array<string, mixed> */
     private function visibleAnswers(): array
     {
-        $input = ['pengetahuan_1' => ['a']];
+        $input = [];
         foreach (range(1, 6) as $index) {
             $input['makan_' . $index] = 'kadang';
         }
         foreach (range(1, 10) as $index) {
             $input['gejala_' . $index] = '2';
+            $input['sikap_' . $index] = '1';
+            $input['pengetahuan_' . $index] = ['a'];
         }
         foreach (range(1, 5) as $index) {
-            $input['sikap_' . $index] = '3';
+            $input['faktor_internal_' . $index] = 'tidak';
+            $input['faktor_eksternal_' . $index] = 'rendah';
         }
 
         return $input;

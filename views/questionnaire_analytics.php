@@ -66,6 +66,8 @@ function renderQuestionnaireResult(array $presentation, array $response): void
             </div>
         </div>
 
+        <?php renderQuestionnaireAnswerCharts($presentation['answer_charts'] ?? []); ?>
+
         <?php renderQuestionnaireAnswerOverview($presentation['answers']); ?>
 
         <?php renderLogisticRegressionExplanation($presentation['logistic'] ?? null); ?>
@@ -102,6 +104,104 @@ function renderQuestionnaireResult(array $presentation, array $response): void
             </div>
         </details>
     </section>
+    <?php
+}
+
+/** @param array<string, array<string, mixed>> $charts */
+function renderQuestionnaireAnswerCharts(array $charts): void
+{
+    if (!isset($charts['sikap'], $charts['pengetahuan'])) return;
+    $chartDefinitions = [
+        'sikap' => [
+            'id' => 'answerAttitudeChart',
+            'title' => 'Diagram jawaban sikap',
+            'description' => 'Nilai 1 berarti sangat tidak setuju dan nilai 4 berarti sangat setuju.',
+            'dataset' => 'Tingkat persetujuan',
+            'color' => '#0d6efd',
+        ],
+        'pengetahuan' => [
+            'id' => 'answerKnowledgeChart',
+            'title' => 'Diagram jawaban pengetahuan',
+            'description' => 'Menampilkan jumlah pilihan yang dipilih pada setiap pertanyaan.',
+            'dataset' => 'Jumlah pilihan',
+            'color' => '#198754',
+        ],
+    ];
+    ?>
+    <section class="card shadow-sm border-0 mb-4" aria-labelledby="answer-chart-title">
+        <div class="card-header bg-white border-bottom p-3 p-md-4">
+            <p class="text-uppercase small fw-semibold text-primary mb-1">Visualisasi respons</p>
+            <h2 class="h4 mb-1" id="answer-chart-title">Diagram hasil kuesioner</h2>
+            <p class="text-muted mb-0">Arahkan kursor atau sentuh batang untuk melihat pertanyaan lengkap.</p>
+        </div>
+        <div class="card-body p-3 p-md-4">
+            <div class="row g-4">
+                <?php foreach ($chartDefinitions as $key => $definition): ?>
+                <div class="col-12 col-xl-6">
+                    <h3 class="h6 mb-1"><?= escape_output($definition['title']) ?></h3>
+                    <p class="small text-muted mb-3"><?= escape_output($definition['description']) ?></p>
+                    <div style="height: 380px">
+                        <canvas id="<?= $definition['id'] ?>" role="img"
+                            aria-label="<?= escape_output($definition['title']) ?>"></canvas>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </section>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (typeof Chart === 'undefined') return;
+        const configs = <?= json_encode(array_map(
+            static fn (string $key, array $definition): array => [
+                'id' => $definition['id'],
+                'dataset' => $definition['dataset'],
+                'color' => $definition['color'],
+                'labels' => $charts[$key]['labels'],
+                'questions' => $charts[$key]['questions'],
+                'values' => $charts[$key]['values'],
+                'max' => $charts[$key]['max'],
+            ],
+            array_keys($chartDefinitions),
+            array_values($chartDefinitions)
+        ), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        configs.forEach(function (config) {
+            const canvas = document.getElementById(config.id);
+            if (!canvas) return;
+            new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: config.labels,
+                    datasets: [{
+                        label: config.dataset,
+                        data: config.values,
+                        backgroundColor: config.color,
+                        borderColor: config.color,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: items => config.questions[items[0].dataIndex],
+                                label: item => config.dataset + ': ' + item.raw
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { beginAtZero: true, max: config.max, ticks: { precision: 0 } },
+                        y: { grid: { display: false } }
+                    }
+                }
+            });
+        });
+    });
+    </script>
     <?php
 }
 

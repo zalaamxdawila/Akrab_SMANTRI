@@ -25,7 +25,7 @@ final class QuestionnaireInsights
             'pengetahuan' => [
                 'field' => 'skor_pengetahuan',
                 'label' => 'Pengetahuan anemia',
-                'max' => 40.0,
+                'max' => 53.0,
                 'direction' => 'higher',
             ],
             'sikap' => [

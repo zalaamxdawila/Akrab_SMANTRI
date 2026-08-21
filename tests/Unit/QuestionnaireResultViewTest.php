@@ -40,6 +40,20 @@ final class QuestionnaireResultViewTest extends TestCase
                     ],
                 ],
             ],
+            'answer_charts' => [
+                'sikap' => [
+                    'labels' => ['S1','S2','S3','S4','S5','S6','S7','S8','S9','S10'],
+                    'questions' => array_fill(0, 10, 'Pertanyaan sikap'),
+                    'values' => array_fill(0, 10, 3),
+                    'max' => 4,
+                ],
+                'pengetahuan' => [
+                    'labels' => ['P1','P2','P3','P4','P5','P6','P7','P8','P9','P10'],
+                    'questions' => array_fill(0, 10, 'Pertanyaan pengetahuan'),
+                    'values' => array_fill(0, 10, 1),
+                    'max' => 10,
+                ],
+            ],
             'disclaimer' => 'Hasil ini bukan diagnosis medis.',
         ];
 
@@ -55,6 +69,9 @@ final class QuestionnaireResultViewTest extends TestCase
 
         self::assertStringContainsString('Hasil Ringkas', $html);
         self::assertStringContainsString('<details', $html);
+        self::assertStringContainsString('answerAttitudeChart', $html);
+        self::assertStringContainsString('answerKnowledgeChart', $html);
+        self::assertStringContainsString('new Chart(', $html);
         self::assertStringContainsString('Hasil Lengkap', $html);
         self::assertStringContainsString('question-answer-overview', $html);
         self::assertStringContainsString('1 jawaban tercatat', $html);

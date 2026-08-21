@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 final class QuestionnaireAnswerSnapshot
 {
-    public const VERSION = '2026-08-21.v3';
+    public const VERSION = '2026-08-21.v4';
 
     /** @var list<string> */
     private const FACTOR_INTERNAL_QUESTIONS = [
@@ -182,7 +182,8 @@ final class QuestionnaireAnswerSnapshot
             $sections['sikap']['items'][] = $this->item(
                 'sikap_' . $index,
                 $question,
-                $attitudeAnswers[$value]
+                $attitudeAnswers[$value],
+                $value
             );
         }
 
@@ -213,7 +214,8 @@ final class QuestionnaireAnswerSnapshot
             $sections['pengetahuan']['items'][] = $this->item(
                 'pengetahuan_' . $index,
                 $question,
-                $answerLabels ? implode(', ', $answerLabels) : 'Tidak memilih jawaban'
+                $answerLabels ? implode(', ', $answerLabels) : 'Tidak memilih jawaban',
+                count($selected)
             );
         }
 
@@ -236,9 +238,18 @@ final class QuestionnaireAnswerSnapshot
         return $json;
     }
 
-    /** @return array{key:string,question:string,answer:string} */
-    private function item(string $key, string $question, string $answer): array
+    /** @return array{key:string,question:string,answer:string,chart_value?:int} */
+    private function item(
+        string $key,
+        string $question,
+        string $answer,
+        ?int $chartValue = null
+    ): array
     {
-        return ['key' => $key, 'question' => $question, 'answer' => $answer];
+        $item = ['key' => $key, 'question' => $question, 'answer' => $answer];
+        if ($chartValue !== null) {
+            $item['chart_value'] = $chartValue;
+        }
+        return $item;
     }
 }

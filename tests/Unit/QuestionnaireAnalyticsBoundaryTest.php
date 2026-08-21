@@ -70,16 +70,18 @@ final class QuestionnaireAnalyticsBoundaryTest extends TestCase
                 'makan' => [50.0],
                 'pengetahuan' => [75.0],
                 'sikap' => [100.0],
+                'faktor_internal' => [0.0],
+                'faktor_eksternal' => [0.0],
             ],
         ]);
         $output = (string) ob_get_clean();
 
         self::assertStringContainsString(
-            'labels: ["Keluhan \\u0026 gejala","Pola makan","Pengetahuan","Sikap \\u0026 kesadaran"]',
+            'labels: ["Keluhan \\u0026 gejala","Pola makan","Pengetahuan","Sikap \\u0026 kesadaran","Faktor Internal","Faktor Eksternal"]',
             $output
         );
         self::assertStringContainsString(
-            'data: [25,50,75,100]',
+            'data: [25,50,75,100,0,0]',
             $output
         );
         self::assertStringContainsString('showLine: true', $output);

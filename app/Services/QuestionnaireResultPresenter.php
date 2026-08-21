@@ -40,12 +40,15 @@ final class QuestionnaireResultPresenter
             $actions[] = $this->factorAction((string) $priority['key']);
         }
 
+        $answers = $this->answers($response['answers_snapshot'] ?? null);
+
         return [
             'risk' => $risk,
             'scores' => $scores,
             'priorities' => $priorities,
             'actions' => array_values(array_unique($actions)),
-            'answers' => $this->answers($response['answers_snapshot'] ?? null),
+            'answers' => $answers,
+            'answer_charts' => $this->answerCharts($answers),
             'logistic' => $this->logistic($response),
             'disclaimer' => $this->insights->disclaimer(),
         ];
@@ -173,10 +176,17 @@ final class QuestionnaireResultPresenter
                         || mb_strlen($item['answer']) > 500) {
                         throw new UnexpectedValueException('Invalid snapshot item.');
                     }
+                    $chartValue = isset($item['chart_value'])
+                        && is_int($item['chart_value'])
+                        && $item['chart_value'] >= 0
+                        && $item['chart_value'] <= 10
+                        ? $item['chart_value']
+                        : $this->legacyChartValue($key, $item['key'], $item['answer']);
                     $items[] = [
                         'key' => $item['key'],
                         'question' => $item['question'],
                         'answer' => $item['answer'],
+                        ...$chartValue !== null ? ['chart_value' => $chartValue] : [],
                     ];
                 }
                 $sections[$key] = [
@@ -199,5 +209,79 @@ final class QuestionnaireResultPresenter
                 'sections' => [],
             ];
         }
+    }
+
+    /** @return array<string, array{labels:list<string>,questions:list<string>,values:list<int>,max:int}> */
+    private function answerCharts(array $answers): array
+    {
+        if (!($answers['available'] ?? false)) {
+            return [];
+        }
+
+        $charts = [];
+        foreach (['sikap' => 4, 'pengetahuan' => 10] as $sectionKey => $max) {
+            $items = $answers['sections'][$sectionKey]['items'] ?? [];
+            if (!is_array($items) || count($items) !== 10) {
+                continue;
+            }
+            $values = [];
+            $questions = [];
+            foreach ($items as $offset => $item) {
+                if (!is_int($item['chart_value'] ?? null)) {
+                    $values = [];
+                    break;
+                }
+                $values[] = $item['chart_value'];
+                $questions[] = (string) $item['question'];
+            }
+            if ($values !== []) {
+                $prefix = $sectionKey === 'sikap' ? 'S' : 'P';
+                $charts[$sectionKey] = [
+                    'labels' => array_map(
+                        static fn (int $index): string => $prefix . $index,
+                        range(1, 10)
+                    ),
+                    'questions' => $questions,
+                    'values' => $values,
+                    'max' => $max,
+                ];
+            }
+        }
+        return $charts;
+    }
+
+    private function legacyChartValue(string $section, string $key, string $answer): ?int
+    {
+        if ($section === 'sikap') {
+            return array_search($answer, [
+                1 => 'Sangat Tidak Setuju',
+                2 => 'Tidak Setuju',
+                3 => 'Setuju',
+                4 => 'Sangat Setuju',
+            ], true) ?: null;
+        }
+        if ($section !== 'pengetahuan'
+            || preg_match('/^pengetahuan_(10|[1-9])$/', $key, $matches) !== 1) {
+            return null;
+        }
+        if ($answer === 'Tidak memilih jawaban') return 0;
+
+        $labels = [
+            1 => ['Tahu, lanjut ke pertanyaan no. 2', 'Tidak', 'Lain-lain'],
+            2 => ['Kurang darah', 'Kurang Hb dalam darah', 'Lain-lain', 'Tidak tahu'],
+            3 => ['Kurang zat gizi', 'Kelainan darah', 'Lain-lain', 'Tidak tahu'],
+            4 => ['Kurang zat besi (Fe)', 'Kurang asam folat', 'Kurang vitamin B12', 'Lain-lain', 'Tidak tahu'],
+            5 => ['Siklus menstruasi tidak teratur', 'Pola makan yang tidak sesuai', 'Infeksi kecacingan', 'Persepsi diri yang salah', 'Lain-lain'],
+            6 => ['Pusing', 'Pucat', 'Lemah dan lesu', 'Berdebar-debar', 'Napas sering singkat', 'Cepat lelah', 'Kaki dingin atau kebas', 'Mengantuk', 'Sempoyongan', 'Berkunang-kunang'],
+            7 => ['Prestasi sekolah menurun', 'Pertumbuhan terganggu', 'Tidak bugar', 'Mudah infeksi', 'Lain-lain', 'Tidak tahu'],
+            8 => ['Pemberian Tablet Tambah Darah (TTD)', 'Penyuluhan tentang anemia', 'Tidak tahu', 'Lain-lain', 'Tidak ada'],
+            9 => ['Hati ayam', 'Kuning telur', 'Daging sapi', 'Daging domba', 'Kacang-kacangan', 'Buah-buahan kering', 'Lain-lain'],
+            10 => ['Membentuk sel darah merah', 'Membentuk sel darah putih', 'Untuk daya tahan tubuh', 'Untuk pertumbuhan', 'Lain-lain'],
+        ];
+        $count = 0;
+        foreach ($labels[(int) $matches[1]] as $label) {
+            if (str_contains($answer, $label)) $count++;
+        }
+        return $count;
     }
 }

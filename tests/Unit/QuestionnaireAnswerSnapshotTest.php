@@ -15,7 +15,7 @@ final class QuestionnaireAnswerSnapshotTest extends TestCase
         $snapshot = (new QuestionnaireAnswerSnapshot())->fromInput($input);
         $encoded = json_encode($snapshot, JSON_THROW_ON_ERROR);
 
-        self::assertSame('2026-08-21.v3', $snapshot['version']);
+        self::assertSame('2026-08-21.v4', $snapshot['version']);
         self::assertSame(
             ['makan', 'gejala', 'faktor_internal', 'faktor_eksternal', 'sikap', 'pengetahuan'],
             array_keys($snapshot['sections'])
@@ -60,6 +60,8 @@ final class QuestionnaireAnswerSnapshotTest extends TestCase
             'Hati ayam, Lain-lain: Bayam',
             $snapshot['sections']['pengetahuan']['items'][8]['answer']
         );
+        self::assertSame(4, $snapshot['sections']['sikap']['items'][0]['chart_value']);
+        self::assertSame(2, $snapshot['sections']['pengetahuan']['items'][8]['chart_value']);
     }
 
     public function testSnapshotRejectsAnswersOutsideVisibleAllowlist(): void
