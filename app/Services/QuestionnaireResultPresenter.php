@@ -49,6 +49,7 @@ final class QuestionnaireResultPresenter
             'actions' => array_values(array_unique($actions)),
             'answers' => $answers,
             'answer_charts' => $this->answerCharts($answers),
+            'choice_charts' => $this->choiceCharts($answers),
             'logistic' => $this->logistic($response),
             'disclaimer' => $this->insights->disclaimer(),
         ];
@@ -257,6 +258,80 @@ final class QuestionnaireResultPresenter
         return $charts;
     }
 
+    /** @return array<string, list<array{key:string,question:string,labels:list<string>,values:list<int>,selected:list<string>}>> */
+    private function choiceCharts(array $answers): array
+    {
+        if (!($answers['available'] ?? false)) return [];
+
+        $options = [
+            'gejala' => array_fill(1, 10, array_map('strval', range(0, 10))),
+            'sikap' => array_fill(1, 10, [
+                'Tidak Setuju', 'Kurang Setuju', 'Setuju', 'Sangat Setuju',
+            ]),
+            'pengetahuan' => $this->knowledgeOptions(),
+            'makan' => array_fill(1, 6, ['Tidak pernah', 'Kadang-kadang', 'Selalu']),
+        ];
+        $charts = [];
+        foreach ($options as $sectionKey => $questionOptions) {
+            $items = $answers['sections'][$sectionKey]['items'] ?? [];
+            if (is_array($items)) {
+                $items = array_values(array_filter(
+                    $items,
+                    static fn (array $item): bool => str_starts_with(
+                        (string) ($item['key'] ?? ''),
+                        $sectionKey . '_'
+                    )
+                ));
+            }
+            $expectedCount = $sectionKey === 'makan' ? 6 : 10;
+            if (!is_array($items) || count($items) !== $expectedCount) continue;
+
+            foreach ($items as $item) {
+                if (preg_match('/^' . preg_quote($sectionKey, '/') . '_(10|[1-9])$/', (string) ($item['key'] ?? ''), $matches) !== 1) {
+                    continue 2;
+                }
+                $labels = $questionOptions[(int) $matches[1]];
+                $answer = (string) $item['answer'];
+                $selected = array_values(array_filter(
+                    $labels,
+                    static fn (string $label): bool => match ($sectionKey) {
+                        'gejala' => (int) $label === ($item['chart_value'] ?? -1),
+                        'sikap', 'makan' => $answer === $label,
+                        default => str_contains($answer, $label),
+                    }
+                ));
+                $charts[$sectionKey][] = [
+                    'key' => (string) $item['key'],
+                    'question' => (string) $item['question'],
+                    'labels' => $labels,
+                    'values' => array_map(
+                        static fn (string $label): int => in_array($label, $selected, true) ? 1 : 0,
+                        $labels
+                    ),
+                    'selected' => $selected,
+                ];
+            }
+        }
+        return $charts;
+    }
+
+    /** @return array<int, list<string>> */
+    private function knowledgeOptions(): array
+    {
+        return [
+            1 => ['Tahu, lanjut ke pertanyaan no 2', 'Tidak'],
+            2 => ['Kurang darah', 'Kurang Hb dalam darah', 'Lain-lain'],
+            3 => ['Kurang zat gizi', 'Kelainan darah', 'Lain-lain'],
+            4 => ['Kurang zat besi (Fe)', 'Kurang asam folat', 'Kurang vitamin B12', 'Lain-lain'],
+            5 => ['Siklus mentruasi tidak teratur', 'Pola makan yang tidak sesuai', 'Infeksi kecacingan', 'Persepsi diri yang salah', 'Lain-lain'],
+            6 => ['Pusing', 'Pucat', 'Lemah dan lesu', 'Berdebar-debar', 'Nafas sering singkat', 'Cepat Lelah', 'Kaki dingin atau kebas', 'Mengantuk', 'Sempoyongan', 'Berkunang-kunang'],
+            7 => ['Prestasi sekolah menurun', 'Pertumbuhan terganggu', 'Tidak bugar', 'Mudah infeksi', 'Lain-lain'],
+            8 => ['Pemberian Tablet Tambah Darah (TTD)', 'Penyuluhan tentang anemia', 'Tidak tahu', 'Lain-lain'],
+            9 => ['Hati ayam', 'Kuning telur', 'Daging sapi', 'Daging domba', 'Kacang-kacangan', 'Buah-buahan kering', 'Lain-lain'],
+            10 => ['Membentuk sel darah merah', 'Membentuk sel darah putih', 'Untuk daya tahan tubuh', 'Untuk pertumbuhan', 'Lain-lain'],
+        ];
+    }
+
     private function legacyChartValue(string $section, string $key, string $answer): ?int
     {
         if ($section === 'gejala'
@@ -280,18 +355,7 @@ final class QuestionnaireResultPresenter
         }
         if ($answer === 'Tidak memilih jawaban') return 0;
 
-        $labels = [
-            1 => ['Tahu, lanjut ke pertanyaan no 2', 'Tidak'],
-            2 => ['Kurang darah', 'Kurang Hb dalam darah', 'Lain-lain'],
-            3 => ['Kurang zat gizi', 'Kelainan darah', 'Lain-lain'],
-            4 => ['Kurang zat besi (Fe)', 'Kurang asam folat', 'Kurang vitamin B12', 'Lain-lain'],
-            5 => ['Siklus mentruasi tidak teratur', 'Pola makan yang tidak sesuai', 'Infeksi kecacingan', 'Persepsi diri yang salah', 'Lain-lain'],
-            6 => ['Pusing', 'Pucat', 'Lemah dan lesu', 'Berdebar-debar', 'Nafas sering singkat', 'Cepat Lelah', 'Kaki dingin atau kebas', 'Mengantuk', 'Sempoyongan', 'Berkunang-kunang'],
-            7 => ['Prestasi sekolah menurun', 'Pertumbuhan terganggu', 'Tidak bugar', 'Mudah infeksi', 'Lain-lain'],
-            8 => ['Pemberian Tablet Tambah Darah (TTD)', 'Penyuluhan tentang anemia', 'Tidak tahu', 'Lain-lain'],
-            9 => ['Hati ayam', 'Kuning telur', 'Daging sapi', 'Daging domba', 'Kacang-kacangan', 'Buah-buahan kering', 'Lain-lain'],
-            10 => ['Membentuk sel darah merah', 'Membentuk sel darah putih', 'Untuk daya tahan tubuh', 'Untuk pertumbuhan', 'Lain-lain'],
-        ];
+        $labels = $this->knowledgeOptions();
         $count = 0;
         foreach ($labels[(int) $matches[1]] as $label) {
             if (str_contains($answer, $label)) $count++;

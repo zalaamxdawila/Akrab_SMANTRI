@@ -66,6 +66,17 @@ final class QuestionnaireResultViewTest extends TestCase
                     'max' => 3,
                 ],
             ],
+            'choice_charts' => [
+                'sikap' => [[
+                    'key' => 'sikap_1', 'question' => 'Pertanyaan sikap',
+                    'labels' => ['Tidak Setuju', 'Kurang Setuju', 'Setuju', 'Sangat Setuju'],
+                    'values' => [0, 0, 1, 0], 'selected' => ['Setuju'],
+                ]],
+                'pengetahuan' => [[
+                    'key' => 'pengetahuan_1', 'question' => 'Pertanyaan pengetahuan',
+                    'labels' => ['Tahu', 'Tidak'], 'values' => [1, 0], 'selected' => ['Tahu'],
+                ]],
+            ],
             'disclaimer' => 'Hasil ini bukan diagnosis medis.',
         ];
 
@@ -85,6 +96,9 @@ final class QuestionnaireResultViewTest extends TestCase
         self::assertStringContainsString('answerKnowledgeChart', $html);
         self::assertStringContainsString('answerSymptomChart', $html);
         self::assertStringContainsString('answerDietChart', $html);
+        self::assertStringContainsString('questionChoiceChart-sikap_1', $html);
+        self::assertStringContainsString('questionChoiceChart-pengetahuan_1', $html);
+        self::assertStringContainsString('Pilihan yang dipilih: Setuju', $html);
         self::assertStringContainsString('new Chart(', $html);
         self::assertStringContainsString('Hasil Lengkap', $html);
         self::assertStringContainsString('question-answer-overview', $html);

@@ -43,6 +43,26 @@ final class QuestionnaireResultPresenterTest extends TestCase
             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
             $result['answer_charts']['pengetahuan']['values']
         );
+        self::assertCount(10, $result['choice_charts']['gejala']);
+        self::assertCount(10, $result['choice_charts']['sikap']);
+        self::assertCount(10, $result['choice_charts']['pengetahuan']);
+        self::assertCount(6, $result['choice_charts']['makan']);
+        self::assertSame(
+            [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+            $result['choice_charts']['gejala'][0]['values']
+        );
+        self::assertSame(
+            [1, 0, 0, 0],
+            $result['choice_charts']['sikap'][0]['values']
+        );
+        self::assertSame(
+            [1, 0],
+            $result['choice_charts']['pengetahuan'][0]['values']
+        );
+        self::assertSame(
+            [0, 1, 0],
+            $result['choice_charts']['makan'][0]['values']
+        );
         self::assertStringContainsString(
             'bukan diagnosis',
             strtolower($result['disclaimer'])

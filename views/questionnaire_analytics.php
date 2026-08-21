@@ -68,6 +68,8 @@ function renderQuestionnaireResult(array $presentation, array $response): void
 
         <?php renderQuestionnaireAnswerCharts($presentation['answer_charts'] ?? []); ?>
 
+        <?php renderQuestionnaireChoiceCharts($presentation['choice_charts'] ?? []); ?>
+
         <?php renderQuestionnaireAnswerOverview($presentation['answers']); ?>
 
         <?php renderLogisticRegressionExplanation($presentation['logistic'] ?? null); ?>
@@ -281,6 +283,88 @@ function renderLogisticRegressionExplanation(?array $model): void
                     Simulasi Model Penelitian — bukan diagnosis medis dan belum menggantikan penilaian tenaga kesehatan.
                 </div>
             <?php endif; ?>
+        </div>
+    </section>
+    <?php
+}
+
+/** @param array<string, list<array<string, mixed>>> $sections */
+function renderQuestionnaireChoiceCharts(array $sections): void
+{
+    if ($sections === []) return;
+    $sectionLabels = [
+        'gejala' => ['Keluhan dan gejala anemia', '#dc3545'],
+        'sikap' => ['Sikap terhadap anemia', '#0d6efd'],
+        'pengetahuan' => ['Pengetahuan tentang anemia', '#198754'],
+        'makan' => ['Pola makan', '#fd7e14'],
+    ];
+    $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
+    ?>
+    <section class="card shadow-sm border-0 mb-4" aria-labelledby="choice-chart-title">
+        <div class="card-header bg-white border-bottom p-3 p-md-4">
+            <p class="text-uppercase small fw-semibold text-primary mb-1">Perbandingan pilihan</p>
+            <h2 class="h4 mb-1" id="choice-chart-title">Diagram pilihan setiap pertanyaan</h2>
+            <p class="text-muted mb-0">Batang berwarna menunjukkan pilihan responden; batang abu-abu menunjukkan pilihan yang tidak dipilih.</p>
+        </div>
+        <div class="card-body p-3 p-md-4">
+            <?php foreach ($sectionLabels as $sectionKey => [$sectionLabel, $color]):
+                if (!isset($sections[$sectionKey])) continue;
+                ?>
+                <section class="<?= $sectionKey !== 'gejala' ? 'mt-5' : '' ?>" aria-labelledby="choice-section-<?= $sectionKey ?>">
+                    <h3 class="h5 mb-3" id="choice-section-<?= $sectionKey ?>"><?= escape_output($sectionLabel) ?></h3>
+                    <div class="row g-3">
+                        <?php foreach ($sections[$sectionKey] as $index => $chart):
+                            $canvasId = 'questionChoiceChart-' . $chart['key'];
+                            $selectedText = $chart['selected'] === [] ? 'Tidak ada' : implode(', ', $chart['selected']);
+                            $height = max(190, count($chart['labels']) * 42);
+                            ?>
+                            <div class="col-12 col-xl-6">
+                                <article class="border rounded-3 p-3 h-100">
+                                    <p class="small text-uppercase text-muted fw-semibold mb-1">Pertanyaan <?= $index + 1 ?></p>
+                                    <h4 class="h6 mb-2"><?= escape_output((string) $chart['question']) ?></h4>
+                                    <p class="small mb-3 fw-semibold">Pilihan yang dipilih: <?= escape_output($selectedText) ?></p>
+                                    <div style="height: <?= $height ?>px">
+                                        <canvas id="<?= escape_output($canvasId) ?>" role="img" aria-label="Diagram pilihan pertanyaan <?= $index + 1 ?>"></canvas>
+                                    </div>
+                                </article>
+                            </div>
+                            <script>
+                            document.addEventListener('DOMContentLoaded', function () {
+                                const canvas = document.getElementById(<?= json_encode($canvasId, $jsonFlags) ?>);
+                                if (!canvas || typeof Chart === 'undefined') return;
+                                const values = <?= json_encode($chart['values'], $jsonFlags) ?>;
+                                new Chart(canvas, {
+                                    type: 'bar',
+                                    data: {
+                                        labels: <?= json_encode($chart['labels'], $jsonFlags) ?>,
+                                        datasets: [{
+                                            data: values,
+                                            backgroundColor: values.map(value => value === 1 ? <?= json_encode($color, $jsonFlags) ?> : '#dee2e6'),
+                                            borderColor: values.map(value => value === 1 ? <?= json_encode($color, $jsonFlags) ?> : '#adb5bd'),
+                                            borderWidth: 1,
+                                            borderRadius: 5
+                                        }]
+                                    },
+                                    options: {
+                                        indexAxis: 'y',
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        plugins: {
+                                            legend: { display: false },
+                                            tooltip: { callbacks: { label: context => context.raw === 1 ? 'Dipilih' : 'Tidak dipilih' } }
+                                        },
+                                        scales: {
+                                            x: { beginAtZero: true, max: 1, ticks: { stepSize: 1, callback: value => value === 1 ? 'Dipilih' : 'Tidak dipilih' } },
+                                            y: { grid: { display: false } }
+                                        }
+                                    }
+                                });
+                            });
+                            </script>
+                        <?php endforeach; ?>
+                    </div>
+                </section>
+            <?php endforeach; ?>
         </div>
     </section>
     <?php
