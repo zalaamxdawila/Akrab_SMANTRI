@@ -110,8 +110,15 @@ function renderQuestionnaireResult(array $presentation, array $response): void
 /** @param array<string, array<string, mixed>> $charts */
 function renderQuestionnaireAnswerCharts(array $charts): void
 {
-    if (!isset($charts['sikap'], $charts['pengetahuan'])) return;
+    if (!isset($charts['gejala'], $charts['sikap'], $charts['pengetahuan'], $charts['makan'])) return;
     $chartDefinitions = [
+        'gejala' => [
+            'id' => 'answerSymptomChart',
+            'title' => 'Diagram gejala anemia',
+            'description' => 'Nilai 0–10 menunjukkan tingkat keparahan gejala yang dirasakan.',
+            'dataset' => 'Tingkat gejala',
+            'color' => '#dc3545',
+        ],
         'sikap' => [
             'id' => 'answerAttitudeChart',
             'title' => 'Diagram jawaban sikap',
@@ -125,6 +132,13 @@ function renderQuestionnaireAnswerCharts(array $charts): void
             'description' => 'Menampilkan jumlah pilihan yang dipilih pada setiap pertanyaan.',
             'dataset' => 'Jumlah pilihan',
             'color' => '#198754',
+        ],
+        'makan' => [
+            'id' => 'answerDietChart',
+            'title' => 'Diagram pola makan',
+            'description' => 'Nilai 1 tidak pernah, 2 kadang-kadang, dan 3 selalu.',
+            'dataset' => 'Frekuensi',
+            'color' => '#fd7e14',
         ],
     ];
     ?>
@@ -480,7 +494,7 @@ function renderQuestionnaireHistoryChartScript(string $canvasId, array $chart): 
     $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
     $singleResponse = count($chart['labels']) === 1;
     $displayLabels = $singleResponse
-        ? ['Keluhan & gejala', 'Pola makan', 'Pengetahuan', 'Sikap & kesadaran', 'Faktor Internal', 'Faktor Eksternal']
+        ? ['Keluhan & gejala', 'Pola makan', 'Pengetahuan', 'Sikap & kesadaran']
         : $chart['labels'];
     $singleResponseValues = $singleResponse
         ? [
@@ -488,8 +502,6 @@ function renderQuestionnaireHistoryChartScript(string $canvasId, array $chart): 
             $chart['series']['makan'][0] ?? 0,
             $chart['series']['pengetahuan'][0] ?? 0,
             $chart['series']['sikap'][0] ?? 0,
-            $chart['series']['faktor_internal'][0] ?? 0,
-            $chart['series']['faktor_eksternal'][0] ?? 0,
         ]
         : [];
     ?>
@@ -578,34 +590,6 @@ function renderQuestionnaireHistoryChartScript(string $canvasId, array $chart): 
                         fill: false,
                         tension: .25
                     },
-                    {
-                        label: 'Faktor Internal',
-                        data: <?= json_encode($chart['series']['faktor_internal'] ?? [], $jsonFlags) ?>,
-                        borderColor: '#fd7e14',
-                        backgroundColor: 'rgba(253, 126, 20, .12)',
-                        showLine: true,
-                        borderWidth: 3,
-                        pointRadius: 4,
-                        pointHoverRadius: 6,
-                        pointBorderWidth: 2,
-                        pointBackgroundColor: '#ffffff',
-                        fill: false,
-                        tension: .25
-                    },
-                    {
-                        label: 'Faktor Eksternal',
-                        data: <?= json_encode($chart['series']['faktor_eksternal'] ?? [], $jsonFlags) ?>,
-                        borderColor: '#20c997',
-                        backgroundColor: 'rgba(32, 201, 151, .12)',
-                        showLine: true,
-                        borderWidth: 3,
-                        pointRadius: 4,
-                        pointHoverRadius: 6,
-                        pointBorderWidth: 2,
-                        pointBackgroundColor: '#ffffff',
-                        fill: false,
-                        tension: .25
-                    }
                     <?php endif; ?>
                 ]
             },

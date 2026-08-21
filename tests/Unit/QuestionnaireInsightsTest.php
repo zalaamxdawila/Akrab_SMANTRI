@@ -17,7 +17,7 @@ final class QuestionnaireInsightsTest extends TestCase
         ]);
 
         self::assertSame(
-            ['gejala', 'makan', 'pengetahuan', 'sikap', 'faktor_internal', 'faktor_eksternal'],
+            ['gejala', 'makan', 'pengetahuan', 'sikap'],
             array_keys($result)
         );
         foreach ($result as $insight) {
@@ -48,7 +48,7 @@ final class QuestionnaireInsightsTest extends TestCase
         self::assertSame(['01 Jul 2026'], $chart['labels']);
         self::assertSame([50.0], $chart['series']['gejala']);
         self::assertSame([50.0], $chart['series']['makan']);
-        self::assertSame([37.7], $chart['series']['pengetahuan']);
+        self::assertSame([41.7], $chart['series']['pengetahuan']);
         self::assertSame([50.0], $chart['series']['sikap']);
     }
 

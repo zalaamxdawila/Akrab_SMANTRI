@@ -32,7 +32,7 @@ final class QuestionnaireResultPresenterTest extends TestCase
         self::assertGreaterThanOrEqual(3, count($result['actions']));
         self::assertTrue($result['answers']['available']);
         self::assertSame(
-            'Sarapan pagi',
+            'Makanan Pagi',
             $result['answers']['sections']['makan']['items'][0]['question']
         );
         self::assertSame(
@@ -106,7 +106,10 @@ final class QuestionnaireResultPresenterTest extends TestCase
     /** @return array<string, mixed> */
     private function visibleAnswers(): array
     {
-        $input = [];
+        $input = [
+            'mens_sudah' => 'ya', 'mens_usia_th' => '12', 'mens_usia_bln' => '6',
+            'mens_teratur' => 'ya', 'mens_lama' => '5', 'mens_jarak_siklus' => '28',
+        ];
         foreach (range(1, 6) as $index) {
             $input['makan_' . $index] = 'kadang';
         }

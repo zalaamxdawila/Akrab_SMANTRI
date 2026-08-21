@@ -15,12 +15,12 @@ final class QuestionnaireAnswerSnapshotTest extends TestCase
         $snapshot = (new QuestionnaireAnswerSnapshot())->fromInput($input);
         $encoded = json_encode($snapshot, JSON_THROW_ON_ERROR);
 
-        self::assertSame('2026-08-21.v4', $snapshot['version']);
+        self::assertSame('2026-08-21.v5', $snapshot['version']);
         self::assertSame(
-            ['makan', 'gejala', 'faktor_internal', 'faktor_eksternal', 'sikap', 'pengetahuan'],
+            ['makan', 'gejala', 'menstruasi', 'sikap', 'pengetahuan'],
             array_keys($snapshot['sections'])
         );
-        self::assertCount(6, $snapshot['sections']['makan']['items']);
+        self::assertCount(11, $snapshot['sections']['makan']['items']);
         self::assertCount(10, $snapshot['sections']['gejala']['items']);
         self::assertCount(10, $snapshot['sections']['sikap']['items']);
         self::assertCount(10, $snapshot['sections']['pengetahuan']['items']);
@@ -42,7 +42,7 @@ final class QuestionnaireAnswerSnapshotTest extends TestCase
 
         self::assertSame(
             'Kadang-kadang',
-            $snapshot['sections']['makan']['items'][0]['answer']
+            $snapshot['sections']['makan']['items'][5]['answer']
         );
         self::assertSame(
             '7 dari 10',
@@ -53,7 +53,7 @@ final class QuestionnaireAnswerSnapshotTest extends TestCase
             $snapshot['sections']['sikap']['items'][0]['answer']
         );
         self::assertSame(
-            'Tahu, lanjut ke pertanyaan no. 2, Tidak',
+            'Tahu, lanjut ke pertanyaan no 2, Tidak',
             $snapshot['sections']['pengetahuan']['items'][0]['answer']
         );
         self::assertSame(
@@ -76,7 +76,10 @@ final class QuestionnaireAnswerSnapshotTest extends TestCase
     /** @return array<string, mixed> */
     private function validInput(): array
     {
-        $input = [];
+        $input = [
+            'mens_sudah' => 'ya', 'mens_usia_th' => '12', 'mens_usia_bln' => '6',
+            'mens_teratur' => 'ya', 'mens_lama' => '5', 'mens_jarak_siklus' => '28',
+        ];
         foreach (range(1, 6) as $index) {
             $input['makan_' . $index] = 'selalu';
         }

@@ -88,7 +88,7 @@ final class QuestionnaireExport
             ...array_values(self::ANSWER_COLUMNS),
             'Skor Keluhan (0-100)',
             'Skor Pola Makan (0-18)',
-            'Skor Pengetahuan (0-53)',
+            'Skor Pengetahuan (0-48)',
             'Skor Sikap (0-40)',
             'Hb (g/dL)',
             'MCHC',

@@ -55,6 +55,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $submission['pendidikan'] = $pendidikan;
         $submission['jurusan'] = $jurusan;
         $submission['tanggal_wawancara'] = date('Y-m-d');
+        $foodRows = [];
+        foreach (['pagi', 'jam_10', 'siang', 'jam_4', 'malam'] as $mealTime) {
+            $food = trim((string) ($submission['makanan_' . $mealTime] ?? ''));
+            $amount = trim((string) ($submission['jumlah_' . $mealTime] ?? ''));
+            if ($food !== '' || $amount !== '') {
+                $foodRows[] = $mealTime . ': ' . $food . ($amount !== '' ? ' (' . $amount . ')' : '');
+            }
+        }
+        $submission['makanan_dikonsumsi'] = implode('; ', $foodRows);
         $questionnaireService = new QuestionnaireService($pdo);
         if ($clinicalRiskEnabled) {
             if (($submission['lab_status'] ?? '') === 'tersedia') {
@@ -380,118 +389,72 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <h6 class="text-primary mb-3 fw-bold">A. Siklus Menstruasi</h6>
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
-                            <label class="form-label text-muted small fw-semibold">Sudah menstruasi?</label>
+                            <label class="form-label text-muted small fw-semibold">Apakah sahabat sudah mengalami menstruasi</label>
                             <select name="mens_sudah" class="form-select">
-                                <option value="ya">Sudah</option><option value="belum">Belum</option>
+                                <option value="ya">Sudah, lanjut ke pertanyyan ke 2</option><option value="belum">Belum</option>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label text-muted small fw-semibold">Usia mulai (Tahun)</label>
-                            <input type="number" class="form-control" name="mens_usia_th">
+                            <label class="form-label text-muted small fw-semibold">Usia berapa sahabat mulai mengalami mentruasi?</label>
+                            <div class="row g-2">
+                                <div class="col-6"><div class="input-group"><input type="number" class="form-control" name="mens_usia_th" min="5" max="25"><span class="input-group-text">Th</span></div></div>
+                                <div class="col-6"><div class="input-group"><input type="number" class="form-control" name="mens_usia_bln" min="0" max="11"><span class="input-group-text">Bln</span></div></div>
+                            </div>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label text-muted small fw-semibold">Siklus teratur tiap bulan?</label>
+                            <label class="form-label text-muted small fw-semibold">Apakah siklus menstruasi sahabat teratur tiap bulan?</label>
                             <select name="mens_teratur" class="form-select">
                                 <option value="ya">Ya</option><option value="tidak">Tidak</option>
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label text-muted small fw-semibold">Lama menstruasi (Hari)</label>
+                            <label class="form-label text-muted small fw-semibold">Berama lama sahabat mengalami menstruasi setiap bulannya?</label>
                             <input type="number" class="form-control" name="mens_lama" min="1" max="15">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label text-muted small fw-semibold">Jarak antar siklus (Hari)</label>
+                            <label class="form-label text-muted small fw-semibold">Berapa jarak antara siklus setiap bulannya?</label>
                             <input type="number" class="form-control" name="mens_jarak_siklus" min="1" max="100" placeholder="Cth: 28">
                         </div>
                     </div>
                     
                     <h6 class="text-primary mb-3 pt-3 border-top fw-bold">B. Pola Makan Sehari-hari</h6>
+                    <p class="small text-muted">Isilah tabel berikut ini sesuai makanan yang sahabat makan setiap hari.</p>
+                    <div class="table-responsive mb-4">
+                        <table class="table table-bordered align-middle">
+                            <thead><tr><th scope="col">Waktu</th><th scope="col">Makanan</th><th scope="col">Jumlah</th></tr></thead>
+                            <tbody>
+                            <?php foreach (['pagi' => 'Pagi', 'jam_10' => 'Jam 10', 'siang' => 'Siang', 'jam_4' => 'Jam 4', 'malam' => 'Malam'] as $mealKey => $mealLabel): ?>
+                                <tr>
+                                    <th scope="row"><?= $mealLabel ?></th>
+                                    <td><input type="text" class="form-control" name="makanan_<?= $mealKey ?>" maxlength="150" aria-label="Makanan <?= $mealLabel ?>"></td>
+                                    <td><input type="text" class="form-control" name="jumlah_<?= $mealKey ?>" maxlength="80" aria-label="Jumlah <?= $mealLabel ?>"></td>
+                                </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
                     <?php 
-                    $makan = ["Sarapan pagi", "Rutin makan siang", "Selalu makan malam", "Snek pagi-siang", "Snek siang-malam", "Snek menjelang tidur"];
+                    $makan = [
+                        'Apakah sahabat ada sarapan setiap hari ?',
+                        'Apakah sahabar rutin makan siang ?',
+                        'Apakah sahabat selalu makan malam?',
+                        'Apakah sahabat ada makan snek antara makan pagi dan siang?',
+                        'Apakah sahabat ada makan snek antara makan siang dan malam?',
+                        'Apakah sahabat ada makan lagi atau snek menjelang tidur ?',
+                    ];
                     foreach($makan as $idx => $m): ?>
                     <div class="mb-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center bg-light p-2 rounded">
                         <label class="fw-medium mb-1 mb-md-0 px-2"><?= ($idx+1).". ".$m ?></label>
                         <select name="makan_<?= $idx+1 ?>" class="form-select w-auto border-0 shadow-sm" required>
                             <option value="selalu">Selalu</option>
-                            <option value="kadang">Kadang-kadang</option>
+                            <option value="kadang"><?= $idx >= 3 ? 'Kdang-kadang' : 'Kadang-kadang' ?></option>
                             <option value="tidak">Tidak pernah</option>
                         </select>
                     </div>
                     <?php endforeach; ?>
-
-                    <div class="mt-4 p-3 bg-light rounded border border-light-subtle">
-                        <label class="fw-semibold text-dark mb-2">Ceritakan jenis makanan apa yang paling sering Anda konsumsi setiap harinya?</label>
-                        <textarea class="form-control" name="makanan_dikonsumsi" rows="3" placeholder="Contoh: Nasi, sayur bayam, telur dadar, ayam goreng, buah pisang, dsb."></textarea>
-                    </div>
                 </div>
             </div>
             
-            <div class="d-flex justify-content-between">
-                <button type="button" class="btn btn-outline-secondary rounded-pill px-4 btn-prev"><i data-lucide="arrow-left" style="width: 18px;"></i> Kembali</button>
-                <button type="button" class="btn btn-primary rounded-pill px-4 btn-next shadow-sm">Selanjutnya <i data-lucide="arrow-right" style="width: 18px;"></i></button>
-            </div>
-        </div>
-
-        <!-- STEP 3: Faktor Risiko -->
-        <div class="step-container" id="step3">
-            <div class="card mb-4 shadow-sm border-0">
-                <div class="card-header bg-white fw-bold d-flex align-items-center gap-2 border-bottom-0 pt-3">
-                    <span class="badge bg-primary rounded-circle px-2 py-2">3</span> Faktor Risiko Anemia
-                </div>
-                <div class="card-body">
-                    <h6 class="text-primary mb-3 fw-bold">A. Faktor Risiko Internal</h6>
-                    <p class="small text-muted mb-3">Pilih "Ya" atau "Tidak" untuk setiap pernyataan berikut.</p>
-
-                    <?php
-                    $faktorInternal = [
-                        'Riwayat anemia sebelumnya',
-                        'Riwayat gangguan pencernaan',
-                        'Konsumsi suplemen zat besi',
-                        'Riwayat alergi makanan tertentu',
-                        'Gangguan penyerapan zat gizi',
-                    ];
-                    foreach ($faktorInternal as $idx => $f): ?>
-                    <div class="risk-toggle">
-                        <span class="risk-label"><?= ($idx + 1) . ". " . $f ?></span>
-                        <div class="btn-group btn-group-toggle" role="group" aria-label="<?= htmlspecialchars($f) ?>">
-                            <input class="btn-check" type="radio" name="faktor_internal_<?= $idx + 1 ?>" id="faktor_internal_<?= $idx + 1 ?>_ya" value="ya" autocomplete="off">
-                            <label class="btn btn-outline-danger" for="faktor_internal_<?= $idx + 1 ?>_ya">Ya</label>
-                            <input class="btn-check" type="radio" name="faktor_internal_<?= $idx + 1 ?>" id="faktor_internal_<?= $idx + 1 ?>_tidak" value="tidak" autocomplete="off" checked>
-                            <label class="btn btn-outline-success" for="faktor_internal_<?= $idx + 1 ?>_tidak">Tidak</label>
-                        </div>
-                    </div>
-                    <?php endforeach; ?>
-
-                    <h6 class="text-primary mb-3 pt-3 border-top fw-bold">B. Faktor Risiko Eksternal</h6>
-                    <p class="small text-muted mb-3">Pilih tingkat yang paling sesuai untuk setiap pernyataan berikut.</p>
-
-                    <?php
-                    $faktorEksternal = [
-                        'Asupan zat besi dari makanan sehari-hari',
-                        'Frekuensi konsumsi makanan tinggi kalsium',
-                        'Pendapatan keluarga',
-                        'Asupan vitamin C',
-                        'Partisipasi dalam edukasi kesehatan',
-                    ];
-                    $opsiEksternal = ['rendah' => 'Rendah', 'sedang' => 'Sedang', 'tinggi' => 'Tinggi'];
-                    foreach ($faktorEksternal as $idx => $f): ?>
-                    <div class="mb-4">
-                        <label class="d-block fw-semibold mb-2"><?= ($idx + 1) . ". " . $f ?></label>
-                        <div class="row g-2">
-                            <?php foreach ($opsiEksternal as $val => $label): ?>
-                            <div class="col-4">
-                                <label class="w-100 form-check-custom d-flex align-items-center justify-content-center gap-2 m-0 h-100">
-                                    <input class="form-check-input mt-0" type="radio" name="faktor_eksternal_<?= $idx + 1 ?>" value="<?= $val ?>" required>
-                                    <span class="small lh-sm fw-medium"><?= $label ?></span>
-                                </label>
-                            </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-
             <div class="d-flex justify-content-between">
                 <button type="button" class="btn btn-outline-secondary rounded-pill px-4 btn-prev"><i data-lucide="arrow-left" style="width: 18px;"></i> Kembali</button>
                 <button type="button" class="btn btn-primary rounded-pill px-4 btn-next shadow-sm">Selanjutnya <i data-lucide="arrow-right" style="width: 18px;"></i></button>
@@ -508,7 +471,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <p class="small text-muted mb-4 border-bottom pb-3">Geser tombol biru ke kanan sesuai dengan tingkat keseringan atau keparahan gejala yang Anda rasakan.</p>
                     
                     <?php 
-                    $gejala = ["Cepat lelah bila beraktivitas", "Merasa pusing", "Mata berkunang-kunang", "Ujung tangan/kaki sering dingin", "Suka sempoyongan", "Berdebar-debar saat aktivitas ringan", "Sering Mengantuk", "Malas beraktivitas", "Nafas terasa pendek", "Wajah terlihat pucat"];
+                    $gejala = [
+                        'Sahabat merasakan cepat lelah bila beraktivitas',
+                        'Sahabat merasakan pusing',
+                        'Sahabat merasakan mata berkunang-kunang',
+                        'Sahabat merasakan bagian ujung tangan atau kaki sering dingin',
+                        'Sahabat merasakan suka sempoyongan',
+                        'Sahabat merasakan berdebar-debar walaupun beraktivitas ringan',
+                        'Sahabat merasakan mengantuk',
+                        'Sahabat merasakan malas beraktivitas',
+                        'Sahabat merasakan nafas terasa pendek waktu beraktivitas',
+                        'Sahabat merasakan pucat',
+                    ];
                     foreach($gejala as $idx => $g): ?>
                     <div class="mb-4 p-3 bg-light rounded-3">
                         <div class="d-flex justify-content-between align-items-end mb-2">
@@ -542,15 +516,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <p class="small text-muted mb-3">Pilih tingkat persetujuan Anda untuk setiap pernyataan di bawah ini.</p>
                     <?php 
                     $sikap = [
-                        'Anemia merupakan keadaan di mana jumlah sel darah merah di bawah nilai normal',
+                        'Anemia merupakan keadaan dimana jumlah sel darah merah dibawah nilai normal',
                         'Anemia adalah penyakit kronis yang tidak dapat dicegah',
                         'Anemia dapat berdampak sangat serius terhadap tubuh',
                         'Anemia dapat berdampak terhadap masa depan generasi bangsa',
                         'Pola makan yang salah dapat menyebabkan anemia',
                         'Menstruasi yang tidak normal juga dapat menyebabkan anemia',
                         'Anemia tidak bisa disebabkan kecacingan',
-                        'Sebaiknya kita mengonsumsi obat cacing untuk mencegah anemia setiap 6 bulan sekali',
-                        'Mengonsumsi Tablet Tambah Darah (TTD) secara teratur dapat mencegah anemia',
+                        'Sebaiknya kita mengkonsumsi obat cacing untuk mencegah anemia setiap 6 bulan sekali',
+                        'Mengkonsumsi tablet tambah darah (TTD) secara teratur dapat mencegah anemia',
                         'Pola makan tinggi zat besi dapat mencegah anemia',
                     ];
                     foreach($sikap as $idx => $s): ?>
@@ -558,7 +532,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <label class="d-block fw-semibold mb-2"><?= ($idx+1).". ".$s ?></label>
                         <div class="row g-2">
                             <?php 
-                            $opsi = [1 => 'Sangat Tidak Setuju', 2 => 'Tidak Setuju', 3 => 'Setuju', 4 => 'Sangat Setuju'];
+                            $opsi = [1 => 'Tidak Setuju', 2 => 'Kurang Setuju', 3 => 'Setuju', 4 => 'Sangat Setuju'];
                             foreach($opsi as $val => $label): ?>
                             <div class="col-6 col-md-3">
                                 <label class="w-100 form-check-custom d-flex align-items-center gap-2 m-0 h-100">
@@ -575,16 +549,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <p class="small text-muted mb-3">Pilih semua jawaban yang sesuai. Jawaban boleh lebih dari satu.</p>
                     <?php
                     $pengetahuan = [
-                        ['Apakah sahabat tahu tentang anemia?', ['Tahu, lanjut ke pertanyaan no. 2', 'Tidak', 'Lain-lain'], 2],
-                        ['Anemia adalah suatu keadaan:', ['Kurang darah', 'Kurang Hb dalam darah', 'Lain-lain', 'Tidak tahu'], 2],
-                        ['Tahukah sahabat apa penyebab anemia?', ['Kurang zat gizi', 'Kelainan darah', 'Lain-lain', 'Tidak tahu'], 2],
-                        ['Apa zat gizi yang sering menjadi penyebab anemia?', ['Kurang zat besi (Fe)', 'Kurang asam folat', 'Kurang vitamin B12', 'Lain-lain', 'Tidak tahu'], 3],
-                        ['Apakah yang menyebabkan sahabat mengalami kekurangan zat gizi tersebut?', ['Siklus menstruasi tidak teratur', 'Pola makan yang tidak sesuai', 'Infeksi kecacingan', 'Persepsi diri yang salah', 'Lain-lain'], 4],
-                        ['Apakah gejala anemia yang sahabat ketahui?', ['Pusing', 'Pucat', 'Lemah dan lesu', 'Berdebar-debar', 'Napas sering singkat', 'Cepat lelah', 'Kaki dingin atau kebas', 'Mengantuk', 'Sempoyongan', 'Berkunang-kunang'], null],
-                        ['Apakah dampak dari anemia?', ['Prestasi sekolah menurun', 'Pertumbuhan terganggu', 'Tidak bugar', 'Mudah infeksi', 'Lain-lain', 'Tidak tahu'], 4],
-                        ['Apakah program pemerintah untuk mencegah anemia?', ['Pemberian Tablet Tambah Darah (TTD)', 'Penyuluhan tentang anemia', 'Tidak tahu', 'Lain-lain', 'Tidak ada'], 3],
+                        ['Apakah sahabat tahu tentang anemia?', ['Tahu, lanjut ke pertanyaan no 2', 'Tidak'], null],
+                        ['Anemia adalah suatu keadaan :', ['Kurang darah', 'Kurang Hb dalam darah', 'Lain-lain'], 2],
+                        ['Tahukan sahabat apa penyebab anemia?', ['Kurang zat gizi', 'Kelainan darah', 'Lain-lain'], 2],
+                        ['Apa zat gizi yang sering menjadi penyebab anemia ?', ['Kurang zat besi (Fe)', 'Kurang asam folat', 'Kurang vitamin B12', 'Lain-lain'], 3],
+                        ['Apakah yang menyebabkan sahabat mengalami kekurangan zat gizi tersebut ?', ['Siklus mentruasi tidak teratur', 'Pola makan yang tidak sesuai', 'Infeksi kecacingan', 'Persepsi diri yang salah', 'Lain-lain'], 4],
+                        ['Apakah gejala anemia yang sahabat ketahui ?', ['Pusing', 'Pucat', 'Lemah dan lesu', 'Berdebar-debar', 'Nafas sering singkat', 'Cepat Lelah', 'Kaki dingin atau kebas', 'Mengantuk', 'Sempoyongan', 'Berkunang-kunang'], null],
+                        ['Apakah dampak dari anemia', ['Prestasi sekolah menurun', 'Pertumbuhan terganggu', 'Tidak bugar', 'Mudah infeksi', 'Lain-lain'], 4],
+                        ['Apakah program pemerintah untuk mencegah anemia', ['Pemberian Tablet Tambah Darah (TTD)', 'Penyuluhan tentang anemia', 'Tidak tahu', 'Lain-lain'], 3],
                         ['Apakah makanan yang tinggi kandungan zat besinya?', ['Hati ayam', 'Kuning telur', 'Daging sapi', 'Daging domba', 'Kacang-kacangan', 'Buah-buahan kering', 'Lain-lain'], 6],
-                        ['Apa kegunaan zat besi bagi tubuh sahabat?', ['Membentuk sel darah merah', 'Membentuk sel darah putih', 'Untuk daya tahan tubuh', 'Untuk pertumbuhan', 'Lain-lain'], 4],
+                        ['Apa kegunaan zat besi bagi tubuh sahabat ?', ['Membentuk sel darah merah', 'Membentuk sel darah putih', 'Untuk daya tahan tubuh', 'Untuk pertumbuhan', 'Lain-lain'], 4],
                     ];
                     foreach ($pengetahuan as $questionOffset => [$question, $choices, $otherOffset]):
                         $questionNumber = $questionOffset + 1;

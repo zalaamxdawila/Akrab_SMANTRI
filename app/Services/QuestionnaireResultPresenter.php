@@ -14,7 +14,7 @@ final class QuestionnaireResultPresenter
     {
         $scores = $this->insights->forResponse($response);
         $priorities = [];
-        $concernKeys = ['gejala', 'faktor_internal'];
+        $concernKeys = ['gejala'];
         foreach ($scores as $key => $score) {
             $concern = in_array($key, $concernKeys, true)
                 ? (float) $score['percentage']
@@ -128,8 +128,6 @@ final class QuestionnaireResultPresenter
             'gejala' => 'Catat keluhan yang dirasakan dan sampaikan bila menetap, memburuk, atau mengganggu aktivitas.',
             'makan' => 'Perkuat kebiasaan makan teratur dan ikuti saran gizi dari petugas kesehatan.',
             'pengetahuan' => 'Pelajari kembali materi anemia agar pilihan pencegahan lebih mudah diterapkan.',
-            'faktor_internal' => 'Konsultasikan riwayat kesehatan pribadi yang menjadi faktor risiko dengan petugas UKS atau dokter.',
-            'faktor_eksternal' => 'Tingkatkan asupan zat besi, vitamin C, dan ikuti edukasi kesehatan yang tersedia.',
             default => 'Diskusikan sikap dan kebiasaan pencegahan yang masih sulit diterapkan.',
         };
     }
@@ -219,9 +217,16 @@ final class QuestionnaireResultPresenter
         }
 
         $charts = [];
-        foreach (['sikap' => 4, 'pengetahuan' => 10] as $sectionKey => $max) {
+        foreach (['gejala' => 10, 'sikap' => 4, 'pengetahuan' => 10, 'makan' => 3] as $sectionKey => $max) {
             $items = $answers['sections'][$sectionKey]['items'] ?? [];
-            if (!is_array($items) || count($items) !== 10) {
+            if (is_array($items)) {
+                $items = array_values(array_filter(
+                    $items,
+                    static fn (array $item): bool => str_starts_with((string) ($item['key'] ?? ''), $sectionKey . '_')
+                ));
+            }
+            $expectedCount = $sectionKey === 'makan' ? 6 : 10;
+            if (!is_array($items) || count($items) !== $expectedCount) {
                 continue;
             }
             $values = [];
@@ -235,11 +240,13 @@ final class QuestionnaireResultPresenter
                 $questions[] = (string) $item['question'];
             }
             if ($values !== []) {
-                $prefix = $sectionKey === 'sikap' ? 'S' : 'P';
+                $prefix = match ($sectionKey) {
+                    'gejala' => 'G', 'sikap' => 'S', 'pengetahuan' => 'P', default => 'M',
+                };
                 $charts[$sectionKey] = [
                     'labels' => array_map(
                         static fn (int $index): string => $prefix . $index,
-                        range(1, 10)
+                        range(1, $expectedCount)
                     ),
                     'questions' => $questions,
                     'values' => $values,
@@ -252,10 +259,17 @@ final class QuestionnaireResultPresenter
 
     private function legacyChartValue(string $section, string $key, string $answer): ?int
     {
+        if ($section === 'gejala'
+            && preg_match('/^(\d{1,2}) dari 10$/', $answer, $matches) === 1) {
+            return min(10, (int) $matches[1]);
+        }
+        if ($section === 'makan') {
+            return ['Tidak pernah' => 1, 'Kadang-kadang' => 2, 'Kdang-kadang' => 2, 'Selalu' => 3][$answer] ?? null;
+        }
         if ($section === 'sikap') {
             return array_search($answer, [
-                1 => 'Sangat Tidak Setuju',
-                2 => 'Tidak Setuju',
+                1 => 'Tidak Setuju',
+                2 => 'Kurang Setuju',
                 3 => 'Setuju',
                 4 => 'Sangat Setuju',
             ], true) ?: null;
@@ -267,14 +281,14 @@ final class QuestionnaireResultPresenter
         if ($answer === 'Tidak memilih jawaban') return 0;
 
         $labels = [
-            1 => ['Tahu, lanjut ke pertanyaan no. 2', 'Tidak', 'Lain-lain'],
-            2 => ['Kurang darah', 'Kurang Hb dalam darah', 'Lain-lain', 'Tidak tahu'],
-            3 => ['Kurang zat gizi', 'Kelainan darah', 'Lain-lain', 'Tidak tahu'],
-            4 => ['Kurang zat besi (Fe)', 'Kurang asam folat', 'Kurang vitamin B12', 'Lain-lain', 'Tidak tahu'],
-            5 => ['Siklus menstruasi tidak teratur', 'Pola makan yang tidak sesuai', 'Infeksi kecacingan', 'Persepsi diri yang salah', 'Lain-lain'],
-            6 => ['Pusing', 'Pucat', 'Lemah dan lesu', 'Berdebar-debar', 'Napas sering singkat', 'Cepat lelah', 'Kaki dingin atau kebas', 'Mengantuk', 'Sempoyongan', 'Berkunang-kunang'],
-            7 => ['Prestasi sekolah menurun', 'Pertumbuhan terganggu', 'Tidak bugar', 'Mudah infeksi', 'Lain-lain', 'Tidak tahu'],
-            8 => ['Pemberian Tablet Tambah Darah (TTD)', 'Penyuluhan tentang anemia', 'Tidak tahu', 'Lain-lain', 'Tidak ada'],
+            1 => ['Tahu, lanjut ke pertanyaan no 2', 'Tidak'],
+            2 => ['Kurang darah', 'Kurang Hb dalam darah', 'Lain-lain'],
+            3 => ['Kurang zat gizi', 'Kelainan darah', 'Lain-lain'],
+            4 => ['Kurang zat besi (Fe)', 'Kurang asam folat', 'Kurang vitamin B12', 'Lain-lain'],
+            5 => ['Siklus mentruasi tidak teratur', 'Pola makan yang tidak sesuai', 'Infeksi kecacingan', 'Persepsi diri yang salah', 'Lain-lain'],
+            6 => ['Pusing', 'Pucat', 'Lemah dan lesu', 'Berdebar-debar', 'Nafas sering singkat', 'Cepat Lelah', 'Kaki dingin atau kebas', 'Mengantuk', 'Sempoyongan', 'Berkunang-kunang'],
+            7 => ['Prestasi sekolah menurun', 'Pertumbuhan terganggu', 'Tidak bugar', 'Mudah infeksi', 'Lain-lain'],
+            8 => ['Pemberian Tablet Tambah Darah (TTD)', 'Penyuluhan tentang anemia', 'Tidak tahu', 'Lain-lain'],
             9 => ['Hati ayam', 'Kuning telur', 'Daging sapi', 'Daging domba', 'Kacang-kacangan', 'Buah-buahan kering', 'Lain-lain'],
             10 => ['Membentuk sel darah merah', 'Membentuk sel darah putih', 'Untuk daya tahan tubuh', 'Untuk pertumbuhan', 'Lain-lain'],
         ];

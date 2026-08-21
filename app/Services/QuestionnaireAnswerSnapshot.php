@@ -4,75 +4,57 @@ declare(strict_types=1);
 
 final class QuestionnaireAnswerSnapshot
 {
-    public const VERSION = '2026-08-21.v4';
-
-    /** @var list<string> */
-    private const FACTOR_INTERNAL_QUESTIONS = [
-        'Riwayat anemia sebelumnya',
-        'Riwayat gangguan pencernaan',
-        'Konsumsi suplemen zat besi',
-        'Riwayat alergi makanan tertentu',
-        'Gangguan penyerapan zat gizi',
-    ];
-
-    /** @var list<string> */
-    private const FACTOR_EXTERNAL_QUESTIONS = [
-        'Asupan zat besi dari makanan sehari-hari',
-        'Frekuensi konsumsi makanan tinggi kalsium',
-        'Pendapatan keluarga',
-        'Asupan vitamin C',
-        'Partisipasi dalam edukasi kesehatan',
-    ];
+    public const VERSION = '2026-08-21.v5';
 
     /** @var list<string> */
     private const DIET_QUESTIONS = [
-        'Sarapan pagi',
-        'Rutin makan siang',
-        'Selalu makan malam',
-        'Snek pagi-siang',
-        'Snek siang-malam',
-        'Snek menjelang tidur',
+        'Apakah sahabat ada sarapan setiap hari ?',
+        'Apakah sahabar rutin makan siang ?',
+        'Apakah sahabat selalu makan malam?',
+        'Apakah sahabat ada makan snek antara makan pagi dan siang?',
+        'Apakah sahabat ada makan snek antara makan siang dan malam?',
+        'Apakah sahabat ada makan lagi atau snek menjelang tidur ?',
     ];
 
     /** @var list<string> */
     private const SYMPTOM_QUESTIONS = [
-        'Cepat lelah bila beraktivitas',
-        'Merasa pusing',
-        'Mata berkunang-kunang',
-        'Ujung tangan/kaki sering dingin',
-        'Suka sempoyongan',
-        'Berdebar-debar saat aktivitas ringan',
-        'Sering mengantuk',
-        'Malas beraktivitas',
-        'Napas terasa pendek',
-        'Wajah terlihat pucat',
+        'Sahabat merasakan cepat lelah bila beraktivitas',
+        'Sahabat merasakan pusing',
+        'Sahabat merasakan mata berkunang-kunang',
+        'Sahabat merasakan bagian ujung tangan atau kaki sering dingin',
+        'Sahabat merasakan suka sempoyongan',
+        'Sahabat merasakan berdebar-debar walaupun beraktivitas ringan',
+        'Sahabat merasakan mengantuk',
+        'Sahabat merasakan malas beraktivitas',
+        'Sahabat merasakan nafas terasa pendek waktu beraktivitas',
+        'Sahabat merasakan pucat',
     ];
 
     /** @var list<string> */
     private const ATTITUDE_QUESTIONS = [
-        'Anemia merupakan keadaan di mana jumlah sel darah merah di bawah nilai normal',
+        'Anemia merupakan keadaan dimana jumlah sel darah merah dibawah nilai normal',
         'Anemia adalah penyakit kronis yang tidak dapat dicegah',
         'Anemia dapat berdampak sangat serius terhadap tubuh',
         'Anemia dapat berdampak terhadap masa depan generasi bangsa',
         'Pola makan yang salah dapat menyebabkan anemia',
         'Menstruasi yang tidak normal juga dapat menyebabkan anemia',
         'Anemia tidak bisa disebabkan kecacingan',
-        'Sebaiknya kita mengonsumsi obat cacing untuk mencegah anemia setiap 6 bulan sekali',
-        'Mengonsumsi Tablet Tambah Darah (TTD) secara teratur dapat mencegah anemia',
+        'Sebaiknya kita mengkonsumsi obat cacing untuk mencegah anemia setiap 6 bulan sekali',
+        'Mengkonsumsi tablet tambah darah (TTD) secara teratur dapat mencegah anemia',
         'Pola makan tinggi zat besi dapat mencegah anemia',
     ];
 
     private const KNOWLEDGE_QUESTIONS = [
-        1 => ['Apakah sahabat tahu tentang anemia?', ['Tahu, lanjut ke pertanyaan no. 2', 'Tidak', 'Lain-lain'], 2],
-        2 => ['Anemia adalah suatu keadaan:', ['Kurang darah', 'Kurang Hb dalam darah', 'Lain-lain', 'Tidak tahu'], 2],
-        3 => ['Tahukah sahabat apa penyebab anemia?', ['Kurang zat gizi', 'Kelainan darah', 'Lain-lain', 'Tidak tahu'], 2],
-        4 => ['Apa zat gizi yang sering menjadi penyebab anemia?', ['Kurang zat besi (Fe)', 'Kurang asam folat', 'Kurang vitamin B12', 'Lain-lain', 'Tidak tahu'], 3],
-        5 => ['Apakah yang menyebabkan sahabat mengalami kekurangan zat gizi tersebut?', ['Siklus menstruasi tidak teratur', 'Pola makan yang tidak sesuai', 'Infeksi kecacingan', 'Persepsi diri yang salah', 'Lain-lain'], 4],
-        6 => ['Apakah gejala anemia yang sahabat ketahui?', ['Pusing', 'Pucat', 'Lemah dan lesu', 'Berdebar-debar', 'Napas sering singkat', 'Cepat lelah', 'Kaki dingin atau kebas', 'Mengantuk', 'Sempoyongan', 'Berkunang-kunang'], null],
-        7 => ['Apakah dampak dari anemia?', ['Prestasi sekolah menurun', 'Pertumbuhan terganggu', 'Tidak bugar', 'Mudah infeksi', 'Lain-lain', 'Tidak tahu'], 4],
-        8 => ['Apakah program pemerintah untuk mencegah anemia?', ['Pemberian Tablet Tambah Darah (TTD)', 'Penyuluhan tentang anemia', 'Tidak tahu', 'Lain-lain', 'Tidak ada'], 3],
+        1 => ['Apakah sahabat tahu tentang anemia?', ['Tahu, lanjut ke pertanyaan no 2', 'Tidak'], null],
+        2 => ['Anemia adalah suatu keadaan :', ['Kurang darah', 'Kurang Hb dalam darah', 'Lain-lain'], 2],
+        3 => ['Tahukan sahabat apa penyebab anemia?', ['Kurang zat gizi', 'Kelainan darah', 'Lain-lain'], 2],
+        4 => ['Apa zat gizi yang sering menjadi penyebab anemia ?', ['Kurang zat besi (Fe)', 'Kurang asam folat', 'Kurang vitamin B12', 'Lain-lain'], 3],
+        5 => ['Apakah yang menyebabkan sahabat mengalami kekurangan zat gizi tersebut ?', ['Siklus mentruasi tidak teratur', 'Pola makan yang tidak sesuai', 'Infeksi kecacingan', 'Persepsi diri yang salah', 'Lain-lain'], 4],
+        6 => ['Apakah gejala anemia yang sahabat ketahui ?', ['Pusing', 'Pucat', 'Lemah dan lesu', 'Berdebar-debar', 'Nafas sering singkat', 'Cepat Lelah', 'Kaki dingin atau kebas', 'Mengantuk', 'Sempoyongan', 'Berkunang-kunang'], null],
+        7 => ['Apakah dampak dari anemia', ['Prestasi sekolah menurun', 'Pertumbuhan terganggu', 'Tidak bugar', 'Mudah infeksi', 'Lain-lain'], 4],
+        8 => ['Apakah program pemerintah untuk mencegah anemia', ['Pemberian Tablet Tambah Darah (TTD)', 'Penyuluhan tentang anemia', 'Tidak tahu', 'Lain-lain'], 3],
         9 => ['Apakah makanan yang tinggi kandungan zat besinya?', ['Hati ayam', 'Kuning telur', 'Daging sapi', 'Daging domba', 'Kacang-kacangan', 'Buah-buahan kering', 'Lain-lain'], 6],
-        10 => ['Apa kegunaan zat besi bagi tubuh sahabat?', ['Membentuk sel darah merah', 'Membentuk sel darah putih', 'Untuk daya tahan tubuh', 'Untuk pertumbuhan', 'Lain-lain'], 4],
+        10 => ['Apa kegunaan zat besi bagi tubuh sahabat ?', ['Membentuk sel darah merah', 'Membentuk sel darah putih', 'Untuk daya tahan tubuh', 'Untuk pertumbuhan', 'Lain-lain'], 4],
     ];
 
     /**
@@ -89,8 +71,8 @@ final class QuestionnaireAnswerSnapshot
             'tidak' => 'Tidak pernah',
         ];
         $attitudeAnswers = [
-            1 => 'Sangat Tidak Setuju',
-            2 => 'Tidak Setuju',
+            1 => 'Tidak Setuju',
+            2 => 'Kurang Setuju',
             3 => 'Setuju',
             4 => 'Sangat Setuju',
         ];
@@ -104,12 +86,8 @@ final class QuestionnaireAnswerSnapshot
                 'label' => 'Keluhan dan gejala',
                 'items' => [],
             ],
-            'faktor_internal' => [
-                'label' => 'Faktor risiko internal',
-                'items' => [],
-            ],
-            'faktor_eksternal' => [
-                'label' => 'Faktor risiko eksternal',
+            'menstruasi' => [
+                'label' => 'Siklus menstruasi',
                 'items' => [],
             ],
             'sikap' => [
@@ -131,40 +109,39 @@ final class QuestionnaireAnswerSnapshot
             $sections['makan']['items'][] = $this->item(
                 'makan_' . $index,
                 $question,
-                $dietAnswers[$value]
+                $value === 'kadang' && $index >= 4 ? 'Kdang-kadang' : $dietAnswers[$value],
+                ['tidak' => 1, 'kadang' => 2, 'selalu' => 3][$value]
             );
         }
 
-        foreach (self::FACTOR_INTERNAL_QUESTIONS as $offset => $question) {
-            $index = $offset + 1;
-            $value = enumValue(
-                $input['faktor_internal_' . $index] ?? null,
-                ['ya', 'tidak']
-            );
-            $sections['faktor_internal']['items'][] = $this->item(
-                'faktor_internal_' . $index,
-                $question,
-                $value === 'ya' ? 'Ya' : 'Tidak'
-            );
-        }
-
-        $externalLabels = [
-            'rendah' => 'Rendah',
-            'sedang' => 'Sedang',
-            'tinggi' => 'Tinggi',
+        $menstruationAnswers = [
+            ['mens_sudah', 'Apakah sahabat sudah mengalami menstruasi',
+                enumValue($input['mens_sudah'] ?? null, ['ya', 'belum']) === 'ya' ? 'Sudah' : 'Belum'],
+            ['mens_usia', 'Usia berapa sahabat mulai mengalami mentruasi?',
+                (($input['mens_usia_th'] ?? '') !== '' ? boundedInt($input['mens_usia_th'], 5, 25) . ' Th' : '-')
+                . (($input['mens_usia_bln'] ?? '') !== '' ? ', ' . boundedInt($input['mens_usia_bln'], 0, 11) . ' Bln' : '')],
+            ['mens_teratur', 'Apakah siklus menstruasi sahabat teratur tiap bulan?',
+                enumValue($input['mens_teratur'] ?? null, ['ya', 'tidak']) === 'ya' ? 'Ya' : 'Tidak'],
+            ['mens_lama', 'Berama lama sahabat mengalami menstruasi setiap bulannya?',
+                (($input['mens_lama'] ?? '') !== '' ? boundedInt($input['mens_lama'], 1, 15) . ' hr' : '-')],
+            ['mens_jarak_siklus', 'Berapa jarak antara siklus setiap bulannya?',
+                (($input['mens_jarak_siklus'] ?? '') !== '' ? boundedInt($input['mens_jarak_siklus'], 1, 100) . ' hari' : '-')],
         ];
-        foreach (self::FACTOR_EXTERNAL_QUESTIONS as $offset => $question) {
-            $index = $offset + 1;
-            $value = enumValue(
-                $input['faktor_eksternal_' . $index] ?? null,
-                array_keys($externalLabels)
-            );
-            $sections['faktor_eksternal']['items'][] = $this->item(
-                'faktor_eksternal_' . $index,
-                $question,
-                $externalLabels[$value]
+        foreach ($menstruationAnswers as [$key, $question, $answer]) {
+            $sections['menstruasi']['items'][] = $this->item($key, $question, $answer);
+        }
+
+        $foodItems = [];
+        foreach (['pagi' => 'Pagi', 'jam_10' => 'Jam 10', 'siang' => 'Siang', 'jam_4' => 'Jam 4', 'malam' => 'Malam'] as $key => $label) {
+            $food = normalizeText($input['makanan_' . $key] ?? '', 150);
+            $amount = normalizeText($input['jumlah_' . $key] ?? '', 80);
+            $foodItems[] = $this->item(
+                'tabel_makan_' . $key,
+                'Makanan ' . $label,
+                ($food !== '' ? $food : '-') . ($amount !== '' ? ' — ' . $amount : '')
             );
         }
+        $sections['makan']['items'] = [...$foodItems, ...$sections['makan']['items']];
 
         foreach (self::SYMPTOM_QUESTIONS as $offset => $question) {
             $index = $offset + 1;
@@ -172,7 +149,8 @@ final class QuestionnaireAnswerSnapshot
             $sections['gejala']['items'][] = $this->item(
                 'gejala_' . $index,
                 $question,
-                $value . ' dari 10'
+                $value . ' dari 10',
+                $value
             );
         }
 

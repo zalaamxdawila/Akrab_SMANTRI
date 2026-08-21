@@ -134,11 +134,16 @@ function validateQuestionnaireInput(array $input): array
             ...$labValues,
             'mens_sudah' => enumValue($input['mens_sudah'] ?? null, ['ya', 'belum']),
             'mens_usia_th' => boundedInt($input['mens_usia_th'] ?? null, 5, 25, true),
+            'mens_usia_bln' => boundedInt($input['mens_usia_bln'] ?? null, 0, 11, true),
             'mens_teratur' => enumValue($input['mens_teratur'] ?? null, ['ya', 'tidak']),
             'mens_lama_hari' => boundedInt($input['mens_lama'] ?? null, 1, 15, true),
             'mens_jarak_siklus' => boundedInt($input['mens_jarak_siklus'] ?? null, 1, 100, true),
             'makanan_dikonsumsi' => normalizeText($input['makanan_dikonsumsi'] ?? '', 1000),
         ];
+        foreach (['pagi', 'jam_10', 'siang', 'jam_4', 'malam'] as $mealTime) {
+            normalizeText($input['makanan_' . $mealTime] ?? '', 150);
+            normalizeText($input['jumlah_' . $mealTime] ?? '', 80);
+        }
 
         $gejala = 0;
         for ($i = 1; $i <= 10; $i++) {
@@ -157,7 +162,7 @@ function validateQuestionnaireInput(array $input): array
             };
         }
         $pengetahuan = 0;
-        $knowledgeOptionLimits = [1 => 3, 2 => 4, 3 => 4, 4 => 5, 5 => 5, 6 => 10, 7 => 6, 8 => 5, 9 => 7, 10 => 5];
+        $knowledgeOptionLimits = [1 => 2, 2 => 3, 3 => 3, 4 => 4, 5 => 5, 6 => 10, 7 => 5, 8 => 4, 9 => 7, 10 => 5];
         for ($i = 1; $i <= 10; $i++) {
             $answers = $input['pengetahuan_' . $i] ?? [];
             $allowedAnswers = range('a', chr(ord('a') + $knowledgeOptionLimits[$i] - 1));
@@ -172,24 +177,12 @@ function validateQuestionnaireInput(array $input): array
             normalizeText($input['pengetahuan_' . $i . '_other'] ?? '', 200);
             $pengetahuan += count(array_unique($answers));
         }
-        $faktorInternal = 0;
-        for ($i = 1; $i <= 5; $i++) {
-            $faktorInternal += enumValue($input['faktor_internal_' . $i] ?? null, ['ya', 'tidak']) === 'ya' ? 1 : 0;
-        }
-        $faktorEksternal = 0;
-        for ($i = 1; $i <= 5; $i++) {
-            $faktorEksternal += match (enumValue($input['faktor_eksternal_' . $i] ?? null, ['rendah', 'sedang', 'tinggi'])) {
-                'rendah' => 1,
-                'sedang' => 2,
-                'tinggi' => 3,
-            };
-        }
         $values['skor_gejala'] = $gejala;
         $values['skor_sikap'] = $sikap;
         $values['skor_pengetahuan'] = $pengetahuan;
         $values['skor_makan'] = $makan;
-        $values['skor_faktor_internal'] = $faktorInternal;
-        $values['skor_faktor_eksternal'] = $faktorEksternal;
+        $values['skor_faktor_internal'] = 0;
+        $values['skor_faktor_eksternal'] = 0;
         return ['valid' => true, 'errors' => [], 'values' => $values];
     } catch (InvalidArgumentException $exception) {
         return ['valid' => false, 'errors' => [$exception->getMessage()], 'values' => []];

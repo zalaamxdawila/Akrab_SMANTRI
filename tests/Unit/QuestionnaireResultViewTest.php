@@ -41,6 +41,12 @@ final class QuestionnaireResultViewTest extends TestCase
                 ],
             ],
             'answer_charts' => [
+                'gejala' => [
+                    'labels' => ['G1','G2','G3','G4','G5','G6','G7','G8','G9','G10'],
+                    'questions' => array_fill(0, 10, 'Pertanyaan gejala'),
+                    'values' => array_fill(0, 10, 2),
+                    'max' => 10,
+                ],
                 'sikap' => [
                     'labels' => ['S1','S2','S3','S4','S5','S6','S7','S8','S9','S10'],
                     'questions' => array_fill(0, 10, 'Pertanyaan sikap'),
@@ -52,6 +58,12 @@ final class QuestionnaireResultViewTest extends TestCase
                     'questions' => array_fill(0, 10, 'Pertanyaan pengetahuan'),
                     'values' => array_fill(0, 10, 1),
                     'max' => 10,
+                ],
+                'makan' => [
+                    'labels' => ['M1','M2','M3','M4','M5','M6'],
+                    'questions' => array_fill(0, 6, 'Pertanyaan pola makan'),
+                    'values' => array_fill(0, 6, 2),
+                    'max' => 3,
                 ],
             ],
             'disclaimer' => 'Hasil ini bukan diagnosis medis.',
@@ -71,6 +83,8 @@ final class QuestionnaireResultViewTest extends TestCase
         self::assertStringContainsString('<details', $html);
         self::assertStringContainsString('answerAttitudeChart', $html);
         self::assertStringContainsString('answerKnowledgeChart', $html);
+        self::assertStringContainsString('answerSymptomChart', $html);
+        self::assertStringContainsString('answerDietChart', $html);
         self::assertStringContainsString('new Chart(', $html);
         self::assertStringContainsString('Hasil Lengkap', $html);
         self::assertStringContainsString('question-answer-overview', $html);
