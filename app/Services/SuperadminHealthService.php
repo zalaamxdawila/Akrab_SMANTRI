@@ -35,7 +35,7 @@ final class SuperadminHealthService
             'kadar_mch' => fn ($v) => optionalDecimal($v, 0, 100),
             'skor_gejala' => fn ($v) => boundedInt($v, 0, 100),
             'skor_sikap' => fn ($v) => boundedInt($v, 0, 40),
-            'skor_pengetahuan' => fn ($v) => boundedInt($v, 0, 40),
+            'skor_pengetahuan' => fn ($v) => boundedInt($v, 0, 53),
             'skor_makan' => fn ($v) => boundedInt($v, 0, 18),
         ];
         $this->correct($actor, 'kuesioner', $id, $input, $allowed, $reason, $requestId);

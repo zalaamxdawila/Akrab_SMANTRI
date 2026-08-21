@@ -157,16 +157,19 @@ function validateQuestionnaireInput(array $input): array
             };
         }
         $pengetahuan = 0;
+        $knowledgeOptionLimits = [1 => 3, 2 => 4, 3 => 4, 4 => 5, 5 => 5, 6 => 10, 7 => 6, 8 => 5, 9 => 7, 10 => 5];
         for ($i = 1; $i <= 10; $i++) {
             $answers = $input['pengetahuan_' . $i] ?? [];
-            if (!is_array($answers) || count($answers) > 4) {
+            $allowedAnswers = range('a', chr(ord('a') + $knowledgeOptionLimits[$i] - 1));
+            if (!is_array($answers) || count($answers) > $knowledgeOptionLimits[$i]) {
                 throw new InvalidArgumentException('Jawaban pengetahuan tidak valid.');
             }
             foreach ($answers as $answer) {
-                if (!in_array($answer, ['a', 'b', 'c', 'd'], true)) {
+                if (!in_array($answer, $allowedAnswers, true)) {
                     throw new InvalidArgumentException('Jawaban pengetahuan tidak valid.');
                 }
             }
+            normalizeText($input['pengetahuan_' . $i . '_other'] ?? '', 200);
             $pengetahuan += count(array_unique($answers));
         }
         $faktorInternal = 0;

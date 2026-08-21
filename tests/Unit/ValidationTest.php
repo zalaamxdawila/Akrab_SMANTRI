@@ -34,6 +34,18 @@ final class ValidationTest extends TestCase
         self::assertSame(6, $result['values']['skor_makan']);
     }
 
+    public function testQuestionnaireAcceptsAllVisibleKnowledgeOptions(): void
+    {
+        $payload = validQuestionnairePayload();
+        $payload['pengetahuan_6'] = range('a', 'j');
+        $payload['pengetahuan_9'] = range('a', 'g');
+
+        $result = validateQuestionnaireInput($payload);
+
+        self::assertTrue($result['valid']);
+        self::assertSame(25, $result['values']['skor_pengetahuan']);
+    }
+
     public function testQuestionnaireRequiresExplicitLabAvailabilityChoice(): void
     {
         $payload = validQuestionnairePayload();
@@ -104,6 +116,10 @@ function validQuestionnairePayload(): array
         $payload['gejala_' . $i] = '1';
         $payload['sikap_' . $i] = '1';
         $payload['pengetahuan_' . $i] = ['a'];
+    }
+    for ($i = 1; $i <= 5; $i++) {
+        $payload['faktor_internal_' . $i] = 'tidak';
+        $payload['faktor_eksternal_' . $i] = 'rendah';
     }
     return $payload;
 }

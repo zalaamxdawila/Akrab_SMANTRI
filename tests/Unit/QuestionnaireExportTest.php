@@ -41,9 +41,9 @@ final class QuestionnaireExportTest extends TestCase
         self::assertSame('Kategori Risiko', $headers[array_key_last($headers)]);
         self::assertSame("'=HYPERLINK(\"https://example.test\")", $row[1]);
         self::assertSame("\t0001234567", $row[2]);
-        self::assertSame('', $row[32]);
-        self::assertSame('42,5%', $row[35]);
-        self::assertSame('SEDANG', $row[36]);
+        self::assertSame('', $row[46]);
+        self::assertSame('42,5%', $row[49]);
+        self::assertSame('SEDANG', $row[50]);
     }
 
     public function testCsvExportsEveryQuestionnaireAnswerInItsOwnColumn(): void
@@ -89,17 +89,17 @@ final class QuestionnaireExportTest extends TestCase
         $row = fgetcsv($stream, null, ',', '"', '');
         fclose($stream);
 
-        self::assertCount(37, $headers);
+        self::assertCount(51, $headers);
         self::assertSame('Pola Makan 1 - Sarapan pagi', $headers[5]);
         self::assertSame('Gejala 1 - Cepat lelah bila beraktivitas', $headers[11]);
         self::assertSame('Gejala 2 - Merasa pusing', $headers[12]);
-        self::assertSame('Pengetahuan 1 - Zat gizi apa yang menjadi penyebab utama anemia?', $headers[26]);
+        self::assertSame('Pengetahuan 1 - Apakah sahabat tahu tentang anemia?', $headers[31]);
         self::assertSame('Selalu', $row[5]);
         self::assertSame('4', $row[11]);
         self::assertSame('5', $row[12]);
         self::assertSame('Setuju', $row[21]);
-        self::assertSame('Zat Besi (Fe)', $row[26]);
-        self::assertSame('9', $row[27]);
+        self::assertSame('Zat Besi (Fe)', $row[31]);
+        self::assertSame('9', $row[41]);
     }
 
     public function testCsvLeavesPerQuestionAnswersBlankForLegacyOrInvalidSnapshots(): void
@@ -119,8 +119,8 @@ final class QuestionnaireExportTest extends TestCase
         $invalidRow = fgetcsv($stream, null, ',', '"', '');
         fclose($stream);
 
-        self::assertSame(array_fill(0, 22, ''), array_slice($legacyRow, 5, 22));
-        self::assertSame(array_fill(0, 22, ''), array_slice($invalidRow, 5, 22));
+        self::assertSame(array_fill(0, 36, ''), array_slice($legacyRow, 5, 36));
+        self::assertSame(array_fill(0, 36, ''), array_slice($invalidRow, 5, 36));
     }
 
     public function testCsvNeutralizesFormulaMarkersAfterLeadingWhitespace(): void

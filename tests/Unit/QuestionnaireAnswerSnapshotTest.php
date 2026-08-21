@@ -6,7 +6,7 @@ use PHPUnit\Framework\TestCase;
 
 final class QuestionnaireAnswerSnapshotTest extends TestCase
 {
-    public function testSnapshotContainsOnlyQuestionsVisibleToStudent(): void
+    public function testSnapshotContainsAllQuestionsVisibleToStudent(): void
     {
         $input = $this->validInput();
         $input['sikap_6'] = '4';
@@ -15,17 +15,17 @@ final class QuestionnaireAnswerSnapshotTest extends TestCase
         $snapshot = (new QuestionnaireAnswerSnapshot())->fromInput($input);
         $encoded = json_encode($snapshot, JSON_THROW_ON_ERROR);
 
-        self::assertSame('2026-08-17.v1', $snapshot['version']);
+        self::assertSame('2026-08-21.v3', $snapshot['version']);
         self::assertSame(
-            ['makan', 'gejala', 'sikap', 'pengetahuan'],
+            ['makan', 'gejala', 'faktor_internal', 'faktor_eksternal', 'sikap', 'pengetahuan'],
             array_keys($snapshot['sections'])
         );
         self::assertCount(6, $snapshot['sections']['makan']['items']);
         self::assertCount(10, $snapshot['sections']['gejala']['items']);
-        self::assertCount(5, $snapshot['sections']['sikap']['items']);
-        self::assertCount(1, $snapshot['sections']['pengetahuan']['items']);
-        self::assertStringNotContainsString('sikap_6', $encoded);
-        self::assertStringNotContainsString('pengetahuan_2', $encoded);
+        self::assertCount(10, $snapshot['sections']['sikap']['items']);
+        self::assertCount(10, $snapshot['sections']['pengetahuan']['items']);
+        self::assertStringContainsString('sikap_6', $encoded);
+        self::assertStringContainsString('pengetahuan_2', $encoded);
     }
 
     public function testSnapshotPreservesHumanReadableQuestionsAndAnswers(): void
@@ -35,6 +35,8 @@ final class QuestionnaireAnswerSnapshotTest extends TestCase
         $input['gejala_1'] = '7';
         $input['sikap_1'] = '4';
         $input['pengetahuan_1'] = ['a', 'b'];
+        $input['pengetahuan_9'] = ['a', 'g'];
+        $input['pengetahuan_9_other'] = 'Bayam';
 
         $snapshot = (new QuestionnaireAnswerSnapshot())->fromInput($input);
 
@@ -51,15 +53,19 @@ final class QuestionnaireAnswerSnapshotTest extends TestCase
             $snapshot['sections']['sikap']['items'][0]['answer']
         );
         self::assertSame(
-            'Zat Besi (Fe), Asam Folat',
+            'Tahu, lanjut ke pertanyaan no. 2, Tidak',
             $snapshot['sections']['pengetahuan']['items'][0]['answer']
+        );
+        self::assertSame(
+            'Hati ayam, Lain-lain: Bayam',
+            $snapshot['sections']['pengetahuan']['items'][8]['answer']
         );
     }
 
     public function testSnapshotRejectsAnswersOutsideVisibleAllowlist(): void
     {
         $input = $this->validInput();
-        $input['pengetahuan_1'] = ['c'];
+        $input['pengetahuan_6'] = ['k'];
 
         $this->expectException(InvalidArgumentException::class);
         (new QuestionnaireAnswerSnapshot())->fromInput($input);
@@ -68,15 +74,18 @@ final class QuestionnaireAnswerSnapshotTest extends TestCase
     /** @return array<string, mixed> */
     private function validInput(): array
     {
-        $input = ['pengetahuan_1' => ['a']];
+        $input = [];
         foreach (range(1, 6) as $index) {
             $input['makan_' . $index] = 'selalu';
         }
         foreach (range(1, 10) as $index) {
             $input['gejala_' . $index] = '0';
+            $input['sikap_' . $index] = '1';
+            $input['pengetahuan_' . $index] = ['a'];
         }
         foreach (range(1, 5) as $index) {
-            $input['sikap_' . $index] = '1';
+            $input['faktor_internal_' . $index] = 'tidak';
+            $input['faktor_eksternal_' . $index] = 'rendah';
         }
 
         return $input;

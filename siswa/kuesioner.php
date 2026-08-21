@@ -541,10 +541,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <h6 class="text-primary mb-3 fw-bold">A. Opini Terhadap Anemia</h6>
                     <p class="small text-muted mb-3">Pilih tingkat persetujuan Anda untuk setiap pernyataan di bawah ini.</p>
                     <?php 
-                    // To keep it short, we pick 5 out of 10. For data consistency with DB, we just put 0 in missing ones, or keep 10.
-                    // The DB logic loop 1 to 10. Let's keep 5 for brevity but send 0 for others to prevent errors if loop expects 10.
-                    // Wait, DB expects up to 10. Let's output 5 visually, but hidden inputs for the rest to 0.
-                    $sikap = ["Anemia merupakan kondisi sel darah merah di bawah normal", "Anemia kronis tidak dapat dicegah", "Anemia berdampak sangat serius bagi kesehatan", "Anemia berdampak terhadap masa depan bangsa", "Pola makan salah adalah penyebab utama anemia"];
+                    $sikap = [
+                        'Anemia merupakan keadaan di mana jumlah sel darah merah di bawah nilai normal',
+                        'Anemia adalah penyakit kronis yang tidak dapat dicegah',
+                        'Anemia dapat berdampak sangat serius terhadap tubuh',
+                        'Anemia dapat berdampak terhadap masa depan generasi bangsa',
+                        'Pola makan yang salah dapat menyebabkan anemia',
+                        'Menstruasi yang tidak normal juga dapat menyebabkan anemia',
+                        'Anemia tidak bisa disebabkan kecacingan',
+                        'Sebaiknya kita mengonsumsi obat cacing untuk mencegah anemia setiap 6 bulan sekali',
+                        'Mengonsumsi Tablet Tambah Darah (TTD) secara teratur dapat mencegah anemia',
+                        'Pola makan tinggi zat besi dapat mencegah anemia',
+                    ];
                     foreach($sikap as $idx => $s): ?>
                     <div class="mb-4">
                         <label class="d-block fw-semibold mb-2"><?= ($idx+1).". ".$s ?></label>
@@ -562,31 +570,45 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         </div>
                     </div>
                     <?php endforeach; ?>
-                    <!-- Hidden inputs for remaining Sikap to prevent null errors in PHP -->
-                    <?php for($i=6; $i<=10; $i++): ?>
-                        <input type="hidden" name="sikap_<?= $i ?>" value="0">
-                    <?php endfor; ?>
-                    
-                    <h6 class="text-primary mb-3 border-top pt-3 fw-bold">B. Pengetahuan Dasar (Pilih yang benar)</h6>
-                    <div class="mb-3">
-                        <label class="fw-semibold mb-2 text-dark">1. Zat gizi apa yang menjadi penyebab utama anemia?</label>
+
+                    <h6 class="text-primary mb-2 border-top pt-3 fw-bold">B. Pengetahuan tentang Anemia</h6>
+                    <p class="small text-muted mb-3">Pilih semua jawaban yang sesuai. Jawaban boleh lebih dari satu.</p>
+                    <?php
+                    $pengetahuan = [
+                        ['Apakah sahabat tahu tentang anemia?', ['Tahu, lanjut ke pertanyaan no. 2', 'Tidak', 'Lain-lain'], 2],
+                        ['Anemia adalah suatu keadaan:', ['Kurang darah', 'Kurang Hb dalam darah', 'Lain-lain', 'Tidak tahu'], 2],
+                        ['Tahukah sahabat apa penyebab anemia?', ['Kurang zat gizi', 'Kelainan darah', 'Lain-lain', 'Tidak tahu'], 2],
+                        ['Apa zat gizi yang sering menjadi penyebab anemia?', ['Kurang zat besi (Fe)', 'Kurang asam folat', 'Kurang vitamin B12', 'Lain-lain', 'Tidak tahu'], 3],
+                        ['Apakah yang menyebabkan sahabat mengalami kekurangan zat gizi tersebut?', ['Siklus menstruasi tidak teratur', 'Pola makan yang tidak sesuai', 'Infeksi kecacingan', 'Persepsi diri yang salah', 'Lain-lain'], 4],
+                        ['Apakah gejala anemia yang sahabat ketahui?', ['Pusing', 'Pucat', 'Lemah dan lesu', 'Berdebar-debar', 'Napas sering singkat', 'Cepat lelah', 'Kaki dingin atau kebas', 'Mengantuk', 'Sempoyongan', 'Berkunang-kunang'], null],
+                        ['Apakah dampak dari anemia?', ['Prestasi sekolah menurun', 'Pertumbuhan terganggu', 'Tidak bugar', 'Mudah infeksi', 'Lain-lain', 'Tidak tahu'], 4],
+                        ['Apakah program pemerintah untuk mencegah anemia?', ['Pemberian Tablet Tambah Darah (TTD)', 'Penyuluhan tentang anemia', 'Tidak tahu', 'Lain-lain', 'Tidak ada'], 3],
+                        ['Apakah makanan yang tinggi kandungan zat besinya?', ['Hati ayam', 'Kuning telur', 'Daging sapi', 'Daging domba', 'Kacang-kacangan', 'Buah-buahan kering', 'Lain-lain'], 6],
+                        ['Apa kegunaan zat besi bagi tubuh sahabat?', ['Membentuk sel darah merah', 'Membentuk sel darah putih', 'Untuk daya tahan tubuh', 'Untuk pertumbuhan', 'Lain-lain'], 4],
+                    ];
+                    foreach ($pengetahuan as $questionOffset => [$question, $choices, $otherOffset]):
+                        $questionNumber = $questionOffset + 1;
+                    ?>
+                    <fieldset class="mb-4">
+                        <legend class="fs-6 fw-semibold mb-2 text-dark"><?= $questionNumber . '. ' . escape_output($question) ?></legend>
                         <div class="row g-2">
+                            <?php foreach ($choices as $choiceOffset => $choice):
+                                $choiceValue = chr(ord('a') + $choiceOffset);
+                            ?>
                             <div class="col-md-6">
-                                <label class="form-check-custom d-flex align-items-center gap-2 m-0 w-100">
-                                    <input type="checkbox" class="form-check-input mt-0" name="pengetahuan_1[]" value="a"> <span>Zat Besi (Fe)</span>
+                                <label class="form-check-custom d-flex align-items-center gap-2 m-0 w-100 h-100">
+                                    <input type="checkbox" class="form-check-input mt-0" name="pengetahuan_<?= $questionNumber ?>[]" value="<?= $choiceValue ?>">
+                                    <span><?= escape_output($choice) ?></span>
                                 </label>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-check-custom d-flex align-items-center gap-2 m-0 w-100">
-                                    <input type="checkbox" class="form-check-input mt-0" name="pengetahuan_1[]" value="b"> <span>Asam Folat</span>
-                                </label>
-                            </div>
+                            <?php endforeach; ?>
                         </div>
-                    </div>
-                    <!-- Hidden inputs for remaining Pengetahuan to prevent null errors -->
-                    <?php for($i=2; $i<=10; $i++): ?>
-                        <input type="hidden" name="pengetahuan_<?= $i ?>[]" value="a">
-                    <?php endfor; ?>
+                        <?php if ($otherOffset !== null): ?>
+                        <label for="pengetahuan_<?= $questionNumber ?>_other" class="form-label small fw-semibold mt-2 mb-1">Sebutkan jawaban lainnya</label>
+                        <input type="text" class="form-control" id="pengetahuan_<?= $questionNumber ?>_other" name="pengetahuan_<?= $questionNumber ?>_other" maxlength="200" placeholder="Isi jika memilih Lain-lain">
+                        <?php endif; ?>
+                    </fieldset>
+                    <?php endforeach; ?>
                 </div>
             </div>
             
