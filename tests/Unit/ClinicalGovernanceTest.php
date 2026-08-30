@@ -24,10 +24,11 @@ final class ClinicalGovernanceTest extends TestCase
         self::assertStringContainsString('feature flag', strtolower($card));
     }
 
-    public function testClinicalPagesUseTheSafetyGateAndDisclaimer(): void
+    public function testStagedScreeningUsesDisclaimerWithoutRunningLabModel(): void
     {
         $questionnaire = file_get_contents(dirname(__DIR__, 2) . '/siswa/kuesioner.php');
-        self::assertStringContainsString('isClinicalRiskEnabled()', $questionnaire);
+        self::assertStringContainsString('StagedScreeningService', $questionnaire);
+        self::assertStringNotContainsString('AnemiaRiskService', $questionnaire);
         self::assertStringContainsString('bukan diagnosis', strtolower($questionnaire));
     }
 }

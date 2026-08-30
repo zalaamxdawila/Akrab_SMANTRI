@@ -101,7 +101,7 @@ Status: `[ ]` belum, `[-]` berjalan, `[x]` selesai, `[!]` diblokir.
 
 ## Sprint 13 — Clinical specification
 
-- [-] Tetapkan clinical owner
+- [-] Tetapkan ahli medis sekolah terkait sebagai pemilik keputusan klinis
 - [-] Definisikan scope screening
 - [-] Definisikan threshold dan rujukan
 - [x] Buat model card draft
@@ -714,3 +714,32 @@ Aturan eksekusi:
     migration, preflight, dan HTTP smoke lulus. Authenticated human-browser UAT
     belum dijalankan karena tidak ada browser DevTools/akun uji produksi pada
     sesi ini. Clinical gate tetap OFF sesuai governance.
+
+### Addendum — Skrining Bertahap Gejala dan Faktor Risiko
+
+- [!] **SR0 — Bekukan clinical decision table sebelum implementasi**
+  - Acceptance: pertanyaan dari `Kuesioner.pdf`, pemetaan Bagian III/VI/VII,
+    bobot/denominator faktor risiko, pembulatan, red flags, klaim, dan rujukan
+    disetujui ahli medis sekolah terkait. Keputusan produk `> 4,6` dan `< 75%`
+    sudah final.
+  - Verify: golden boundary cases dan sign-off ahli.
+  - Plan: `tasks/plans/staged-symptom-risk-screening.md`.
+  - Todo rinci: `tasks/todos/staged-symptom-risk-screening.md`.
+
+- [x] **SR1–SR8b — Implementasi kandidat skrining bertahap**
+  - Profile + 10 gejala, gate server `> 4,6`, faktor menstruasi/pola makan,
+    boundary `< 75%`, hasil/saran siswa, dan detail UKS/superadmin selesai.
+  - Formula awal dua dimensi berbobot sama terdokumentasi dan versioned.
+  - Unit/contract tests hijau; driver PDO lokal dan Chrome DevTools MCP tidak
+    tersedia untuk rehearsal/browser test.
+
+- [!] **SR9 — Quality, migrasi produksi, smoke, dan validasi ahli**
+  - Lint/unit/preflight, migrasi additive, deploy hanya ke
+    `akrab.portodq.com`, HTTP smoke, lalu validasi formula/redaksi oleh ahli
+    medis sekolah terkait.
+  - Status 2026-08-30: migrasi `021_staged_screening` dan deploy hanya ke
+    `akrab.portodq.com` selesai; runner migrasi ditombstone 404; lint/audit,
+    241 unit tests (236 lulus, 5 environment errors karena driver PDO lokal),
+    targeted regression, adversarial review `CLEAR TO DEPLOY`, parity file,
+    serta HTTP smoke lulus. Authenticated browser UAT dan sign-off formula
+    final ahli medis sekolah terkait masih terbuka.

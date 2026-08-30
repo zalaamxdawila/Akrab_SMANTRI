@@ -113,6 +113,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <script src="/assets/vendor/bootstrap.bundle.min.js"></script>
 <script>lucide.createIcons();</script>
 <script src="assets/js/main.js?v=20260818"></script>
-<script src="assets/js/app-init.js?v=20260818"></script>
+<script src="assets/js/app-init.js?v=20260831-safe-install"></script>
 </body>
 </html>

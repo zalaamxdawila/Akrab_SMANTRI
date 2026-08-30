@@ -1,30 +1,47 @@
-const CACHE_NAME = 'akrab-static-20260730-v2-auto-update';
-const STATIC_ASSETS = [
+const CACHE_NAME = 'akrab-static-20260831-v3-safe-install';
+const APP_CACHE_PREFIX = 'akrab-static-';
+const PRECACHE_ASSETS = [
   '/offline.html',
-  '/assets/css/style.css?v=20260729-analytics',
-  '/assets/js/app-init.js?v=20260729-analytics',
-  '/assets/js/main.js?v=20260729-analytics',
-  '/assets/vendor/bootstrap.min.css',
-  '/assets/vendor/bootstrap.bundle.min.js',
-  '/assets/vendor/chart.umd.min.js',
-  '/assets/vendor/lucide.min.js',
-  '/assets/vendor/qrcode.min.js',
-  '/assets/vendor/html5-qrcode.min.js',
-  '/assets/img/logo.png'
+  '/assets/icons/icon-192.png',
+  '/assets/icons/icon-512.png'
 ];
+const SAFE_STATIC_PREFIXES = [
+  '/assets/css/',
+  '/assets/js/',
+  '/assets/vendor/',
+  '/assets/img/',
+  '/assets/icons/'
+];
+const SAFE_DESTINATIONS = new Set(['style', 'script', 'image', 'font']);
 
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS)));
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(PRECACHE_ASSETS)));
   self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))))
+      .then(keys => Promise.all(
+        keys
+          .filter(key => key.startsWith(APP_CACHE_PREFIX) && key !== CACHE_NAME)
+          .map(key => caches.delete(key))
+      ))
       .then(() => self.clients.claim())
   );
 });
+
+function isSafeStaticRequest(request, url) {
+  return SAFE_DESTINATIONS.has(request.destination)
+    && SAFE_STATIC_PREFIXES.some(prefix => url.pathname.startsWith(prefix));
+}
+
+function isCacheableStaticResponse(response) {
+  const cacheControl = response.headers.get('Cache-Control') || '';
+  return response.ok
+    && response.type === 'basic'
+    && !cacheControl.toLowerCase().includes('no-store');
+}
 
 self.addEventListener('fetch', event => {
   const request = event.request;
@@ -36,18 +53,18 @@ self.addEventListener('fetch', event => {
   }
 
   const url = new URL(request.url);
-  if (url.origin !== self.location.origin || !url.pathname.startsWith('/assets/')) return;
+  if (url.origin !== self.location.origin || !isSafeStaticRequest(request, url)) return;
 
+  const update = fetch(request).then(async response => {
+    if (isCacheableStaticResponse(response)) {
+      const cache = await caches.open(CACHE_NAME);
+      await cache.put(request, response.clone());
+    }
+    return response;
+  });
+
+  event.waitUntil(update.then(() => undefined).catch(() => undefined));
   event.respondWith(
-    caches.match(request).then(cached => {
-      const update = fetch(request).then(response => {
-        if (response.ok && response.type === 'basic') {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
-        }
-        return response;
-      });
-      return cached || update;
-    })
+    caches.match(request).then(cached => cached || update)
   );
 });

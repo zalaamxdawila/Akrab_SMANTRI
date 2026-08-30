@@ -11,11 +11,28 @@ if (!isset($_GET['id'])) {
 $siswa_id = (int) $_GET['id'];
 
 // Get Data Siswa
-$stmt = $pdo->prepare("SELECT u.*, h.kategori_risiko, h.probabilitas_risiko, h.tanggal as tgl_deteksi, k.skor_gejala, k.skor_makan 
-                       FROM users u 
-                       LEFT JOIN hasil_deteksi h ON u.id = h.user_id 
-                       LEFT JOIN kuesioner k ON u.id = k.user_id
-                       WHERE u.id = ? AND u.role = 'siswa' ORDER BY h.tanggal DESC, h.id DESC, k.created_at DESC, k.id DESC LIMIT 1");
+$stmt = $pdo->prepare("SELECT u.*, h.kategori_risiko, h.probabilitas_risiko,
+                              h.tanggal as tgl_deteksi, k.skor_gejala, k.skor_makan
+                       FROM users u
+                       JOIN kuesioner k ON k.id = (
+                           SELECT current_k.id FROM kuesioner current_k
+                           WHERE current_k.user_id = u.id
+                             AND current_k.archived_at IS NULL
+                             AND current_k.history_only_at IS NULL
+                           ORDER BY current_k.created_at DESC, current_k.id DESC
+                           LIMIT 1
+                       )
+                       JOIN hasil_deteksi h ON h.id = (
+                           SELECT current_h.id FROM hasil_deteksi current_h
+                           WHERE current_h.user_id = u.id
+                             AND current_h.questionnaire_id = k.id
+                             AND current_h.archived_at IS NULL
+                           ORDER BY current_h.tanggal DESC, current_h.id DESC
+                           LIMIT 1
+                       )
+                       WHERE u.id = ? AND u.role = 'siswa'
+                         AND h.kategori_risiko = 'tinggi'
+                       LIMIT 1");
 $stmt->execute([$siswa_id]);
 $data = $stmt->fetch();
 

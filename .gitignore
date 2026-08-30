@@ -32,6 +32,8 @@ tmp/
 *.sql.gz
 *.bak
 backups/
+.deploy-backup/
+*.drawio.bkp
 
 # Generated deployment archives
 *.zip
@@ -42,6 +44,13 @@ vendor/
 node_modules/
 !assets/vendor/
 !assets/vendor/**
+mobile/platforms/
+mobile/plugins/
+mobile/.gradle/
+mobile/.signing/
+downloads/*.apk
+downloads/*.aab
+downloads/*.bin
 .phpunit.cache/
 coverage/
 __pycache__/

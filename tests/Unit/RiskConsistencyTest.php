@@ -18,7 +18,10 @@ final class RiskConsistencyTest extends TestCase
     public function testLatestQueriesUseDateAndIdTieBreakers(): void
     {
         $export = file_get_contents(dirname(__DIR__, 2) . '/uks/export_csv.php');
-        self::assertStringContainsString('ORDER BY tanggal DESC, id DESC', $export);
+        self::assertStringContainsString(
+            'ORDER BY hd.tanggal DESC, hd.id DESC',
+            $export
+        );
         $dashboard = file_get_contents(dirname(__DIR__, 2) . '/siswa/dashboard.php');
         self::assertStringContainsString('latestDetectionForStudent(', $dashboard);
         $repository = file_get_contents(
@@ -31,10 +34,10 @@ final class RiskConsistencyTest extends TestCase
         );
     }
 
-    public function testAdviceLookupUsesRiskMapping(): void
+    public function testStudentResultUsesStagedThresholdPresenter(): void
     {
         $contents = file_get_contents(dirname(__DIR__, 2) . '/siswa/hasil_deteksi.php');
-        self::assertStringContainsString('adviceCategoryForRisk', $contents);
-        self::assertStringContainsString('canonicalRiskCategory', $contents);
+        self::assertStringContainsString('StagedScreeningResultPresenter', $contents);
+        self::assertStringContainsString('resultForStudent', $contents);
     }
 }

@@ -118,6 +118,7 @@ final class QuestionnaireService
             'SELECT created_at
              FROM kuesioner
              WHERE user_id = ? AND archived_at IS NULL
+               AND history_only_at IS NULL
              ORDER BY created_at DESC, id DESC
              LIMIT 1'
         );

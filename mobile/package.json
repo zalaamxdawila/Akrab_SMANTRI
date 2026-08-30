@@ -1,0 +1,23 @@
+{
+  "name": "akrab-android",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Wrapper Android resmi untuk aplikasi web AKRAB.",
+  "scripts": {
+    "android:check": "cordova requirements android",
+    "android:prepare": "cordova prepare android",
+    "android:debug": "cordova build android --debug",
+    "android:release": "cordova build android --release -- --packageType=apk",
+    "android:bundle": "cordova build android --release"
+  },
+  "devDependencies": {
+    "cordova": "13.0.0",
+    "cordova-android": "15.1.0"
+  },
+  "cordova": {
+    "platforms": [
+      "android"
+    ],
+    "plugins": {}
+  }
+}

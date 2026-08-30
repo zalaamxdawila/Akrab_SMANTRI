@@ -388,7 +388,7 @@ Baseline
 
 **Pekerjaan:**
 
-- Libatkan tenaga kesehatan sebagai clinical owner.
+- Tetapkan ahli medis sekolah terkait sebagai pemilik keputusan klinis.
 - Definisikan populasi, tujuan screening, label, threshold, dan kontraindikasi.
 - Pisahkan “screening risk” dari diagnosis.
 - Tetapkan disclaimer, jalur rujukan, dan emergency language.
@@ -396,7 +396,7 @@ Baseline
 
 **Acceptance criteria:**
 
-- Spesifikasi klinis ditandatangani clinical owner.
+- Spesifikasi klinis disetujui ahli medis sekolah terkait.
 - UI tidak mengklaim diagnosis.
 - Kondisi berbahaya selalu memberi instruksi eskalasi.
 
@@ -412,7 +412,7 @@ Baseline
 - Split train/validation/test dengan pencegahan leakage.
 - Ukur sensitivity, specificity, precision, recall, ROC-AUC, calibration, dan subgroup behavior.
 - Simpan koefisien/version/checksum sebagai artefak.
-- Tetapkan acceptance threshold bersama clinical owner.
+- Tetapkan acceptance threshold bersama ahli medis sekolah terkait.
 
 **Acceptance criteria:**
 
@@ -442,7 +442,7 @@ Baseline
 
 **Verifikasi:** golden tests, boundary tests, dan flag OFF/ON tests.
 
-**Checkpoint CP-07:** wajib `GREEN` dari clinical owner dan security reviewer; jika tidak, feature tetap OFF.
+**Checkpoint CP-07:** wajib `GREEN` dari ahli medis sekolah terkait dan security reviewer; jika tidak, feature tetap OFF.
 
 ## Sprint 16 — Pemisahan business logic dan template
 
@@ -973,7 +973,7 @@ review, dan rollback drill.
 
 | Risiko | Dampak | Mitigasi |
 |---|---|---|
-| Model memberi hasil klinis salah | Kritis | Flag OFF, clinical owner, golden tests |
+| Model memberi hasil klinis salah | Kritis | Flag OFF, ahli medis sekolah terkait, golden tests |
 | Migrasi merusak database lama | Kritis | Clone rehearsal, backup, reversible migration |
 | Secret bocor dari ZIP/source | Kritis | Environment secret, scan, rotation |
 | Parent mengakses siswa yang salah | Tinggi | Verified relation dan approval |
@@ -986,12 +986,12 @@ review, dan rollback drill.
 
 - 24 sprint × 3-5 hari kerja: sekitar 72-120 hari kerja.
 - Dengan 2 jalur kerja yang terkoordinasi, beberapa sprint UI, dokumentasi, dan test dapat berjalan paralel setelah kontrak/schema stabil.
-- Sprint 13-15 mengikuti jadwal clinical owner dan tidak boleh dipercepat hanya demi tanggal deploy.
+- Sprint 13-15 mengikuti jadwal ahli medis sekolah terkait dan tidak boleh dipercepat hanya demi tanggal deploy.
 
 ## Persetujuan yang diperlukan
 
 - Product owner: scope dan UAT.
-- Clinical owner: spesifikasi, threshold, model card, dan konten kesehatan.
+- Ahli medis sekolah terkait: spesifikasi, threshold, model card, dan konten kesehatan.
 - Data owner/sekolah: kebijakan akses orang tua, retensi, audit.
 - Technical reviewer: schema, security, migration, rollback.
 - Deployment owner: akses hosting, secret, backup, dan Go/No-Go.
@@ -1035,3 +1035,30 @@ Eligibility 17 Agustus
 | Siswa mengisi berulang pada 17 Agustus | Tinggi | Pengisian pada/setelah cutoff memulai cooldown baru |
 | Perubahan memengaruhi model klinis | Kritis | Tidak mengubah input, formula, threshold, atau flag model |
 | Migrasi production gagal | Tinggi | Additive migration, clone rehearsal, backup, explicit GO |
+
+## Addendum 2026-08-30 — Skrining Bertahap Gejala dan Faktor Risiko
+
+Rencana rinci: `tasks/plans/staged-symptom-risk-screening.md`
+
+Draft spesifikasi: `docs/specs/staged-symptom-risk-screening.md`
+
+Satu alur terpadu memakai rata-rata 10 gejala: `> 4,6` membuka faktor risiko dan
+`<= 4,6` berhenti pada hasil gejala. Faktor risiko `< 75%` menghasilkan status
+terindikasi/berisiko anemia; flow baru tidak bergantung pada Hb.
+
+Sumber pertanyaan ditetapkan dari `Kuesioner.pdf`: Bagian III untuk gejala,
+Bagian VI sebagai kandidat faktor internal, dan Bagian VII sebagai kandidat
+faktor eksternal. Bagian Hb, sikap, dan pengetahuan tidak masuk flow baru.
+
+Implementasi kandidat memakai dua dimensi berbobot sama: menstruasi sebagai
+internal dan enam kebiasaan makan sebagai eksternal (`100/50/0`), dengan tabel
+makanan hanya sebagai konteks. Formula, red flags, dan redaksi tetap perlu
+validasi final ahli medis sekolah terkait; output tidak mengklaim diagnosis
+pasti. Tidak ada kerja sama atau afiliasi dengan WHO/Kementerian Kesehatan;
+istilah `clinical owner` pada roadmap berarti ahli medis sekolah terkait.
+
+Status implementasi 2026-08-30: migrasi additive dan rilis staged sudah aktif
+hanya pada `akrab.portodq.com`. Analytics/export memisahkan format historis dan
+format baru, CSRF dashboard diperketat, schema route fail-closed, dan runner
+migrasi sekali-pakai sudah dinonaktifkan. Tindak lanjut tersisa adalah UAT login
+manusia dan persetujuan akhir formula/redaksi oleh ahli medis sekolah terkait.

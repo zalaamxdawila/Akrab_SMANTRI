@@ -8,7 +8,17 @@ require_once __DIR__ . '/app/Services/QuestionnaireLabService.php';
 require_once __DIR__ . '/app/Services/QuestionnaireInsights.php';
 require_once __DIR__ . '/app/Services/QuestionnaireEligibility.php';
 require_once __DIR__ . '/app/Services/QuestionnaireResultPresenter.php';
+require_once __DIR__ . '/app/Services/QuestionnaireAggregatePresenter.php';
+require_once __DIR__ . '/app/Services/StagedScreeningScore.php';
+require_once __DIR__ . '/app/Contracts/StagedScreeningStore.php';
+require_once __DIR__ . '/app/Contracts/QuestionnaireRetakeStore.php';
+require_once __DIR__ . '/app/Services/StagedScreeningSnapshot.php';
+require_once __DIR__ . '/app/Services/StagedScreeningService.php';
+require_once __DIR__ . '/app/Services/StagedScreeningResultPresenter.php';
+require_once __DIR__ . '/app/Services/QuestionnaireRetakeService.php';
 require_once __DIR__ . '/app/Repositories/DashboardRepository.php';
+require_once __DIR__ . '/app/Repositories/PdoStagedScreeningStore.php';
+require_once __DIR__ . '/app/Repositories/PdoQuestionnaireRetakeStore.php';
 require_once __DIR__ . '/app/Repositories/QuestionnaireAnalyticsRepository.php';
 require_once __DIR__ . '/views/partials/impersonation_banner.php';
 
@@ -60,23 +70,18 @@ function studentOnboardingDestination(array $state): ?string
     if (empty($state['questionnaire_id'])) {
         return 'siswa/kuesioner.php';
     }
-    foreach (['kadar_hb', 'kadar_mchc', 'kadar_mcv', 'kadar_mch'] as $field) {
-        if (($state[$field] ?? null) === null || $state[$field] === '') {
-            return 'siswa/data_laboratorium.php';
-        }
-    }
     return null;
 }
 
 function studentOnboardingState(PDO $pdo, int $studentId): array
 {
     $statement = $pdo->prepare(
-        'SELECT u.email, k.id questionnaire_id, k.kadar_hb, k.kadar_mchc,
-                k.kadar_mcv, k.kadar_mch
+        'SELECT u.email, k.id questionnaire_id
          FROM users u
          LEFT JOIN kuesioner k ON k.id = (
              SELECT latest.id FROM kuesioner latest
              WHERE latest.user_id = u.id AND latest.archived_at IS NULL
+               AND latest.history_only_at IS NULL
              ORDER BY latest.created_at DESC, latest.id DESC LIMIT 1
          )
          WHERE u.id = ? AND u.role = \'siswa\''

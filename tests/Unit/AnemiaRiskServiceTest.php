@@ -143,7 +143,7 @@ final class AnemiaRiskServiceTest extends TestCase
         (new AnemiaRiskService())->evaluate(['skor_gejala' => 1, 'skor_makan' => 1, 'mens_teratur' => 'ya']);
     }
 
-    public function testQuestionnairePersistsModelMetadata(): void
+    public function testLegacyLabServiceKeepsModelMetadataSeparateFromStagedFlow(): void
     {
         $root = dirname(__DIR__, 2);
         $route = file_get_contents($root . '/siswa/kuesioner.php');
@@ -151,7 +151,8 @@ final class AnemiaRiskServiceTest extends TestCase
 
         self::assertStringContainsString('model_version', $service);
         self::assertStringContainsString('model_checksum', $service);
-        self::assertStringContainsString('QuestionnaireService', $route);
+        self::assertStringContainsString('StagedScreeningService', $route);
+        self::assertStringNotContainsString('AnemiaRiskService', $route);
     }
 
     public function testCenteredResultBackfillIsVersionedAndIdempotent(): void

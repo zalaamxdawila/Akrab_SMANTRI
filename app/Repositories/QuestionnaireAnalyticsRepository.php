@@ -10,31 +10,65 @@ final class QuestionnaireAnalyticsRepository
 
     /**
      * @return array{
-     *   total_responses:int,responding_students:int,lab_available:int,
+     *   total_responses:int,total_students:int,responding_students:int,
+     *   not_responded_students:int,lab_available:int,legacy_responses:int,
+     *   staged:array{responses:int,completed:int,indicated:int,avg_symptom:float,avg_risk:float},
      *   averages:array{gejala:float,makan:float,pengetahuan:float,sikap:float}
      * }
      */
     public function aggregate(): array
     {
         $row = $this->pdo->query(
-            'SELECT COUNT(*) total_responses,
-                    COUNT(DISTINCT user_id) responding_students,
+            "SELECT COUNT(*) total_responses,
                     SUM(CASE WHEN kadar_hb IS NOT NULL
                         AND kadar_mchc IS NOT NULL
                         AND kadar_mcv IS NOT NULL
                         AND kadar_mch IS NOT NULL THEN 1 ELSE 0 END) lab_available,
-                    AVG(skor_gejala) avg_gejala,
-                    AVG(skor_makan) avg_makan,
-                    AVG(skor_pengetahuan) avg_pengetahuan,
-                    AVG(skor_sikap) avg_sikap
+                    SUM(CASE WHEN COALESCE(versi_screening, '') = '' THEN 1 ELSE 0 END) legacy_responses,
+                    SUM(CASE WHEN COALESCE(versi_screening, '') <> '' THEN 1 ELSE 0 END) staged_responses,
+                    SUM(CASE WHEN COALESCE(versi_screening, '') <> ''
+                        AND tahap_screening = 'selesai' THEN 1 ELSE 0 END) staged_completed,
+                    SUM(CASE WHEN COALESCE(versi_screening, '') <> ''
+                        AND hasil_screening = 'terindikasi_anemia' THEN 1 ELSE 0 END) staged_indicated,
+                    AVG(CASE WHEN COALESCE(versi_screening, '') = '' THEN skor_gejala END) avg_gejala,
+                    AVG(CASE WHEN COALESCE(versi_screening, '') = '' THEN skor_makan END) avg_makan,
+                    AVG(CASE WHEN COALESCE(versi_screening, '') = '' THEN skor_pengetahuan END) avg_pengetahuan,
+                    AVG(CASE WHEN COALESCE(versi_screening, '') = '' THEN skor_sikap END) avg_sikap,
+                    AVG(CASE WHEN COALESCE(versi_screening, '') <> '' THEN rerata_gejala END) staged_avg_symptom,
+                    AVG(CASE WHEN COALESCE(versi_screening, '') <> ''
+                        AND tahap_screening = 'selesai' THEN persentase_faktor_risiko END) staged_avg_risk
              FROM kuesioner
-             WHERE archived_at IS NULL'
+             WHERE archived_at IS NULL AND history_only_at IS NULL"
         )->fetch() ?: [];
+        $totalStudents = (int) $this->pdo->query(
+            "SELECT COUNT(*) FROM users WHERE role = 'siswa' AND status = 'active'"
+        )->fetchColumn();
+        $respondingStudents = (int) $this->pdo->query(
+            "SELECT COUNT(DISTINCT k.user_id)
+             FROM kuesioner k
+             JOIN users u ON u.id = k.user_id
+                AND u.role = 'siswa' AND u.status = 'active'
+             WHERE k.archived_at IS NULL
+               AND k.history_only_at IS NULL"
+        )->fetchColumn();
 
         return [
             'total_responses' => (int) ($row['total_responses'] ?? 0),
-            'responding_students' => (int) ($row['responding_students'] ?? 0),
+            'total_students' => $totalStudents,
+            'responding_students' => $respondingStudents,
+            'not_responded_students' => max(
+                0,
+                $totalStudents - $respondingStudents
+            ),
             'lab_available' => (int) ($row['lab_available'] ?? 0),
+            'legacy_responses' => (int) ($row['legacy_responses'] ?? 0),
+            'staged' => [
+                'responses' => (int) ($row['staged_responses'] ?? 0),
+                'completed' => (int) ($row['staged_completed'] ?? 0),
+                'indicated' => (int) ($row['staged_indicated'] ?? 0),
+                'avg_symptom' => round((float) ($row['staged_avg_symptom'] ?? 0), 1),
+                'avg_risk' => round((float) ($row['staged_avg_risk'] ?? 0), 1),
+            ],
             'averages' => [
                 'gejala' => round((float) ($row['avg_gejala'] ?? 0), 1),
                 'makan' => round((float) ($row['avg_makan'] ?? 0), 1),
@@ -44,21 +78,51 @@ final class QuestionnaireAnalyticsRepository
         ];
     }
 
-    /** @return list<array<string, mixed>> */
-    public function latestByStudent(): array
+    /** @return list<string> */
+    public function activeAnswerSnapshots(): array
     {
-        return $this->latestStudentRows(false);
+        return $this->pdo->query(
+            "SELECT k.answers_snapshot
+             FROM kuesioner k
+             JOIN users u ON u.id = k.user_id
+                AND u.role = 'siswa' AND u.status = 'active'
+             WHERE k.archived_at IS NULL
+               AND k.history_only_at IS NULL
+               AND COALESCE(k.versi_screening, '') = ''
+               AND k.answers_snapshot IS NOT NULL
+               AND k.answers_snapshot <> ''
+             ORDER BY k.created_at, k.id"
+        )->fetchAll(PDO::FETCH_COLUMN);
     }
 
     /** @return list<array<string, mixed>> */
-    public function latestByStudentForExport(): array
+    public function latestStagedByStudent(): array
     {
-        return $this->latestStudentRows(modelExecutionGatePassed());
+        return $this->latestStudentRows(false, true);
     }
 
     /** @return list<array<string, mixed>> */
-    private function latestStudentRows(bool $includeClinicalRisk): array
+    public function latestLegacyByStudent(): array
     {
+        return $this->latestStudentRows(false, false);
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function latestStagedByStudentForExport(): array
+    {
+        return $this->latestStudentRows(false, true);
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function latestLegacyByStudentForExport(): array
+    {
+        return $this->latestStudentRows(modelExecutionGatePassed(), false);
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function latestStudentRows(bool $includeClinicalRisk, bool $staged): array
+    {
+        $versionCondition = $staged ? "<> ''" : "= ''";
         $riskColumns = 'NULL probabilitas_risiko, NULL kategori_risiko';
         $riskJoin = '';
         if ($includeClinicalRisk) {
@@ -78,13 +142,18 @@ final class QuestionnaireAnalyticsRepository
             "SELECT u.id student_id, u.nama, u.username, u.kelas,
                     k.id questionnaire_id, k.kadar_hb, k.kadar_mchc,
                     k.kadar_mcv, k.kadar_mch, k.skor_gejala, k.skor_makan,
-                    k.skor_pengetahuan, k.skor_sikap, k.answers_snapshot, k.created_at,
+                    k.skor_pengetahuan, k.skor_sikap, k.answers_snapshot,
+                    k.tanggal_lahir, k.jenis_kelamin, k.pendidikan, k.created_at,
+                    k.tahap_screening, k.rerata_gejala, k.persentase_faktor_risiko,
+                    k.hasil_screening, k.versi_screening,
                     {$riskColumns}
              FROM users u
              JOIN kuesioner k ON k.id = (
                 SELECT k2.id
                 FROM kuesioner k2
                 WHERE k2.user_id = u.id AND k2.archived_at IS NULL
+                  AND k2.history_only_at IS NULL
+                  AND COALESCE(k2.versi_screening, '') {$versionCondition}
                 ORDER BY k2.created_at DESC, k2.id DESC
                 LIMIT 1
              )
@@ -105,6 +174,41 @@ final class QuestionnaireAnalyticsRepository
         );
         $statement->execute([$studentId]);
         return $statement->fetchAll();
+    }
+
+    /** @return array<string, mixed>|null */
+    public function latestPrimaryForStudent(int $studentId): ?array
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT *
+             FROM kuesioner
+             WHERE user_id = ? AND archived_at IS NULL
+               AND history_only_at IS NULL
+             ORDER BY created_at DESC, id DESC
+             LIMIT 1'
+        );
+        $statement->execute([$studentId]);
+        $row = $statement->fetch();
+        return $row ?: null;
+    }
+
+    /** @return array<string, mixed>|null */
+    public function primaryQuestionnaireForStudent(int $studentId, int $questionnaireId): ?array
+    {
+        if ($studentId <= 0 || $questionnaireId <= 0) {
+            return null;
+        }
+
+        $statement = $this->pdo->prepare(
+            'SELECT *
+             FROM kuesioner
+             WHERE id = ? AND user_id = ? AND archived_at IS NULL
+               AND history_only_at IS NULL
+             LIMIT 1'
+        );
+        $statement->execute([$questionnaireId, $studentId]);
+        $row = $statement->fetch();
+        return $row ?: null;
     }
 
     /** @return array<string, mixed>|null */

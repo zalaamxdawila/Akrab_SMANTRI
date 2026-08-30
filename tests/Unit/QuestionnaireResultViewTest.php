@@ -8,6 +8,62 @@ require_once dirname(__DIR__, 2) . '/views/questionnaire_analytics.php';
 
 final class QuestionnaireResultViewTest extends TestCase
 {
+    public function testCompletionChartComparesUniqueRespondentsWithActiveStudents(): void
+    {
+        ob_start();
+        renderQuestionnaireCompletionChart('completionChart', 7, 3);
+        $html = (string) ob_get_clean();
+
+        self::assertStringContainsString('Sudah Mengisi', $html);
+        self::assertStringContainsString('Belum Mengisi', $html);
+        self::assertStringContainsString('data: [7,3]', $html);
+        self::assertStringContainsString("type: 'doughnut'", $html);
+    }
+
+    public function testAggregateQuestionChartRendersResponseCountsWithUniqueCanvasIds(): void
+    {
+        ob_start();
+        renderQuestionnaireChoiceCharts([
+            'makan' => [[
+                'key' => 'makan_1',
+                'question' => 'Apakah sarapan?',
+                'labels' => ['Tidak pernah', 'Kadang-kadang', 'Selalu'],
+                'values' => [2, 3, 5],
+                'selected' => [],
+            ]],
+        ], true, 10, 'aggregateQuestionChoiceChart');
+        $html = (string) ob_get_clean();
+
+        self::assertStringContainsString('Diagram Jawaban Setiap Pertanyaan', $html);
+        self::assertStringContainsString('10 pengisian aktif', $html);
+        self::assertStringContainsString('data: values', $html);
+        self::assertStringContainsString('const values = [2,3,5]', $html);
+        self::assertStringContainsString('aggregateQuestionChoiceChart-makan_1', $html);
+        self::assertStringNotContainsString('Pilihan yang dipilih', $html);
+    }
+
+    public function testSharedViewRendersAllResponseRecapWithRawAndNormalizedScores(): void
+    {
+        $insights = (new QuestionnaireInsights())->forResponse([
+            'skor_gejala' => 30,
+            'skor_makan' => 9,
+            'skor_pengetahuan' => 24,
+            'skor_sikap' => 20,
+        ]);
+
+        ob_start();
+        renderQuestionnaireAggregateRecap($insights, 6);
+        $html = (string) ob_get_clean();
+
+        self::assertStringContainsString('Rekapitulasi Semua Hasil', $html);
+        self::assertStringContainsString('6 pengisian aktif', $html);
+        self::assertStringContainsString('30 / 100', $html);
+        self::assertStringContainsString('9 / 18', $html);
+        self::assertStringContainsString('30%', $html);
+        self::assertSame(3, substr_count($html, '50%'));
+        self::assertStringContainsString('<table', $html);
+    }
+
     public function testSharedViewRendersSummaryAndKeyboardAccessibleDetails(): void
     {
         $presentation = [
@@ -103,9 +159,19 @@ final class QuestionnaireResultViewTest extends TestCase
         self::assertStringContainsString('Hasil Lengkap', $html);
         self::assertStringContainsString('question-answer-overview', $html);
         self::assertStringContainsString('1 jawaban tercatat', $html);
-        self::assertLessThan(
-            strpos($html, '<details'),
+        $detailsPosition = strpos($html, '<details');
+        self::assertNotFalse($detailsPosition);
+        self::assertGreaterThan(
+            $detailsPosition,
             strpos($html, 'question-answer-overview')
+        );
+        self::assertGreaterThan(
+            $detailsPosition,
+            strpos($html, 'answerSymptomChart')
+        );
+        self::assertGreaterThan(
+            $detailsPosition,
+            strpos($html, 'logistic-model-title')
         );
         self::assertSame(1, substr_count($html, 'Pertanyaan dan jawaban'));
         self::assertStringContainsString('&lt;script&gt;tidak aman&lt;/script&gt;', $html);

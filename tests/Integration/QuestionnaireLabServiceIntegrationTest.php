@@ -15,10 +15,10 @@ final class QuestionnaireLabServiceIntegrationTest extends TestCase
         $this->pdo = new PDO('sqlite::memory:');
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        $this->pdo->exec("CREATE TABLE kuesioner (id INTEGER PRIMARY KEY, user_id INTEGER, kadar_hb REAL, kadar_mchc REAL, kadar_mcv REAL, kadar_mch REAL, archived_at TEXT, created_at TEXT);
+        $this->pdo->exec("CREATE TABLE kuesioner (id INTEGER PRIMARY KEY, user_id INTEGER, kadar_hb REAL, kadar_mchc REAL, kadar_mcv REAL, kadar_mch REAL, archived_at TEXT, history_only_at TEXT, created_at TEXT);
             CREATE TABLE hasil_deteksi (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, questionnaire_id INTEGER, probabilitas_risiko REAL, kategori_risiko TEXT, model_version TEXT, model_checksum TEXT, tanggal TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP, archived_at TEXT);
             CREATE TABLE lab_change_requests (id INTEGER PRIMARY KEY AUTOINCREMENT, questionnaire_id INTEGER, student_id INTEGER, kadar_hb REAL, kadar_mchc REAL, kadar_mcv REAL, kadar_mch REAL, status TEXT DEFAULT 'pending', reviewed_by INTEGER, reviewer_role TEXT, reviewed_at TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP);
-            INSERT INTO kuesioner VALUES (1, 7, NULL, NULL, NULL, NULL, NULL, '2026-08-14 10:00:00')");
+            INSERT INTO kuesioner VALUES (1, 7, NULL, NULL, NULL, NULL, NULL, NULL, '2026-08-14 10:00:00')");
         $this->service = new QuestionnaireLabService($this->pdo);
     }
 

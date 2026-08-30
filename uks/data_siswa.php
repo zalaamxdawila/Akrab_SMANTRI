@@ -29,8 +29,18 @@ $query = "
         u.nama, 
         u.kelas, 
         u.username,
-        (SELECT kategori_risiko FROM hasil_deteksi WHERE user_id = u.id ORDER BY tanggal DESC, id DESC LIMIT 1) as risiko_terakhir,
-        (SELECT tanggal FROM hasil_deteksi WHERE user_id = u.id ORDER BY tanggal DESC, id DESC LIMIT 1) as tanggal_cek,
+        (SELECT hd.kategori_risiko
+         FROM hasil_deteksi hd
+         JOIN kuesioner q ON q.id = hd.questionnaire_id
+            AND q.archived_at IS NULL AND q.history_only_at IS NULL
+         WHERE hd.user_id = u.id AND hd.archived_at IS NULL
+         ORDER BY hd.tanggal DESC, hd.id DESC LIMIT 1) as risiko_terakhir,
+        (SELECT hd.tanggal
+         FROM hasil_deteksi hd
+         JOIN kuesioner q ON q.id = hd.questionnaire_id
+            AND q.archived_at IS NULL AND q.history_only_at IS NULL
+         WHERE hd.user_id = u.id AND hd.archived_at IS NULL
+         ORDER BY hd.tanggal DESC, hd.id DESC LIMIT 1) as tanggal_cek,
         (SELECT COUNT(*) FROM konsumsi_ttd WHERE user_id = u.id AND status_konsumsi = 'sudah') as total_ttd
     FROM users u
 ";
@@ -170,6 +180,6 @@ $pageQuery = $search !== '' ? '&amp;search=' . rawurlencode($search) : '';
 <script>
   lucide.createIcons();
 </script>
-<script src="../assets/js/app-init.js?v=20260818"></script>
+<script src="../assets/js/app-init.js?v=20260831-safe-install"></script>
 </body>
 </html>

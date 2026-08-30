@@ -19,7 +19,7 @@ final class SuperadminOverviewRepositoryTest extends TestCase
         $pdo->exec('CREATE TABLE konsultasi (status TEXT)');
         $pdo->exec('CREATE TABLE artikel_edukasi (id INTEGER)');
         $pdo->exec('CREATE TABLE konsumsi_ttd (tanggal TEXT, status_konsumsi TEXT)');
-        $pdo->exec('CREATE TABLE kuesioner (id INTEGER)');
+        $pdo->exec('CREATE TABLE kuesioner (id INTEGER, archived_at TEXT, history_only_at TEXT)');
         $pdo->exec('CREATE TABLE kadar_hb (id INTEGER)');
         $pdo->exec(
             'CREATE TABLE schema_migrations (
@@ -47,7 +47,7 @@ final class SuperadminOverviewRepositoryTest extends TestCase
             "INSERT INTO konsumsi_ttd VALUES
                 ('2026-07-29', 'sudah'), ('2026-07-29', 'belum')"
         );
-        $pdo->exec('INSERT INTO kuesioner VALUES (1), (2), (3)');
+        $pdo->exec('INSERT INTO kuesioner VALUES (1, NULL, NULL), (2, NULL, NULL), (3, NULL, NULL)');
         $pdo->exec('INSERT INTO kadar_hb VALUES (1)');
         $pdo->exec(
             "INSERT INTO schema_migrations VALUES

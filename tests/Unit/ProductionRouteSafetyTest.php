@@ -68,8 +68,9 @@ final class ProductionRouteSafetyTest extends TestCase
             $contents
         );
         self::assertStringContainsString(
-            '$e instanceof InvalidArgumentException ? $e->getMessage() : publicErrorMessage()',
+            '$exception instanceof InvalidArgumentException',
             $contents
         );
+        self::assertStringContainsString('publicErrorMessage()', $contents);
     }
 }

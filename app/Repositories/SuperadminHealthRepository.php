@@ -58,6 +58,14 @@ final class SuperadminHealthRepository
         $definition = self::TYPES[$type];
         $table = $definition['table'];
         $where = $archived ? 'r.archived_at IS NOT NULL' : 'r.archived_at IS NULL';
+        $questionnaireJoin = '';
+        if (!$archived && $type === 'questionnaire') {
+            $where .= ' AND r.history_only_at IS NULL';
+        }
+        if (!$archived && $type === 'risk') {
+            $questionnaireJoin = ' JOIN kuesioner q ON q.id = r.questionnaire_id';
+            $where .= ' AND q.archived_at IS NULL AND q.history_only_at IS NULL';
+        }
         $parameters = [];
         if ($search !== '') {
             $where .= ' AND (u.nama LIKE ? OR u.username LIKE ?)';
@@ -65,6 +73,7 @@ final class SuperadminHealthRepository
         }
         $from = " FROM {$table} r
             JOIN users u ON u.id = r.user_id AND u.role = 'siswa'
+            {$questionnaireJoin}
             WHERE {$where}";
         $count = $this->pdo->prepare('SELECT COUNT(*)' . $from);
         $count->execute($parameters);

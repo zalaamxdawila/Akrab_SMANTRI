@@ -2,6 +2,7 @@
 require_once '../config.php';
 require_once '../helpers.php';
 require_once '../views/questionnaire_analytics.php';
+require_once '../views/staged_screening_staff.php';
 
 check_role('orangtua');
 $parent_id = $_SESSION['user_id'];
@@ -12,6 +13,8 @@ $hasil = null;
 $kepatuhan = [];
 $questionnaireHistory = [];
 $resultPresentation = null;
+$stagedPresentation = null;
+$isStagedScreening = false;
 $historyChart = ['labels' => [], 'series' => []];
 
 $questionnaireRepository = new QuestionnaireAnalyticsRepository($pdo);
@@ -21,17 +24,33 @@ $anak = $questionnaireRepository->approvedStudentForParent((int) $parent_id);
 if ($anak) {
     $anak_id = (int) $anak['id'];
     $questionnaireHistory = $questionnaireRepository->historyForStudent($anak_id);
-    $kuesioner = $questionnaireHistory
+    $primaryQuestionnaire = $questionnaireRepository->latestPrimaryForStudent(
+        $anak_id
+    );
+    $kuesioner = $primaryQuestionnaire ?? ($questionnaireHistory
         ? $questionnaireHistory[array_key_last($questionnaireHistory)]
-        : null;
-    $historyChart = $questionnaireInsights->historyChart($questionnaireHistory);
-        
+        : null);
     // Latest Risk Detection
     $hasil = $questionnaireRepository->latestDetectionForStudent(
         $anak_id,
         (int) ($kuesioner['id'] ?? 0)
     );
-    $resultPresentation = $kuesioner
+    $isStagedScreening = $kuesioner && !empty($kuesioner['versi_screening']);
+    if (!$isStagedScreening) {
+        $legacyHistory = array_values(array_filter(
+            $questionnaireHistory,
+            static fn (array $row): bool => empty($row['versi_screening'])
+        ));
+        $historyChart = $questionnaireInsights->historyChart($legacyHistory);
+    }
+    if ($isStagedScreening && ($kuesioner['tahap_screening'] ?? null) !== 'faktor_risiko_tersedia') {
+        try {
+            $stagedPresentation = (new StagedScreeningResultPresenter())->present($kuesioner);
+        } catch (InvalidArgumentException) {
+            $stagedPresentation = null;
+        }
+    }
+    $resultPresentation = $kuesioner && !$isStagedScreening
         ? (new QuestionnaireResultPresenter())->forResult($kuesioner, $hasil)
         : null;
         
@@ -104,7 +123,13 @@ if ($anak) {
                         <?php
                             $risk_badge = 'bg-secondary';
                             $risk_text = 'Belum Ada Data';
-                            if ($hasil) {
+                            if ($stagedPresentation) {
+                                $risk_badge = 'text-bg-' . $stagedPresentation['status_class'];
+                                $risk_text = $stagedPresentation['title'];
+                            } elseif ($isStagedScreening) {
+                                $risk_badge = 'bg-warning text-dark';
+                                $risk_text = 'Faktor Risiko Belum Selesai';
+                            } elseif ($hasil) {
                                 if ($hasil['kategori_risiko'] == 'tinggi') { $risk_badge = 'bg-danger'; $risk_text = 'Risiko Tinggi Anemia'; }
                                 elseif ($hasil['kategori_risiko'] == 'sedang') { $risk_badge = 'bg-warning text-dark'; $risk_text = 'Risiko Sedang'; }
                                 else { $risk_badge = 'bg-success'; $risk_text = 'Risiko Rendah'; }
@@ -124,12 +149,23 @@ if ($anak) {
                         </h5>
                         
                         <?php if ($kuesioner): ?>
-                            <?php renderQuestionnaireResult($resultPresentation, $kuesioner); ?>
-                            <h6 class="fw-bold">Perkembangan semua pengisian</h6>
-                            <p class="small text-muted">Grafik hanya memuat hasil dari akun siswa yang telah tertaut dan disetujui.</p>
-                            <div class="mb-4" style="height: 300px">
-                                <canvas id="parentQuestionnaireChart"></canvas>
-                            </div>
+                            <?php if (!empty($kuesioner['history_only_at'])): ?>
+                                <div class="alert alert-secondary" role="note">
+                                    <strong>Riwayat pribadi.</strong> Hasil lama ini tetap tersedia pada catatan individual, tetapi tidak dihitung dalam pendataan utama sekolah.
+                                </div>
+                            <?php endif; ?>
+                            <?php if ($isStagedScreening): ?>
+                                <?php renderStagedScreeningForStaff($stagedPresentation, $kuesioner); ?>
+                            <?php else: ?>
+                                <?php renderQuestionnaireResult($resultPresentation, $kuesioner); ?>
+                            <?php endif; ?>
+                            <?php if (!$isStagedScreening): ?>
+                                <h6 class="fw-bold">Perkembangan pengisian format historis</h6>
+                                <p class="small text-muted">Grafik hanya memuat format lama dari akun siswa yang telah tertaut dan disetujui.</p>
+                                <div class="mb-4" style="height: 300px">
+                                    <canvas id="parentQuestionnaireChart"></canvas>
+                                </div>
+                            <?php endif; ?>
                         <?php else: ?>
                             <p class="text-muted">Anak Anda belum pernah mengisi kuesioner *screening* Anemia.</p>
                         <?php endif; ?>
@@ -167,8 +203,8 @@ if ($anak) {
 <script>
   lucide.createIcons();
 </script>
-<script src="../assets/js/app-init.js?v=20260818"></script>
-<?php if ($questionnaireHistory): ?>
+<script src="../assets/js/app-init.js?v=20260831-safe-install"></script>
+<?php if ($questionnaireHistory && !$isStagedScreening): ?>
     <?php renderQuestionnaireHistoryChartScript('parentQuestionnaireChart', $historyChart); ?>
 <?php endif; ?>
 </body>

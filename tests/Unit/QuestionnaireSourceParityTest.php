@@ -6,15 +6,12 @@ use PHPUnit\Framework\TestCase;
 
 final class QuestionnaireSourceParityTest extends TestCase
 {
-    public function testVisibleQuestionnaireMatchesCanonicalDocumentSections(): void
+    public function testVisibleQuestionnaireMatchesCanonicalStagedSections(): void
     {
         $route = file_get_contents(dirname(__DIR__, 2) . '/siswa/kuesioner.php');
 
         foreach ([
             'Sahabat merasakan cepat lelah bila beraktivitas',
-            'Tidak Setuju',
-            'Kurang Setuju',
-            'Tahu, lanjut ke pertanyaan no 2',
             'Apakah sahabat sudah mengalami menstruasi',
             'Isilah tabel berikut ini sesuai makanan yang sahabat makan setiap hari.',
             'Apakah sahabat ada makan lagi atau snek menjelang tidur ?',
@@ -23,8 +20,9 @@ final class QuestionnaireSourceParityTest extends TestCase
             self::assertStringContainsString($canonicalText, $route);
         }
 
-        self::assertStringNotContainsString('Faktor Risiko Anemia', $route);
-        self::assertStringNotContainsString('Sangat Tidak Setuju', $route);
+        foreach (['Hasil Lab Darah', 'Tidak Setuju', 'Pengetahuan Dasar'] as $removedSection) {
+            self::assertStringNotContainsString($removedSection, $route);
+        }
     }
 
     public function testCompleteResultIncludesEveryScoredDocumentDiagram(): void

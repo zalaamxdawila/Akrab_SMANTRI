@@ -48,8 +48,14 @@ if (in_array('--check-database', $argv, true)) {
             ]
         );
         $checks['database_connection'] = $pdo->query('SELECT 1')->fetchColumn() === 1;
+        $schema = $pdo->prepare(
+            'SELECT COUNT(*) FROM schema_migrations WHERE version = ?'
+        );
+        $schema->execute(['021_staged_screening']);
+        $checks['database_schema_021'] = (int) $schema->fetchColumn() === 1;
     } catch (Throwable $exception) {
         $checks['database_connection'] = false;
+        $checks['database_schema_021'] = false;
     }
 }
 

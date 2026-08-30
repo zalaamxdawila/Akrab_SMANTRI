@@ -109,6 +109,7 @@ CREATE TABLE IF NOT EXISTS kuesioner (
     nomor_responden VARCHAR(50) NULL,
     inisial_responden VARCHAR(50) NULL,
     tanggal_lahir DATE NULL,
+    jenis_kelamin ENUM('perempuan', 'laki_laki') NULL,
     tempat_lahir VARCHAR(100) NULL,
     alamat TEXT NULL,
     pendidikan VARCHAR(150) NULL,
@@ -139,6 +140,11 @@ CREATE TABLE IF NOT EXISTS kuesioner (
     skor_makan INT NOT NULL DEFAULT 0,
     makanan_dikonsumsi TEXT NULL,
     answers_snapshot JSON NULL,
+    tahap_screening ENUM('gejala_selesai', 'faktor_risiko_tersedia', 'selesai') NULL,
+    rerata_gejala DECIMAL(4,1) NULL,
+    persentase_faktor_risiko DECIMAL(5,1) NULL,
+    hasil_screening ENUM('gejala_di_bawah_ambang', 'terindikasi_anemia', 'tidak_terindikasi_anemia') NULL,
+    versi_screening VARCHAR(80) NULL,
 
     -- VIII. Faktor Risiko Anemia
     skor_faktor_internal INT NOT NULL DEFAULT 0,
@@ -150,11 +156,18 @@ CREATE TABLE IF NOT EXISTS kuesioner (
     archived_at TIMESTAMP NULL,
     archived_by INT NULL,
     archive_reason VARCHAR(500) NULL,
+    history_only_at TIMESTAMP NULL,
+    history_only_by INT NULL,
+    history_only_reason VARCHAR(500) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     KEY idx_kuesioner_archive (archived_at, user_id),
+    KEY idx_kuesioner_screening_stage (user_id, tahap_screening, archived_at, created_at),
+    KEY idx_kuesioner_primary_history (user_id, history_only_at, archived_at, created_at),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (corrected_by) REFERENCES users(id) ON DELETE SET NULL,
-    FOREIGN KEY (archived_by) REFERENCES users(id) ON DELETE SET NULL
+    FOREIGN KEY (archived_by) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT fk_kuesioner_history_only_by FOREIGN KEY (history_only_by)
+        REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS hasil_deteksi (

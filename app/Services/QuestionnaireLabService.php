@@ -77,9 +77,12 @@ final class QuestionnaireLabService
     public function pendingForStudent(int $studentId): ?array
     {
         $statement = $this->pdo->prepare(
-            "SELECT id, status, created_at FROM lab_change_requests
-             WHERE student_id = ? AND status = 'pending'
-             ORDER BY created_at DESC, id DESC LIMIT 1"
+            "SELECT lcr.id, lcr.status, lcr.created_at
+             FROM lab_change_requests lcr
+             JOIN kuesioner k ON k.id = lcr.questionnaire_id
+                AND k.archived_at IS NULL AND k.history_only_at IS NULL
+             WHERE lcr.student_id = ? AND lcr.status = 'pending'
+             ORDER BY lcr.created_at DESC, lcr.id DESC LIMIT 1"
         );
         $statement->execute([$studentId]);
         return $statement->fetch() ?: null;
@@ -95,7 +98,8 @@ final class QuestionnaireLabService
              FROM lab_change_requests lcr
              JOIN users u ON u.id = lcr.student_id AND u.role = 'siswa'
              JOIN kuesioner k ON k.id = lcr.questionnaire_id
-             WHERE lcr.status = 'pending'
+             WHERE lcr.status = 'pending' AND k.archived_at IS NULL
+               AND k.history_only_at IS NULL
              ORDER BY lcr.created_at, lcr.id LIMIT 200"
         )->fetchAll();
     }
@@ -153,7 +157,9 @@ final class QuestionnaireLabService
         $suffix = $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' FOR UPDATE' : '';
         $statement = $this->pdo->prepare(
             'SELECT id, kadar_hb, kadar_mchc, kadar_mcv, kadar_mch FROM kuesioner
-             WHERE user_id = ? AND archived_at IS NULL ORDER BY created_at DESC, id DESC LIMIT 1' . $suffix
+             WHERE user_id = ? AND archived_at IS NULL
+               AND history_only_at IS NULL
+             ORDER BY created_at DESC, id DESC LIMIT 1' . $suffix
         );
         $statement->execute([$studentId]);
         $row = $statement->fetch();
@@ -163,7 +169,7 @@ final class QuestionnaireLabService
 
     private function updateQuestionnaire(int $questionnaireId, array $values): void
     {
-        $statement = $this->pdo->prepare('UPDATE kuesioner SET kadar_hb = ?, kadar_mchc = ?, kadar_mcv = ?, kadar_mch = ? WHERE id = ? AND archived_at IS NULL');
+        $statement = $this->pdo->prepare('UPDATE kuesioner SET kadar_hb = ?, kadar_mchc = ?, kadar_mcv = ?, kadar_mch = ? WHERE id = ? AND archived_at IS NULL AND history_only_at IS NULL');
         $statement->execute([$values['kadar_hb'], $values['kadar_mchc'], $values['kadar_mcv'], $values['kadar_mch'], $questionnaireId]);
         if ($statement->rowCount() !== 1) throw new RuntimeException('Kuesioner tidak dapat diperbarui.');
     }

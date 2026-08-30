@@ -10,7 +10,8 @@ final class QuestionnaireBoundaryTest extends TestCase
     {
         $contents = file_get_contents(dirname(__DIR__, 2) . '/siswa/kuesioner.php');
 
-        self::assertStringContainsString('new QuestionnaireService($pdo)', $contents);
+        self::assertStringContainsString('new StagedScreeningService($store)', $contents);
+        self::assertStringContainsString('new PdoStagedScreeningStore($pdo)', $contents);
         self::assertStringNotContainsString('INSERT INTO kuesioner', $contents);
         self::assertStringNotContainsString('beginTransaction()', $contents);
     }
@@ -25,31 +26,29 @@ final class QuestionnaireBoundaryTest extends TestCase
         self::assertStringContainsString('model_checksum', $contents);
     }
 
-    public function testLabSectionIsRequiredExplainedAndAccessible(): void
+    public function testFirstStageHasProfileAndSymptomsWithoutLabSection(): void
     {
         $contents = file_get_contents(dirname(__DIR__, 2) . '/siswa/kuesioner.php');
 
         self::assertStringContainsString('<fieldset', $contents);
-        self::assertStringContainsString('name="lab_status"', $contents);
-        self::assertStringContainsString('value="tersedia"', $contents);
-        self::assertStringContainsString('value="belum_ada"', $contents);
-        foreach (['lab-hb-help', 'lab-mchc-help', 'lab-mcv-help', 'lab-mch-help'] as $id) {
-            self::assertStringContainsString('id="' . $id . '"', $contents);
-            self::assertStringContainsString('aria-describedby="' . $id . '"', $contents);
-        }
-        self::assertStringContainsString('setLabRequirement', $contents);
+        self::assertStringContainsString('name="tanggal_lahir"', $contents);
+        self::assertStringContainsString('name="pendidikan"', $contents);
+        self::assertStringContainsString('name="jenis_kelamin"', $contents);
+        self::assertStringContainsString('name="gejala_<?= $number ?>"', $contents);
+        self::assertStringNotContainsString('name="lab_status"', $contents);
+        self::assertStringNotContainsString('kadar_hb', $contents);
     }
 
-    public function testAutomaticIdentityFieldsAreRebuiltOnTheServer(): void
+    public function testIdentityAndOwnershipAreResolvedOnTheServer(): void
     {
-        $contents = file_get_contents(dirname(__DIR__, 2) . '/siswa/kuesioner.php');
+        $route = file_get_contents(dirname(__DIR__, 2) . '/siswa/kuesioner.php');
+        $store = file_get_contents(dirname(__DIR__, 2) . '/app/Repositories/PdoStagedScreeningStore.php');
 
-        self::assertStringContainsString('$submission = $_POST;', $contents);
-        self::assertStringContainsString('$submission[\'inisial\'] = $inisial;', $contents);
-        self::assertStringContainsString('$submission[\'pendidikan\'] = $pendidikan;', $contents);
-        self::assertStringContainsString('$submission[\'jurusan\'] = $jurusan;', $contents);
-        self::assertStringContainsString('$submission[\'tanggal_wawancara\'] = date(\'Y-m-d\');', $contents);
-        self::assertStringContainsString('submit($user_id, $submission)', $contents);
+        self::assertStringContainsString("SELECT nama, username, kelas FROM users WHERE id = ?", $route);
+        self::assertStringContainsString("role = 'siswa' AND status = 'active'", $store);
+        self::assertStringContainsString('submitSymptoms(', $route);
+        self::assertStringContainsString('createSymptomScreening(', file_get_contents(dirname(__DIR__, 2) . '/app/Services/StagedScreeningService.php'));
+        self::assertStringContainsString('WHERE id = ? AND user_id = ?', $store);
     }
 
     public function testArchivedQuestionnairesDoNotExtendTheCooldown(): void
@@ -61,27 +60,24 @@ final class QuestionnaireBoundaryTest extends TestCase
         self::assertStringContainsString('archived_at IS NULL', $dashboard);
     }
 
-    public function testWizardRevealsHiddenInvalidFieldsBeforeSubmission(): void
+    public function testConditionalMenstrualFieldsAreRevealedAndRequired(): void
     {
         $contents = file_get_contents(dirname(__DIR__, 2) . '/siswa/kuesioner.php');
 
-        self::assertStringContainsString("form.addEventListener('invalid'", $contents);
-        self::assertStringContainsString('showInvalidInput', $contents);
-        self::assertStringContainsString("form.querySelector(':invalid')", $contents);
-        self::assertStringContainsString("typeof invalidInput.reportValidity === 'function'", $contents);
-        self::assertDoesNotMatchRegularExpression(
-            '/<button type="submit"[^>]*class="[^"]*\\bbtn-next\\b[^"]*"/',
-            $contents
-        );
+        self::assertStringContainsString('id="menstrualDetails"', $contents);
+        self::assertStringContainsString("input.disabled = !started", $contents);
+        self::assertStringContainsString("input.required = started", $contents);
+        self::assertStringContainsString("form.checkValidity()", $contents);
     }
 
-    public function testQuestionnaireCanBeCollectedWithoutBypassingTheClinicalGate(): void
+    public function testStagedScreeningDoesNotDependOnTheLabClinicalGate(): void
     {
         $contents = file_get_contents(dirname(__DIR__, 2) . '/siswa/kuesioner.php');
 
-        self::assertStringContainsString('if ($clinicalRiskEnabled)', $contents);
-        self::assertStringContainsString('->collect($user_id, $submission)', $contents);
-        self::assertStringContainsString('hasil risiko belum tersedia', strtolower($contents));
+        self::assertStringContainsString('submitSymptoms(', $contents);
+        self::assertStringContainsString('submitRiskFactors(', $contents);
+        self::assertStringContainsString('tanpa pemeriksaan Hb', $contents);
+        self::assertStringNotContainsString('isClinicalRiskEnabled()', $contents);
         self::assertDoesNotMatchRegularExpression(
             '/<button type="submit"[^>]*\\bdisabled\\b/',
             $contents

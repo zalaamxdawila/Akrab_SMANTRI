@@ -72,6 +72,6 @@ check_role('uks');
         html5QrcodeScanner.render(onScanSuccess, onScanFailure);
     });
 </script>
-<script src="../assets/js/app-init.js?v=20260818"></script>
+<script src="../assets/js/app-init.js?v=20260831-safe-install"></script>
 </body>
 </html>

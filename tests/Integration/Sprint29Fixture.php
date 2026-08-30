@@ -32,7 +32,7 @@ final class Sprint29Fixture
             kadar_mchc REAL, kadar_mcv REAL, kadar_mch REAL,
             skor_gejala INTEGER, skor_sikap INTEGER,
             skor_pengetahuan INTEGER, skor_makan INTEGER,
-            created_at TEXT, {$metadata}
+            created_at TEXT, {$metadata}, history_only_at TEXT
         )");
         $pdo->exec("CREATE TABLE hasil_deteksi (
             id INTEGER PRIMARY KEY, user_id INTEGER, probabilitas_risiko REAL,

@@ -5,6 +5,10 @@ require_once '../helpers.php';
 check_role('siswa');
 $user_id = $_SESSION['user_id'];
 
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+    verifyCsrfOrFail(csrfTokenFromRequest($_POST, $_SERVER));
+}
+
 // Check if email is missing
 $stmt = $pdo->prepare("SELECT email FROM users WHERE id = ?");
 $stmt->execute([$user_id]);
@@ -49,25 +53,45 @@ $stmt->execute([$user_id]);
 $sedang_haid = $stmt->fetch() ? true : false;
 
 // Check latest questionnaire
-$stmt = $pdo->prepare("SELECT * FROM kuesioner WHERE user_id = ? AND archived_at IS NULL ORDER BY created_at DESC LIMIT 1");
+$stmt = $pdo->prepare("SELECT * FROM kuesioner WHERE user_id = ? AND archived_at IS NULL AND history_only_at IS NULL ORDER BY created_at DESC, id DESC LIMIT 1");
 $stmt->execute([$user_id]);
 $kuesioner = $stmt->fetch();
+$questionnaireRepository = new QuestionnaireAnalyticsRepository($pdo);
+$questionnaireHistory = array_slice(
+    array_reverse($questionnaireRepository->historyForStudent((int) $user_id)),
+    0,
+    5
+);
 
 $questionnaireEligibility = (new QuestionnaireEligibility())->forLatestSubmission(
     $kuesioner['created_at'] ?? null
 );
-$can_fill_kuesioner = $questionnaireEligibility['allowed'];
+$pending_staged_screening = $kuesioner
+    && ($kuesioner['tahap_screening'] ?? null) === 'faktor_risiko_tersedia';
+$can_fill_kuesioner = $questionnaireEligibility['allowed'] || $pending_staged_screening;
 $next_kuesioner_date = $questionnaireEligibility['next_eligible_at']
     ? $questionnaireEligibility['next_eligible_at']->format('d M Y')
     : null;
 
 // A result is current only when it was created with the latest questionnaire.
 $hasil_deteksi = $kuesioner
-    ? (new QuestionnaireAnalyticsRepository($pdo))->latestDetectionForStudent(
+    ? $questionnaireRepository->latestDetectionForStudent(
         (int) $user_id,
         (int) ($kuesioner['id'] ?? 0)
     )
     : null;
+$staged_presentation = null;
+if (
+    $kuesioner
+    && !empty($kuesioner['versi_screening'])
+    && !$pending_staged_screening
+) {
+    try {
+        $staged_presentation = (new StagedScreeningResultPresenter())->present($kuesioner);
+    } catch (InvalidArgumentException) {
+        $staged_presentation = null;
+    }
+}
 
 // Handle TTD consumption confirmation
 if (isset($_POST['confirm_ttd'])) {
@@ -142,8 +166,9 @@ if (empty($news)) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Siswa - AKRAB</title>
     <link href="/assets/vendor/bootstrap.min.css" rel="stylesheet">
-    <link href="../assets/css/style.css?v=20260818" rel="stylesheet">
+    <link href="../assets/css/style.css?v=20260830-profile" rel="stylesheet">
     <script src="/assets/vendor/lucide.min.js"></script>
+    <script defer src="../assets/js/email-profile-notice.js?v=20260830"></script>
 </head>
 <body>
 <?php renderImpersonationBanner($pdo, $_SESSION); ?>
@@ -164,6 +189,44 @@ if (empty($news)) {
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="konsultasi.php">Konsultasi</a>
+                </li>
+                <li class="nav-item profile-nav-item">
+                    <a class="profile-nav-link nav-link d-inline-flex align-items-center gap-2"
+                       href="profil.php"
+                       data-email-profile-link
+                       aria-label="<?= $hasEmail ? 'Profil' : 'Profil, email belum dilengkapi' ?>">
+                        <span class="position-relative d-inline-flex" aria-hidden="true">
+                            <i data-lucide="circle-user-round" class="profile-nav-icon"></i>
+                            <?php if (!$hasEmail): ?>
+                                <span class="profile-email-dot"></span>
+                            <?php endif; ?>
+                        </span>
+                        <span>Profil</span>
+                    </a>
+                    <?php if (!$hasEmail): ?>
+                        <div class="profile-email-bubble"
+                             id="emailProfileNotice"
+                             role="region"
+                             aria-labelledby="emailProfileNoticeTitle"
+                             data-email-profile-notice
+                             data-storage-key="akrab-email-profile-notice-<?= (int) $user_id ?>">
+                            <button type="button"
+                                    class="profile-email-bubble-close"
+                                    data-email-notice-close
+                                    aria-controls="emailProfileNotice"
+                                    aria-label="Tutup pengingat email">
+                                <i data-lucide="x" aria-hidden="true"></i>
+                            </button>
+                            <div class="d-flex align-items-start gap-2 pe-4">
+                                <i data-lucide="mail-warning" class="profile-email-bubble-icon" aria-hidden="true"></i>
+                                <div>
+                                    <strong class="d-block mb-1" id="emailProfileNoticeTitle">Email belum dilengkapi.</strong>
+                                    <span class="d-block">Tambahkan email agar dapat mereset password jika lupa.</span>
+                                    <a href="profil.php" class="profile-email-bubble-action">Isi email sekarang</a>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link text-danger" href="../logout.php">Logout</a>
@@ -195,17 +258,6 @@ if (empty($news)) {
         </div>
     </div>
 
-    <?php if (!$hasEmail): ?>
-    <div class="alert alert-warning d-flex align-items-center gap-2 shadow-sm border-warning animate-fade-in-up mb-3" role="alert">
-        <i data-lucide="mail-alert" style="width: 22px;" class="text-warning flex-shrink-0"></i>
-        <div class="flex-grow-1">
-            <strong>Email belum dilengkapi.</strong>
-            Tambahkan email di <a href="profil.php" class="fw-bold text-decoration-underline">profil</a> agar dapat mereset password jika lupa.
-        </div>
-        <a href="profil.php" class="btn btn-sm btn-warning rounded-pill fw-bold flex-shrink-0">Isi Sekarang</a>
-    </div>
-    <?php endif; ?>
-
     <?php if (isset($_GET['success'])): ?>
         <div class="alert alert-success alert-auto-dismiss">Terima kasih telah mencatat konsumsi TTD hari ini!</div>
     <?php endif; ?>
@@ -216,7 +268,7 @@ if (empty($news)) {
         <div class="alert alert-warning alert-auto-dismiss border-warning shadow-sm"><i data-lucide="lock" style="width: 18px;" class="me-1"></i> Anda sudah mengisi kuesioner semester ini. Kuesioner akan terbuka otomatis pada jadwal pengecekan kesehatan berikutnya.</div>
     <?php endif; ?>
     <?php if (isset($_GET['questionnaire_saved'])): ?>
-        <div class="alert alert-success alert-auto-dismiss" role="status">Jawaban kuesioner berhasil disimpan. Hasil risiko belum tersedia sampai model selesai divalidasi klinis.</div>
+        <div class="alert alert-success alert-auto-dismiss" role="status">Jawaban kuesioner berhasil disimpan.</div>
     <?php endif; ?>
 
     <div class="row g-4 animate-fade-in-up delay-100">
@@ -298,8 +350,32 @@ if (empty($news)) {
         <!-- Risk Status -->
         <div class="col-md-6">
             <div class="card h-100 p-4">
-                <h5 class="card-title text-muted mb-3">Status Risiko Anemia</h5>
-                <?php if ($hasil_deteksi): ?>
+                <h5 class="card-title text-muted mb-3">Hasil Skrining Anemia</h5>
+                <?php if ($staged_presentation): ?>
+                    <div class="text-center my-3">
+                        <span class="badge text-bg-<?= escape_output($staged_presentation['status_class']) ?> fs-6 px-3 py-2">
+                            <?= escape_output($staged_presentation['title']) ?>
+                        </span>
+                    </div>
+                    <p class="text-center mb-1">Rerata gejala: <strong><?= escape_output($staged_presentation['symptom_average']) ?>/10</strong></p>
+                    <?php if ($staged_presentation['show_risk_score']): ?>
+                        <p class="text-center mb-3">Faktor risiko: <strong><?= escape_output($staged_presentation['risk_percentage']) ?></strong></p>
+                    <?php endif; ?>
+                    <div class="text-center d-flex flex-column gap-2 align-items-center">
+                        <a href="hasil_deteksi.php?questionnaire_id=<?= (int) $kuesioner['id'] ?>" class="btn btn-outline-primary w-75">Lihat Hasil dan Saran</a>
+                        <?php if ($questionnaireEligibility['allowed']): ?>
+                            <a href="kuesioner.php" class="btn btn-primary w-75">Isi Skrining Baru</a>
+                        <?php elseif ($next_kuesioner_date): ?>
+                            <small class="text-muted mt-1">Dapat diisi kembali pada <strong><?= escape_output($next_kuesioner_date) ?></strong>.</small>
+                        <?php endif; ?>
+                    </div>
+                <?php elseif ($pending_staged_screening): ?>
+                    <div class="text-center my-4">
+                        <i data-lucide="clipboard-list" class="text-primary mb-2" style="width: 42px; height: 42px;"></i>
+                        <p class="mb-3">Skor gejala melewati 4,6. Lanjutkan pertanyaan faktor risiko untuk menyelesaikan skrining.</p>
+                        <a href="kuesioner.php?questionnaire_id=<?= (int) $kuesioner['id'] ?>" class="btn btn-primary">Lanjutkan Faktor Risiko</a>
+                    </div>
+                <?php elseif ($hasil_deteksi): ?>
                     <?php 
                         $risk_class = 'risk-low';
                         $risk_label = 'Rendah';
@@ -322,12 +398,63 @@ if (empty($news)) {
                 <?php else: ?>
                     <div class="text-center my-4">
                         <?php if ($kuesioner): ?>
-                            <p class="text-muted">Kuesioner sudah tersimpan. Lengkapi empat nilai laboratorium untuk menjalankan simulasi regresi logistik.</p>
-                            <a href="data_laboratorium.php" class="btn btn-primary">Lengkapi Data Laboratorium</a>
+                            <p class="text-muted">Data lama tersimpan, tetapi belum memakai format skrining gejala bertahap.</p>
+                            <?php if ($can_fill_kuesioner): ?>
+                                <a href="kuesioner.php" class="btn btn-primary">Isi Skrining Gejala</a>
+                            <?php elseif ($next_kuesioner_date): ?>
+                                <small class="text-muted">Skrining baru tersedia pada <strong><?= escape_output($next_kuesioner_date) ?></strong>.</small>
+                            <?php endif; ?>
                         <?php else: ?>
-                            <p class="text-muted">Belum ada data. Silakan isi kuesioner terlebih dahulu.</p>
-                            <a href="kuesioner.php" class="btn btn-primary">Isi Kuesioner Sekarang</a>
+                            <p class="text-muted">Belum ada hasil. Skrining dapat dilakukan dari gejala tanpa pemeriksaan Hb.</p>
+                            <a href="kuesioner.php" class="btn btn-primary">Mulai Skrining Gejala</a>
                         <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card h-100 p-4">
+                <h5 class="card-title text-muted mb-2 d-flex align-items-center gap-2">
+                    <i data-lucide="history" aria-hidden="true"></i>
+                    Riwayat Skrining Pribadi
+                </h5>
+                <p class="small text-muted">
+                    Hasil berlabel <strong>Riwayat pribadi</strong> tetap dapat dilihat di sini, tetapi tidak dihitung dalam pendataan utama sekolah.
+                </p>
+                <?php if ($questionnaireHistory === []): ?>
+                    <p class="text-muted mb-0">Belum ada riwayat skrining.</p>
+                <?php else: ?>
+                    <div class="list-group list-group-flush">
+                        <?php foreach ($questionnaireHistory as $historyItem): ?>
+                            <?php
+                            $historyOnly = !empty($historyItem['history_only_at']);
+                            $isStagedHistory = !empty($historyItem['versi_screening']);
+                            $canOpenHistory = $isStagedHistory
+                                && ($historyItem['tahap_screening'] ?? null)
+                                    !== 'faktor_risiko_tersedia';
+                            ?>
+                            <div class="list-group-item px-0 d-flex justify-content-between align-items-center gap-3">
+                                <div>
+                                    <span class="fw-semibold d-block">
+                                        <?= escape_output(date('d M Y', strtotime((string) $historyItem['created_at']))) ?>
+                                    </span>
+                                    <small class="text-muted">
+                                        <?= $isStagedHistory
+                                            ? 'Rerata gejala ' . escape_output($historyItem['rerata_gejala']) . '/10'
+                                            : 'Format kuesioner sebelumnya' ?>
+                                    </small>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge <?= $historyOnly ? 'text-bg-secondary' : 'text-bg-success' ?> d-block mb-1">
+                                        <?= $historyOnly ? 'Riwayat pribadi' : 'Data utama' ?>
+                                    </span>
+                                    <?php if ($canOpenHistory): ?>
+                                        <a class="small" href="hasil_deteksi.php?questionnaire_id=<?= (int) $historyItem['id'] ?>">Lihat hasil</a>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
                     </div>
                 <?php endif; ?>
             </div>
@@ -405,7 +532,7 @@ if (empty($news)) {
 
 <script src="/assets/vendor/bootstrap.bundle.min.js"></script>
 <script src="/assets/vendor/lucide.min.js"></script>
-<script src="../assets/js/app-init.js?v=20260818"></script>
+<script src="../assets/js/app-init.js?v=20260831-safe-install"></script>
 <script src="../assets/js/chatbot.js?v=20260818"></script>
 <script>
   lucide.createIcons();

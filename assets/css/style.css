@@ -135,6 +135,142 @@ h1, h2, h3, h4, h5, h6 {
     background-color: rgba(16, 185, 129, 0.07);
 }
 
+.profile-nav-item {
+    position: relative;
+}
+
+.profile-nav-link {
+    white-space: nowrap;
+}
+
+.profile-nav-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.profile-email-dot {
+    position: absolute;
+    top: -0.2rem;
+    right: -0.2rem;
+    width: 0.55rem;
+    height: 0.55rem;
+    border: 2px solid var(--surface);
+    border-radius: var(--radius-full);
+    background: var(--danger-color);
+}
+
+.profile-email-bubble {
+    position: absolute;
+    top: calc(100% + 0.75rem);
+    right: 0;
+    z-index: 1080;
+    width: min(20rem, calc(100vw - 2rem));
+    padding: 0.9rem;
+    color: var(--text-main);
+    background: var(--surface-elevated);
+    border: 1px solid color-mix(in srgb, var(--warning-color) 40%, var(--border-color));
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    font-size: 0.82rem;
+    line-height: 1.45;
+    animation: profile-email-bubble-in 180ms ease-out;
+}
+
+.profile-email-bubble::before {
+    content: '';
+    position: absolute;
+    right: 1.2rem;
+    bottom: 100%;
+    border: 0.45rem solid transparent;
+    border-bottom-color: var(--surface-elevated);
+}
+
+.profile-email-bubble[hidden] {
+    display: none !important;
+}
+
+.profile-email-bubble-icon {
+    flex: 0 0 auto;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-top: 0.1rem;
+    color: var(--warning-color);
+}
+
+.profile-email-bubble-close {
+    position: absolute;
+    top: 0.55rem;
+    right: 0.55rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    color: var(--text-muted);
+    background: transparent;
+    border: 0;
+    border-radius: var(--radius-full);
+}
+
+.profile-email-bubble-close:hover {
+    color: var(--text-main);
+    background: var(--surface-muted);
+}
+
+.profile-email-bubble-close:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--primary-color) 35%, transparent);
+    outline-offset: 1px;
+}
+
+.profile-email-bubble-close svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+.profile-email-bubble-action {
+    display: inline-block;
+    margin-top: 0.45rem;
+    color: var(--primary-dark);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.profile-email-bubble-action:hover {
+    text-decoration: underline;
+}
+
+@keyframes profile-email-bubble-in {
+    from { opacity: 0; transform: translateY(-0.25rem); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 991.98px) {
+    .profile-nav-item,
+    .profile-nav-link {
+        width: 100%;
+    }
+
+    .profile-email-bubble {
+        position: relative;
+        top: auto;
+        right: auto;
+        width: 100%;
+        margin: 0.35rem 0 0.75rem;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .profile-email-bubble::before {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .profile-email-bubble {
+        animation: none;
+    }
+}
+
 .navbar-toggler {
     border: none !important;
     background: rgba(16, 185, 129, 0.08) !important;

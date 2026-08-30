@@ -98,6 +98,114 @@ function validateBmiInput(mixed $weight, mixed $height): array
     }
 }
 
+/**
+ * Validate the first stage of the school screening: student profile and the
+ * ten symptom questions from the canonical questionnaire.
+ *
+ * @return array{valid: bool, errors: list<string>, values: array<string, mixed>}
+ */
+function validateStagedSymptomInput(array $input): array
+{
+    try {
+        $birthDate = optionalDate($input['tanggal_lahir'] ?? null);
+        if ($birthDate === null) {
+            throw new InvalidArgumentException('Tanggal lahir wajib diisi untuk menghitung usia.');
+        }
+        $age = (new DateTimeImmutable($birthDate))->diff(new DateTimeImmutable('today'))->y;
+        if ($age < 10 || $age > 25) {
+            throw new InvalidArgumentException('Usia siswa harus berada pada rentang 10 sampai 25 tahun.');
+        }
+
+        $symptoms = [];
+        for ($index = 1; $index <= 10; $index++) {
+            $symptoms[] = (int) boundedInt($input['gejala_' . $index] ?? null, 0, 10);
+        }
+
+        return [
+            'valid' => true,
+            'errors' => [],
+            'values' => [
+                'tanggal_lahir' => $birthDate,
+                'usia' => $age,
+                'pendidikan' => enumValue(
+                    $input['pendidikan'] ?? null,
+                    ['Kelas VII', 'Kelas VIII', 'Kelas IX', 'Kelas X', 'Kelas XI', 'Kelas XII']
+                ),
+                'jenis_kelamin' => enumValue(
+                    $input['jenis_kelamin'] ?? null,
+                    ['perempuan', 'laki_laki']
+                ),
+                'symptoms' => $symptoms,
+            ],
+        ];
+    } catch (InvalidArgumentException $exception) {
+        return ['valid' => false, 'errors' => [$exception->getMessage()], 'values' => []];
+    }
+}
+
+/**
+ * Validate only the risk-factor questions shown after the symptom gate.
+ * Menstrual detail fields are conditional, matching the source questionnaire.
+ *
+ * @return array{valid: bool, errors: list<string>, values: array<string, mixed>}
+ */
+function validateStagedRiskFactorInput(array $input): array
+{
+    try {
+        $menstruation = enumValue($input['mens_sudah'] ?? null, ['ya', 'belum']);
+        $values = [
+            'mens_sudah' => $menstruation,
+            'mens_usia_th' => null,
+            'mens_usia_bln' => null,
+            'mens_teratur' => null,
+            'mens_lama_hari' => null,
+            'mens_jarak_siklus' => null,
+        ];
+
+        if ($menstruation === 'ya') {
+            $values['mens_usia_th'] = boundedInt($input['mens_usia_th'] ?? null, 5, 25);
+            $values['mens_usia_bln'] = boundedInt($input['mens_usia_bln'] ?? 0, 0, 11);
+            $values['mens_teratur'] = enumValue($input['mens_teratur'] ?? null, ['ya', 'tidak']);
+            $values['mens_lama_hari'] = boundedInt($input['mens_lama'] ?? null, 1, 15);
+            $values['mens_jarak_siklus'] = boundedInt($input['mens_jarak_siklus'] ?? null, 1, 100);
+        }
+
+        $meals = [];
+        foreach (['pagi', 'jam_10', 'siang', 'jam_4', 'malam'] as $mealTime) {
+            $meals[$mealTime] = [
+                'food' => normalizeText($input['makanan_' . $mealTime] ?? '', 150),
+                'amount' => normalizeText($input['jumlah_' . $mealTime] ?? '', 80),
+            ];
+        }
+
+        $dietHabits = [];
+        $legacyDietScore = 0;
+        for ($index = 1; $index <= 6; $index++) {
+            $habit = enumValue($input['makan_' . $index] ?? null, ['selalu', 'kadang', 'tidak']);
+            $dietHabits['makan_' . $index] = $habit;
+            $legacyDietScore += match ($habit) {
+                'selalu' => 3,
+                'kadang' => 2,
+                'tidak' => 1,
+            };
+        }
+
+        return [
+            'valid' => true,
+            'errors' => [],
+            'values' => [
+                ...$values,
+                'meals' => $meals,
+                'diet_habits' => $dietHabits,
+                'skor_makan' => $legacyDietScore,
+                'makanan_dikonsumsi' => normalizeText($input['makanan_dikonsumsi'] ?? '', 1000),
+            ],
+        ];
+    } catch (InvalidArgumentException $exception) {
+        return ['valid' => false, 'errors' => [$exception->getMessage()], 'values' => []];
+    }
+}
+
 function validateQuestionnaireInput(array $input): array
 {
     try {

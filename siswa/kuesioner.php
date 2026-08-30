@@ -1,200 +1,145 @@
 <?php
+
+declare(strict_types=1);
+
 require_once '../config.php';
 require_once '../helpers.php';
 
 check_role('siswa');
-$user_id = $_SESSION['user_id'];
+
+if (!PdoStagedScreeningStore::schemaIsReady($pdo)) {
+    http_response_code(503);
+    header('Retry-After: 300');
+    exit('Layanan skrining sedang disiapkan. Silakan coba kembali beberapa saat lagi.');
+}
+
+$userId = (int) $_SESSION['user_id'];
 $error = '';
-$success = '';
-$clinicalRiskEnabled = isClinicalRiskEnabled();
+$store = new PdoStagedScreeningStore($pdo);
+$screeningService = new StagedScreeningService($store);
 
-// Cek Cooldown Kuesioner (6 Bulan)
-$stmtCooldown = $pdo->prepare("SELECT created_at FROM kuesioner WHERE user_id = ? AND archived_at IS NULL ORDER BY created_at DESC LIMIT 1");
-$stmtCooldown->execute([$user_id]);
-$lastKuesioner = $stmtCooldown->fetch();
-$questionnaireEligibility = (new QuestionnaireEligibility())->forLatestSubmission(
-    $lastKuesioner['created_at'] ?? null
-);
-if (!$questionnaireEligibility['allowed']) {
-    header("Location: dashboard.php?cooldown=1");
-    exit;
+$userStatement = $pdo->prepare('SELECT nama, username, kelas FROM users WHERE id = ? AND role = \'siswa\' LIMIT 1');
+$userStatement->execute([$userId]);
+$user = $userStatement->fetch();
+if (!$user) {
+    http_response_code(404);
+    exit('Akun siswa tidak ditemukan.');
 }
 
-$stmtUser = $pdo->prepare("SELECT nama, username, kelas FROM users WHERE id = ?");
-$stmtUser->execute([$user_id]);
-$userData = $stmtUser->fetch();
-
-$user_nama = $userData['nama'] ?? '';
-$words = explode(" ", $user_nama);
-$inisial = "";
-foreach ($words as $w) {
-    if (!empty($w)) {
-        $inisial .= strtoupper($w[0]);
+$allowedClasses = ['Kelas VII', 'Kelas VIII', 'Kelas IX', 'Kelas X', 'Kelas XI', 'Kelas XII'];
+$savedClass = trim((string) ($user['kelas'] ?? ''));
+$selectedClass = '';
+foreach ($allowedClasses as $class) {
+    if (stripos($savedClass, $class) === 0 || strcasecmp($savedClass, substr($class, 6)) === 0) {
+        $selectedClass = $class;
+        break;
     }
 }
 
-$user_kelas = trim($userData['kelas'] ?? '');
-$pendidikan = '';
-$jurusan = '';
-if (preg_match('/^(Kelas\s+(VII|VIII|IX|X|XI|XII))\s*(.*)$/i', $user_kelas, $matches)) {
-    $pendidikan = 'Kelas ' . strtoupper($matches[2]);
-    $jurusan = trim($matches[3]);
-} elseif (preg_match('/^(VII|VIII|IX|X|XI|XII)\s*(.*)$/i', $user_kelas, $matches)) {
-    $pendidikan = 'Kelas ' . strtoupper($matches[1]);
-    $jurusan = trim($matches[2]);
-} else {
-    // If not matching any known roman numerals, just pass it along
-    $pendidikan = $user_kelas;
-    $jurusan = '';
-}
+$pendingRisk = $screeningService->pendingRiskFactors($userId);
+$step = $pendingRisk !== null ? 'risk' : 'symptoms';
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    try {
-        $submission = $_POST;
-        $submission['inisial'] = $inisial;
-        $submission['pendidikan'] = $pendidikan;
-        $submission['jurusan'] = $jurusan;
-        $submission['tanggal_wawancara'] = date('Y-m-d');
-        $foodRows = [];
-        foreach (['pagi', 'jam_10', 'siang', 'jam_4', 'malam'] as $mealTime) {
-            $food = trim((string) ($submission['makanan_' . $mealTime] ?? ''));
-            $amount = trim((string) ($submission['jumlah_' . $mealTime] ?? ''));
-            if ($food !== '' || $amount !== '') {
-                $foodRows[] = $mealTime . ': ' . $food . ($amount !== '' ? ' (' . $amount . ')' : '');
-            }
-        }
-        $submission['makanan_dikonsumsi'] = implode('; ', $foodRows);
-        $questionnaireService = new QuestionnaireService($pdo);
-        if ($clinicalRiskEnabled) {
-            if (($submission['lab_status'] ?? '') === 'tersedia') {
-                $questionnaireService->submit($user_id, $submission);
-                header("Location: hasil_deteksi.php");
-                exit;
-            }
-        }
-
-        $questionnaireService->collect($user_id, $submission);
-        header("Location: data_laboratorium.php?questionnaire_saved=1");
+if ($step === 'symptoms') {
+    $latestStatement = $pdo->prepare(
+        'SELECT created_at FROM kuesioner
+         WHERE user_id = ? AND archived_at IS NULL
+           AND history_only_at IS NULL
+         ORDER BY created_at DESC, id DESC LIMIT 1'
+    );
+    $latestStatement->execute([$userId]);
+    $latestCreatedAt = $latestStatement->fetchColumn();
+    $eligibility = (new QuestionnaireEligibility())->forLatestSubmission(
+        is_string($latestCreatedAt) ? $latestCreatedAt : null
+    );
+    if (!$eligibility['allowed']) {
+        header('Location: dashboard.php?cooldown=1', true, 303);
         exit;
-    } catch (Exception $e) {
-        if ($pdo->inTransaction()) {
-            $pdo->rollBack();
-        }
-        akrabLog('warn', 'questionnaire_submission_failed', ['exception_class' => get_class($e), 'outcome' => 'rejected']);
-        $error = $e instanceof InvalidArgumentException ? $e->getMessage() : publicErrorMessage();
     }
 }
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verifyCsrfOrFail(csrfTokenFromRequest($_POST, $_SERVER));
+
+    try {
+        $action = enumValue($_POST['action'] ?? null, ['symptoms', 'risk']);
+        if ($action === 'symptoms') {
+            if ($step !== 'symptoms') {
+                throw new InvalidArgumentException('Selesaikan faktor risiko yang masih terbuka terlebih dahulu.');
+            }
+            $result = $screeningService->submitSymptoms($userId, $_POST);
+            $destination = $result['risk_eligible']
+                ? 'kuesioner.php?questionnaire_id=' . $result['questionnaire_id']
+                : 'hasil_deteksi.php?questionnaire_id=' . $result['questionnaire_id'];
+            header('Location: ' . $destination, true, 303);
+            exit;
+        }
+
+        if ($step !== 'risk' || $pendingRisk === null) {
+            throw new InvalidArgumentException('Tahap faktor risiko tidak tersedia.');
+        }
+        $questionnaireId = (int) boundedInt($_POST['questionnaire_id'] ?? null, 1, PHP_INT_MAX);
+        if ($questionnaireId !== (int) $pendingRisk['id']) {
+            throw new InvalidArgumentException('Kuesioner faktor risiko tidak sesuai.');
+        }
+        $result = $screeningService->submitRiskFactors($userId, $questionnaireId, $_POST);
+        header('Location: hasil_deteksi.php?questionnaire_id=' . $result['questionnaire_id'], true, 303);
+        exit;
+    } catch (Throwable $exception) {
+        akrabLog('warn', 'staged_screening_submission_failed', [
+            'exception_class' => get_class($exception),
+            'outcome' => 'rejected',
+        ]);
+        $error = $exception instanceof InvalidArgumentException
+            ? $exception->getMessage()
+            : publicErrorMessage();
+    }
+}
+
+$symptomQuestions = [
+    'Sahabat merasakan cepat lelah bila beraktivitas',
+    'Sahabat merasakan pusing',
+    'Sahabat merasakan mata berkunang-kunang',
+    'Sahabat merasakan bagian ujung tangan atau kaki sering dingin',
+    'Sahabat merasakan suka sempoyongan',
+    'Sahabat merasakan berdebar-debar walaupun beraktivitas ringan',
+    'Sahabat merasakan mengantuk',
+    'Sahabat merasakan malas beraktivitas',
+    'Sahabat merasakan nafas terasa pendek waktu beraktivitas',
+    'Sahabat merasakan pucat',
+];
+$dietQuestions = [
+    'Apakah sahabat ada sarapan setiap hari ?',
+    'Apakah sahabat rutin makan siang ?',
+    'Apakah sahabat selalu makan malam?',
+    'Apakah sahabat ada makan snek antara makan pagi dan siang?',
+    'Apakah sahabat ada makan snek antara makan siang dan malam?',
+    'Apakah sahabat ada makan lagi atau snek menjelang tidur ?',
+];
+$mealTimes = [
+    'pagi' => 'Pagi',
+    'jam_10' => 'Jam 10',
+    'siang' => 'Siang',
+    'jam_4' => 'Jam 4',
+    'malam' => 'Malam',
+];
 ?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Isi Kuesioner Lengkap - AKRAB</title>
+    <title>Skrining Gejala Anemia - AKRAB</title>
     <link href="/assets/vendor/bootstrap.min.css" rel="stylesheet">
-    <link href="../assets/css/style.css?v=20260818" rel="stylesheet">
+    <link href="../assets/css/style.css?v=20260830" rel="stylesheet">
     <script src="/assets/vendor/lucide.min.js"></script>
     <style>
-        .step-container { display: none; animation: fadeInUp 0.4s ease; }
-        .step-container.active { display: block; }
-        
-        .progress-wizard { height: 8px; border-radius: 10px; background-color: #e2e8f0; margin-bottom: 2rem; overflow: hidden; }
-        .progress-bar-wizard { background: var(--primary-gradient); height: 100%; width: 0%; transition: width 0.4s ease; }
-        
-        /* Modern range slider */
-        input[type=range] {
-            -webkit-appearance: none;
-            width: 100%;
-            background: transparent;
-        }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 24px;
-            width: 24px;
-            border-radius: 50%;
-            background: var(--primary-color);
-            cursor: pointer;
-            margin-top: -9px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-        }
-        input[type=range]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 6px;
-            cursor: pointer;
-            background: #cbd5e1;
-            border-radius: 10px;
-        }
-        .range-labels {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            margin-top: 8px;
-        }
-        
-        /* Custom Radio/Checkbox Cards */
-        .form-check-custom {
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 12px 15px;
-            margin-bottom: 8px;
-            transition: all 0.2s;
-            cursor: pointer;
-            background: var(--bg-white);
-        }
-        .form-check-custom:hover { background: #f8fafc; border-color: var(--primary-light); }
-        .form-check-input:checked + span { font-weight: 700; color: var(--primary-color); }
-        .form-check-custom:has(.form-check-input:checked) {
-            border-color: var(--primary-color);
-            background-color: #ecfdf5;
-        }
-
-        /* Yes/No Toggle for Risk Factors */
-        .risk-toggle {
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 12px;
-            background: var(--bg-white);
-            transition: all 0.2s;
-        }
-        .risk-toggle .risk-label {
-            font-weight: 600;
-            margin-bottom: 10px;
-            display: block;
-            color: #1e293b;
-        }
-        .risk-toggle .btn-group-toggle .btn {
-            border-radius: 8px;
-            padding: 6px 20px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-        .risk-toggle .btn-group-toggle .btn-outline-danger {
-            border-color: #dc3545;
-            color: #dc3545;
-        }
-        .risk-toggle .btn-group-toggle .btn-outline-danger.active,
-        .risk-toggle .btn-group-toggle .btn-outline-danger:active {
-            background-color: #dc3545;
-            color: #fff;
-            border-color: #dc3545;
-        }
-        .risk-toggle .btn-group-toggle .btn-outline-success {
-            border-color: #198754;
-            color: #198754;
-        }
-        .risk-toggle .btn-group-toggle .btn-outline-success.active,
-        .risk-toggle .btn-group-toggle .btn-outline-success:active {
-            background-color: #198754;
-            color: #fff;
-            border-color: #198754;
-        }
-        .risk-toggle:has(.btn-check:checked) {
-            border-color: var(--primary-color);
-            background-color: #f0fdf4;
-        }
+        .screening-shell { max-width: 900px; }
+        .screening-step { letter-spacing: .04em; }
+        .question-card { border: 1px solid #e2e8f0; border-radius: 1rem; }
+        .question-card:focus-within { border-color: var(--primary-color); box-shadow: 0 0 0 .2rem rgba(16, 185, 129, .1); }
+        .score-value { min-width: 3rem; text-align: center; }
+        .form-range { min-height: 2.5rem; }
+        .context-note { background: linear-gradient(135deg, #ecfdf5, #f0fdfa); }
     </style>
 </head>
 <body class="bg-light">
@@ -203,528 +148,292 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top shadow-sm">
     <div class="container">
         <a class="navbar-brand fw-bold text-white d-flex align-items-center gap-2" href="dashboard.php">
-            <i data-lucide="arrow-left"></i> AKRAB Siswa
+            <i data-lucide="arrow-left" aria-hidden="true"></i> AKRAB Siswa
         </a>
     </div>
 </nav>
 
-<div class="container py-4" style="max-width: 800px;">
-    <div class="text-center mb-4">
-        <h3 class="fw-bold text-primary">Kuesioner Skrining Anemia</h3>
-        <p class="text-muted">Jawablah pertanyaan berikut dengan jujur untuk screening risiko. Hasil ini bukan diagnosis dan tidak menggantikan pemeriksaan tenaga kesehatan.</p>
-    </div>
+<main class="container screening-shell py-4 py-md-5">
+    <header class="text-center mb-4">
+        <span class="badge rounded-pill text-bg-success screening-step mb-2">
+            <?= $step === 'risk' ? 'TAHAP 2 DARI 2' : 'TAHAP 1 DARI 2' ?>
+        </span>
+        <h1 class="h3 fw-bold text-primary mb-2">
+            <?= $step === 'risk' ? 'Faktor Risiko' : 'Gejala yang Dirasakan' ?>
+        </h1>
+        <p class="text-muted mx-auto mb-0" style="max-width: 720px;">
+            Skrining sederhana tanpa pemeriksaan Hb ini membantu mengenali indikasi awal berdasarkan gejala.
+            Hasilnya bukan diagnosis dan tetap perlu dibahas dengan ahli medis sekolah atau tenaga kesehatan.
+        </p>
+    </header>
 
-    <div class="progress-wizard shadow-sm">
-        <div class="progress-bar-wizard" id="wizardProgress"></div>
-    </div>
-
-    <?php if ($error): ?>
-        <div class="alert alert-danger animate-fade-in-up"><?= htmlspecialchars($error) ?></div>
+    <?php if ($error !== ''): ?>
+        <div class="alert alert-danger" role="alert"><?= escape_output($error) ?></div>
     <?php endif; ?>
 
-    <?php if (!$clinicalRiskEnabled): ?>
-        <div class="alert alert-warning border-warning shadow-sm" role="alert">
-            <strong>Jawaban akan disimpan tanpa perhitungan risiko.</strong>
-            Model masih dalam proses validasi klinis. Data kuesioner dapat dikirim untuk evaluasi, tetapi hasil risiko belum tersedia dan data ini tidak boleh digunakan sebagai diagnosis.
+    <?php if ($step === 'symptoms'): ?>
+        <div class="alert context-note border-success-subtle" role="note">
+            Isi data diri, lalu beri nilai setiap gejala dari 0 (tidak dirasakan) sampai 10 (sangat kuat/sering).
+            Faktor risiko baru dapat diakses bila rerata gejala lebih dari 4,6.
         </div>
-    <?php endif; ?>
-    
-    <form method="POST" action="" id="kuesionerForm">
-        <?= csrfInput() ?>
-        
-        <!-- STEP 1: Karakteristik -->
-        <div class="step-container active" id="step1">
-            <div class="card mb-4 shadow-sm border-0">
-                <div class="card-header bg-white fw-bold d-flex align-items-center gap-2 border-bottom-0 pt-3">
-                    <span class="badge bg-primary rounded-circle px-2 py-2">1</span> Data Diri Dasar
-                </div>
-                <div class="card-body row g-3">
-                    <div class="col-md-6"><label class="form-label text-muted small fw-semibold">Tanggal Pengisian (Otomatis)</label><input type="date" class="form-control" name="tanggal_wawancara" value="<?= date('Y-m-d') ?>" readonly style="background-color: #e9ecef;"></div>
 
-                    <div class="col-md-6">
-                        <label class="form-label text-muted small fw-semibold">Nama Lengkap (Otomatis)</label>
-                        <input type="text" class="form-control" value="<?= htmlspecialchars($user_nama) ?>" readonly style="background-color: #e9ecef;">
-                        <input type="hidden" name="inisial" value="<?= htmlspecialchars($inisial) ?>">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label text-muted small fw-semibold">NISN (Otomatis)</label>
-                        <input type="text" class="form-control" value="<?= htmlspecialchars($userData['username'] ?? '') ?>" readonly style="background-color: #e9ecef;">
-                    </div>
-                    <div class="col-md-6"><label class="form-label text-muted small fw-semibold">Tanggal Lahir</label><input type="date" class="form-control" name="tanggal_lahir"></div>
-                    <div class="col-md-6"><label class="form-label text-muted small fw-semibold">Tempat Lahir</label><input type="text" class="form-control" name="tempat_lahir"></div>
-                    <div class="col-md-6">
-                        <label class="form-label text-muted small fw-semibold">Pendidikan / Tingkat Kelas (Otomatis)</label>
-                        <input type="text" class="form-control" value="<?= htmlspecialchars($pendidikan . ($jurusan ? ' ' . $jurusan : '')) ?>" readonly style="background-color: #e9ecef;">
-                        <input type="hidden" name="pendidikan" value="<?= htmlspecialchars($pendidikan) ?>">
-                        <input type="hidden" name="jurusan" value="<?= htmlspecialchars($jurusan) ?>">
-                    </div>
-                    <div class="col-12"><label class="form-label text-muted small fw-semibold">Alamat</label><textarea class="form-control" name="alamat" rows="2"></textarea></div>
-                </div>
-            </div>
-            
-            <fieldset class="card mb-4 shadow-sm border-0">
-                <legend class="card-header bg-white fw-bold border-bottom-0 pt-3 fs-6">
-                    Hasil Lab Darah <span class="text-danger" aria-hidden="true">*</span>
-                </legend>
-                <div class="card-body pt-2">
-                    <p class="small text-muted mb-3">
-                        Pilih salah satu kondisi berikut. Pilihan ini wajib agar data kuesioner dapat
-                        ditafsirkan dengan benar.
-                    </p>
+        <form method="post" id="symptomForm">
+            <?= csrfInput() ?>
+            <input type="hidden" name="action" value="symptoms">
 
-                    <div class="row g-2" role="radiogroup" aria-label="Ketersediaan hasil lab darah">
+            <section class="card border-0 shadow-sm mb-4" aria-labelledby="profileHeading">
+                <div class="card-body p-4">
+                    <h2 class="h5 fw-bold mb-3" id="profileHeading">Data diri siswa</h2>
+                    <div class="row g-3">
                         <div class="col-md-6">
-                            <input class="btn-check" type="radio" name="lab_status" id="labAvailable"
-                                   value="tersedia" required autocomplete="off"
-                                   aria-controls="labSection" aria-expanded="false">
-                            <label class="btn btn-outline-primary w-100 text-start p-3" for="labAvailable">
-                                <span class="d-block fw-bold">Hasil lab tersedia</span>
-                                <span class="small">Saya akan mengisi semua nilai sesuai lembar hasil lab.</span>
-                            </label>
+                            <label class="form-label" for="studentName">Nama lengkap</label>
+                            <input class="form-control" id="studentName" value="<?= escape_output($user['nama']) ?>" readonly>
                         </div>
                         <div class="col-md-6">
-                            <input class="btn-check" type="radio" name="lab_status" id="labUnavailable"
-                                   value="belum_ada" required autocomplete="off"
-                                   aria-controls="labSection" aria-expanded="false">
-                            <label class="btn btn-outline-secondary w-100 text-start p-3" for="labUnavailable">
-                                <span class="d-block fw-bold">Belum memiliki hasil lab</span>
-                                <span class="small">Kuesioner tetap dapat dilanjutkan tanpa memasukkan angka.</span>
-                            </label>
+                            <label class="form-label" for="studentNumber">NIS/NISN</label>
+                            <input class="form-control" id="studentNumber" value="<?= escape_output($user['username']) ?>" readonly>
                         </div>
-                    </div>
-
-                    <div class="row g-3 mt-2 d-none" id="labSection" aria-live="polite">
+                        <div class="col-md-6">
+                            <label class="form-label" for="birthDate">Tanggal lahir</label>
+                            <input type="date" class="form-control" id="birthDate" name="tanggal_lahir"
+                                   value="<?= escape_output($_POST['tanggal_lahir'] ?? '') ?>" required aria-describedby="ageDisplay">
+                            <div class="form-text" id="ageDisplay">Usia akan dihitung otomatis.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="studentClass">Kelas</label>
+                            <select class="form-select" id="studentClass" name="pendidikan" required>
+                                <option value="">Pilih kelas</option>
+                                <?php foreach ($allowedClasses as $class): ?>
+                                    <?php $classSelected = (string) ($_POST['pendidikan'] ?? $selectedClass) === $class; ?>
+                                    <option value="<?= escape_output($class) ?>" <?= $classSelected ? 'selected' : '' ?>>
+                                        <?= escape_output($class) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
                         <div class="col-12">
-                            <div class="alert alert-info border-0 py-2 small mb-0">
-                                <i data-lucide="info" style="width: 16px;" class="me-1" aria-hidden="true"></i>
-                                Masukkan angka persis seperti pada lembar hasil lab, bukan perkiraan.
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold" for="labHb">Hb <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <input type="number" step="0.1" min="0" max="30" inputmode="decimal"
-                                       class="form-control" name="kadar_hb" id="labHb"
-                                       aria-describedby="lab-hb-help" disabled>
-                                <span class="input-group-text">g/dL</span>
-                            </div>
-                            <div class="form-text mt-2" id="lab-hb-help">
-                                <div class="fw-semibold text-secondary mb-1">Panduan Nilai Hb (Hemoglobin):</div>
-                                <ul class="mb-0 ps-3 small">
-                                    <li>Sangat Rendah (&lt;8,0 g/dL)</li>
-                                    <li>Rendah (8,0 sampai 10,9 g/dL)</li>
-                                    <li>Sedikit Rendah (11,0 sampai 11,9 g/dL)</li>
-                                    <li>Normal (12,0 sampai 16,0 g/dL)</li>
-                                    <li>Tinggi (&gt;16,0 g/dL)</li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold" for="labMchc">MCHC <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <input type="number" step="0.1" min="0" max="100" inputmode="decimal"
-                                       class="form-control" name="kadar_mchc" id="labMchc"
-                                       aria-describedby="lab-mchc-help" disabled>
-                                <span class="input-group-text">g/dL</span>
-                            </div>
-                            <div class="form-text mt-2" id="lab-mchc-help">
-                                <div class="fw-semibold text-secondary mb-1">Panduan Nilai MCHC:</div>
-                                <ul class="mb-0 ps-3 small">
-                                    <li>Rendah (&lt;32 g/dL)</li>
-                                    <li>Normal (32 sampai 36 g/dL)</li>
-                                    <li>Tinggi (&gt;36 g/dL)</li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold" for="labMcv">MCV <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <input type="number" step="0.1" min="0" max="200" inputmode="decimal"
-                                       class="form-control" name="kadar_mcv" id="labMcv"
-                                       aria-describedby="lab-mcv-help" disabled>
-                                <span class="input-group-text">fL</span>
-                            </div>
-                            <div class="form-text mt-2" id="lab-mcv-help">
-                                <div class="fw-semibold text-secondary mb-1">Panduan Nilai MCV:</div>
-                                <ul class="mb-0 ps-3 small">
-                                    <li>Mikrositik / Sel Darah Merah Kecil (&lt;80 fL)</li>
-                                    <li>Normositik / Ukuran Normal (80 sampai 100 fL)</li>
-                                    <li>Makrositik / Sel Darah Merah Besar (&gt;100 fL)</li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold" for="labMch">MCH <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <input type="number" step="0.1" min="0" max="100" inputmode="decimal"
-                                       class="form-control" name="kadar_mch" id="labMch"
-                                       aria-describedby="lab-mch-help" disabled>
-                                <span class="input-group-text">pg</span>
-                            </div>
-                            <div class="form-text mt-2" id="lab-mch-help">
-                                <div class="fw-semibold text-secondary mb-1">Panduan Nilai MCH:</div>
-                                <ul class="mb-0 ps-3 small">
-                                    <li>Rendah (&lt;27 pg)</li>
-                                    <li>Normal (27 sampai 33 pg)</li>
-                                    <li>Tinggi (&gt;33 pg)</li>
-                                </ul>
-                            </div>
+                            <fieldset>
+                                <legend class="col-form-label pt-0">Jenis kelamin</legend>
+                                <div class="d-flex flex-wrap gap-3">
+                                    <?php foreach (['perempuan' => 'Perempuan', 'laki_laki' => 'Laki-laki'] as $value => $label): ?>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="jenis_kelamin"
+                                                   id="gender_<?= escape_output($value) ?>" value="<?= escape_output($value) ?>"
+                                                   <?= (string) ($_POST['jenis_kelamin'] ?? '') === $value ? 'checked' : '' ?> required>
+                                            <label class="form-check-label" for="gender_<?= escape_output($value) ?>"><?= escape_output($label) ?></label>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </fieldset>
                         </div>
                     </div>
                 </div>
-            </fieldset>
-            
-            <div class="d-flex justify-content-end">
-                <button type="button" class="btn btn-primary rounded-pill px-4 btn-next shadow-sm">Selanjutnya <i data-lucide="arrow-right" style="width: 18px;"></i></button>
+            </section>
+
+            <section aria-labelledby="symptomsHeading">
+                <div class="d-flex justify-content-between align-items-end mb-3">
+                    <div>
+                        <h2 class="h5 fw-bold mb-1" id="symptomsHeading">Pertanyaan gejala</h2>
+                        <p class="small text-muted mb-0">Semua pertanyaan wajib dijawab.</p>
+                    </div>
+                    <span class="badge text-bg-light border">0–10</span>
+                </div>
+
+                <?php foreach ($symptomQuestions as $offset => $question): ?>
+                    <?php
+                    $number = $offset + 1;
+                    $currentValue = (int) ($_POST['gejala_' . $number] ?? 0);
+                    ?>
+                    <div class="question-card bg-white p-3 p-md-4 mb-3">
+                        <div class="d-flex justify-content-between gap-3 mb-2">
+                            <label class="fw-semibold" for="symptom_<?= $number ?>">
+                                <?= $number ?>. <?= escape_output($question) ?>
+                            </label>
+                            <output class="badge text-bg-primary score-value fs-6" id="symptomValue_<?= $number ?>" for="symptom_<?= $number ?>">
+                                <?= $currentValue ?>
+                            </output>
+                        </div>
+                        <input type="range" class="form-range symptom-range" id="symptom_<?= $number ?>"
+                               name="gejala_<?= $number ?>" min="0" max="10" step="1" value="<?= $currentValue ?>" required
+                               aria-describedby="symptomScale_<?= $number ?>">
+                        <div class="d-flex justify-content-between small text-muted" id="symptomScale_<?= $number ?>">
+                            <span>0 — Tidak dirasakan</span><span>10 — Sangat kuat/sering</span>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </section>
+
+            <div class="d-grid mt-4">
+                <button type="submit" class="btn btn-primary btn-lg fw-bold">Hitung skor gejala</button>
             </div>
+        </form>
+    <?php endif; ?>
+
+    <?php if ($step === 'risk' && $pendingRisk !== null): ?>
+        <div class="alert context-note border-success-subtle" role="status">
+            Rerata gejala Anda <strong><?= escape_output(number_format((float) $pendingRisk['rerata_gejala'], 1, ',', '.')) ?></strong>,
+            sehingga pertanyaan faktor risiko dapat dilanjutkan. Jawaban berikut dipakai untuk skrining, bukan diagnosis medis.
         </div>
 
-        <!-- STEP 2: Menstruasi & Makan -->
-        <div class="step-container" id="step2">
-            <div class="card mb-4 shadow-sm border-0">
-                <div class="card-header bg-white fw-bold d-flex align-items-center gap-2 border-bottom-0 pt-3">
-                    <span class="badge bg-primary rounded-circle px-2 py-2">2</span> Siklus Menstruasi & Pola Makan
+        <form method="post" id="riskForm">
+            <?= csrfInput() ?>
+            <input type="hidden" name="action" value="risk">
+            <input type="hidden" name="questionnaire_id" value="<?= (int) $pendingRisk['id'] ?>">
+
+            <?php if (($pendingRisk['jenis_kelamin'] ?? null) === 'laki_laki'): ?>
+                <input type="hidden" name="mens_sudah" value="belum">
+                <div class="alert alert-info" role="note">
+                    Pertanyaan menstruasi tidak berlaku berdasarkan data jenis kelamin pada tahap pertama.
                 </div>
-                <div class="card-body">
-                    <h6 class="text-primary mb-3 fw-bold">A. Siklus Menstruasi</h6>
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <label class="form-label text-muted small fw-semibold">Apakah sahabat sudah mengalami menstruasi</label>
-                            <select name="mens_sudah" class="form-select">
-                                <option value="ya">Sudah, lanjut ke pertanyyan ke 2</option><option value="belum">Belum</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-muted small fw-semibold">Usia berapa sahabat mulai mengalami mentruasi?</label>
-                            <div class="row g-2">
-                                <div class="col-6"><div class="input-group"><input type="number" class="form-control" name="mens_usia_th" min="5" max="25"><span class="input-group-text">Th</span></div></div>
-                                <div class="col-6"><div class="input-group"><input type="number" class="form-control" name="mens_usia_bln" min="0" max="11"><span class="input-group-text">Bln</span></div></div>
+            <?php else: ?>
+            <section class="card border-0 shadow-sm mb-4" aria-labelledby="menstruationHeading">
+                <div class="card-body p-4">
+                    <h2 class="h5 fw-bold mb-3" id="menstruationHeading">A. Riwayat menstruasi</h2>
+                    <fieldset class="mb-3">
+                        <legend class="fs-6 fw-semibold">Apakah sahabat sudah mengalami menstruasi?</legend>
+                        <div class="d-flex gap-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="mens_sudah" id="mensYes" value="ya" required>
+                                <label class="form-check-label" for="mensYes">Sudah</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="mens_sudah" id="mensNo" value="belum" required>
+                                <label class="form-check-label" for="mensNo">Belum</label>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label text-muted small fw-semibold">Apakah siklus menstruasi sahabat teratur tiap bulan?</label>
-                            <select name="mens_teratur" class="form-select">
-                                <option value="ya">Ya</option><option value="tidak">Tidak</option>
+                    </fieldset>
+
+                    <div class="row g-3 d-none" id="menstrualDetails">
+                        <div class="col-md-6">
+                            <label class="form-label" for="mensAgeYear">Usia pertama kali menstruasi</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control menstrual-required" id="mensAgeYear" name="mens_usia_th" min="5" max="25" placeholder="Tahun" disabled>
+                                <input type="number" class="form-control" name="mens_usia_bln" min="0" max="11" value="0" aria-label="Bulan" disabled>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="mensRegular">Apakah siklus menstruasi sahabat teratur tiap bulan?</label>
+                            <select class="form-select menstrual-required" id="mensRegular" name="mens_teratur" disabled>
+                                <option value="">Pilih jawaban</option>
+                                <option value="ya">Ya</option>
+                                <option value="tidak">Tidak</option>
                             </select>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label text-muted small fw-semibold">Berama lama sahabat mengalami menstruasi setiap bulannya?</label>
-                            <input type="number" class="form-control" name="mens_lama" min="1" max="15">
+                        <div class="col-md-6">
+                            <label class="form-label" for="mensDuration">Berapa lama sahabat mengalami menstruasi setiap bulannya?</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control menstrual-required" id="mensDuration" name="mens_lama" min="1" max="15" disabled>
+                                <span class="input-group-text">hari</span>
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label text-muted small fw-semibold">Berapa jarak antara siklus setiap bulannya?</label>
-                            <input type="number" class="form-control" name="mens_jarak_siklus" min="1" max="100" placeholder="Cth: 28">
+                        <div class="col-md-6">
+                            <label class="form-label" for="mensCycle">Berapa jarak antara siklus setiap bulannya?</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control menstrual-required" id="mensCycle" name="mens_jarak_siklus" min="1" max="100" disabled>
+                                <span class="input-group-text">hari</span>
+                            </div>
                         </div>
                     </div>
-                    
-                    <h6 class="text-primary mb-3 pt-3 border-top fw-bold">B. Pola Makan Sehari-hari</h6>
-                    <p class="small text-muted">Isilah tabel berikut ini sesuai makanan yang sahabat makan setiap hari.</p>
+                </div>
+            </section>
+            <?php endif; ?>
+
+            <section class="card border-0 shadow-sm mb-4" aria-labelledby="dietHeading">
+                <div class="card-body p-4">
+                    <h2 class="h5 fw-bold mb-2" id="dietHeading">B. Pola makan sehari-hari</h2>
+                    <p class="text-muted">Isilah tabel berikut ini sesuai makanan yang sahabat makan setiap hari.</p>
                     <div class="table-responsive mb-4">
                         <table class="table table-bordered align-middle">
-                            <thead><tr><th scope="col">Waktu</th><th scope="col">Makanan</th><th scope="col">Jumlah</th></tr></thead>
+                            <thead class="table-light"><tr><th scope="col">Waktu</th><th scope="col">Makanan</th><th scope="col">Jumlah</th></tr></thead>
                             <tbody>
-                            <?php foreach (['pagi' => 'Pagi', 'jam_10' => 'Jam 10', 'siang' => 'Siang', 'jam_4' => 'Jam 4', 'malam' => 'Malam'] as $mealKey => $mealLabel): ?>
+                            <?php foreach ($mealTimes as $key => $label): ?>
                                 <tr>
-                                    <th scope="row"><?= $mealLabel ?></th>
-                                    <td><input type="text" class="form-control" name="makanan_<?= $mealKey ?>" maxlength="150" aria-label="Makanan <?= $mealLabel ?>"></td>
-                                    <td><input type="text" class="form-control" name="jumlah_<?= $mealKey ?>" maxlength="80" aria-label="Jumlah <?= $mealLabel ?>"></td>
+                                    <th scope="row"><?= escape_output($label) ?></th>
+                                    <td><input class="form-control" name="makanan_<?= escape_output($key) ?>" maxlength="150" aria-label="Makanan <?= escape_output($label) ?>"></td>
+                                    <td><input class="form-control" name="jumlah_<?= escape_output($key) ?>" maxlength="80" aria-label="Jumlah <?= escape_output($label) ?>"></td>
                                 </tr>
                             <?php endforeach; ?>
                             </tbody>
                         </table>
                     </div>
-                    <?php 
-                    $makan = [
-                        'Apakah sahabat ada sarapan setiap hari ?',
-                        'Apakah sahabar rutin makan siang ?',
-                        'Apakah sahabat selalu makan malam?',
-                        'Apakah sahabat ada makan snek antara makan pagi dan siang?',
-                        'Apakah sahabat ada makan snek antara makan siang dan malam?',
-                        'Apakah sahabat ada makan lagi atau snek menjelang tidur ?',
-                    ];
-                    foreach($makan as $idx => $m): ?>
-                    <div class="mb-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center bg-light p-2 rounded">
-                        <label class="fw-medium mb-1 mb-md-0 px-2"><?= ($idx+1).". ".$m ?></label>
-                        <select name="makan_<?= $idx+1 ?>" class="form-select w-auto border-0 shadow-sm" required>
-                            <option value="selalu">Selalu</option>
-                            <option value="kadang"><?= $idx >= 3 ? 'Kdang-kadang' : 'Kadang-kadang' ?></option>
-                            <option value="tidak">Tidak pernah</option>
-                        </select>
-                    </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-            
-            <div class="d-flex justify-content-between">
-                <button type="button" class="btn btn-outline-secondary rounded-pill px-4 btn-prev"><i data-lucide="arrow-left" style="width: 18px;"></i> Kembali</button>
-                <button type="button" class="btn btn-primary rounded-pill px-4 btn-next shadow-sm">Selanjutnya <i data-lucide="arrow-right" style="width: 18px;"></i></button>
-            </div>
-        </div>
 
-        <!-- STEP 4: Gejala -->
-        <div class="step-container" id="step4">
-            <div class="card mb-4 shadow-sm border-0">
-                <div class="card-header bg-white fw-bold d-flex align-items-center gap-2 border-bottom-0 pt-3">
-                    <span class="badge bg-primary rounded-circle px-2 py-2">4</span> Keluhan & Gejala Fisik
-                </div>
-                <div class="card-body">
-                    <p class="small text-muted mb-4 border-bottom pb-3">Geser tombol biru ke kanan sesuai dengan tingkat keseringan atau keparahan gejala yang Anda rasakan.</p>
-                    
-                    <?php 
-                    $gejala = [
-                        'Sahabat merasakan cepat lelah bila beraktivitas',
-                        'Sahabat merasakan pusing',
-                        'Sahabat merasakan mata berkunang-kunang',
-                        'Sahabat merasakan bagian ujung tangan atau kaki sering dingin',
-                        'Sahabat merasakan suka sempoyongan',
-                        'Sahabat merasakan berdebar-debar walaupun beraktivitas ringan',
-                        'Sahabat merasakan mengantuk',
-                        'Sahabat merasakan malas beraktivitas',
-                        'Sahabat merasakan nafas terasa pendek waktu beraktivitas',
-                        'Sahabat merasakan pucat',
-                    ];
-                    foreach($gejala as $idx => $g): ?>
-                    <div class="mb-4 p-3 bg-light rounded-3">
-                        <div class="d-flex justify-content-between align-items-end mb-2">
-                            <label class="fw-semibold mb-0 text-dark"><?= ($idx+1).". ".$g ?></label>
-                            <span class="badge bg-primary px-2 py-1 fs-6 shadow-sm" id="val_gejala_<?= $idx+1 ?>">0</span>
+                    <?php foreach ($dietQuestions as $offset => $question): ?>
+                        <?php $number = $offset + 1; ?>
+                        <div class="question-card p-3 mb-3">
+                            <label class="form-label fw-semibold" for="diet_<?= $number ?>">
+                                <?= $number ?>. <?= escape_output($question) ?>
+                            </label>
+                            <select class="form-select" id="diet_<?= $number ?>" name="makan_<?= $number ?>" required>
+                                <option value="">Pilih jawaban</option>
+                                <option value="selalu">Selalu</option>
+                                <option value="kadang">Kadang-kadang</option>
+                                <option value="tidak">Tidak pernah</option>
+                            </select>
                         </div>
-                        <input type="range" name="gejala_<?= $idx+1 ?>" id="gejala_<?= $idx+1 ?>" min="0" max="10" value="0" class="form-range" oninput="document.getElementById('val_gejala_<?= $idx+1 ?>').innerText = this.value">
-                        <div class="range-labels">
-                            <span class="fw-medium">Tak Pernah (0)</span>
-                            <span class="fw-medium text-danger">Sangat Sering (10)</span>
-                        </div>
-                    </div>
                     <?php endforeach; ?>
                 </div>
-            </div>
-            
-            <div class="d-flex justify-content-between">
-                <button type="button" class="btn btn-outline-secondary rounded-pill px-4 btn-prev"><i data-lucide="arrow-left" style="width: 18px;"></i> Kembali</button>
-                <button type="button" class="btn btn-primary rounded-pill px-4 btn-next shadow-sm">Selanjutnya <i data-lucide="arrow-right" style="width: 18px;"></i></button>
-            </div>
-        </div>
-        
-        <!-- STEP 5: Sikap & Pengetahuan -->
-        <div class="step-container" id="step5">
-            <div class="card mb-4 shadow-sm border-0">
-                <div class="card-header bg-white fw-bold d-flex align-items-center gap-2 border-bottom-0 pt-3">
-                    <span class="badge bg-primary rounded-circle px-2 py-2">5</span> Opini & Pengetahuan
-                </div>
-                <div class="card-body">
-                    <h6 class="text-primary mb-3 fw-bold">A. Opini Terhadap Anemia</h6>
-                    <p class="small text-muted mb-3">Pilih tingkat persetujuan Anda untuk setiap pernyataan di bawah ini.</p>
-                    <?php 
-                    $sikap = [
-                        'Anemia merupakan keadaan dimana jumlah sel darah merah dibawah nilai normal',
-                        'Anemia adalah penyakit kronis yang tidak dapat dicegah',
-                        'Anemia dapat berdampak sangat serius terhadap tubuh',
-                        'Anemia dapat berdampak terhadap masa depan generasi bangsa',
-                        'Pola makan yang salah dapat menyebabkan anemia',
-                        'Menstruasi yang tidak normal juga dapat menyebabkan anemia',
-                        'Anemia tidak bisa disebabkan kecacingan',
-                        'Sebaiknya kita mengkonsumsi obat cacing untuk mencegah anemia setiap 6 bulan sekali',
-                        'Mengkonsumsi tablet tambah darah (TTD) secara teratur dapat mencegah anemia',
-                        'Pola makan tinggi zat besi dapat mencegah anemia',
-                    ];
-                    foreach($sikap as $idx => $s): ?>
-                    <div class="mb-4">
-                        <label class="d-block fw-semibold mb-2"><?= ($idx+1).". ".$s ?></label>
-                        <div class="row g-2">
-                            <?php 
-                            $opsi = [1 => 'Tidak Setuju', 2 => 'Kurang Setuju', 3 => 'Setuju', 4 => 'Sangat Setuju'];
-                            foreach($opsi as $val => $label): ?>
-                            <div class="col-6 col-md-3">
-                                <label class="w-100 form-check-custom d-flex align-items-center gap-2 m-0 h-100">
-                                    <input class="form-check-input mt-0" type="radio" name="sikap_<?= $idx+1 ?>" value="<?= $val ?>" required>
-                                    <span class="small lh-sm"><?= $label ?></span>
-                                </label>
-                            </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-                    <?php endforeach; ?>
+            </section>
 
-                    <h6 class="text-primary mb-2 border-top pt-3 fw-bold">B. Pengetahuan tentang Anemia</h6>
-                    <p class="small text-muted mb-3">Pilih semua jawaban yang sesuai. Jawaban boleh lebih dari satu.</p>
-                    <?php
-                    $pengetahuan = [
-                        ['Apakah sahabat tahu tentang anemia?', ['Tahu, lanjut ke pertanyaan no 2', 'Tidak'], null],
-                        ['Anemia adalah suatu keadaan :', ['Kurang darah', 'Kurang Hb dalam darah', 'Lain-lain'], 2],
-                        ['Tahukan sahabat apa penyebab anemia?', ['Kurang zat gizi', 'Kelainan darah', 'Lain-lain'], 2],
-                        ['Apa zat gizi yang sering menjadi penyebab anemia ?', ['Kurang zat besi (Fe)', 'Kurang asam folat', 'Kurang vitamin B12', 'Lain-lain'], 3],
-                        ['Apakah yang menyebabkan sahabat mengalami kekurangan zat gizi tersebut ?', ['Siklus mentruasi tidak teratur', 'Pola makan yang tidak sesuai', 'Infeksi kecacingan', 'Persepsi diri yang salah', 'Lain-lain'], 4],
-                        ['Apakah gejala anemia yang sahabat ketahui ?', ['Pusing', 'Pucat', 'Lemah dan lesu', 'Berdebar-debar', 'Nafas sering singkat', 'Cepat Lelah', 'Kaki dingin atau kebas', 'Mengantuk', 'Sempoyongan', 'Berkunang-kunang'], null],
-                        ['Apakah dampak dari anemia', ['Prestasi sekolah menurun', 'Pertumbuhan terganggu', 'Tidak bugar', 'Mudah infeksi', 'Lain-lain'], 4],
-                        ['Apakah program pemerintah untuk mencegah anemia', ['Pemberian Tablet Tambah Darah (TTD)', 'Penyuluhan tentang anemia', 'Tidak tahu', 'Lain-lain'], 3],
-                        ['Apakah makanan yang tinggi kandungan zat besinya?', ['Hati ayam', 'Kuning telur', 'Daging sapi', 'Daging domba', 'Kacang-kacangan', 'Buah-buahan kering', 'Lain-lain'], 6],
-                        ['Apa kegunaan zat besi bagi tubuh sahabat ?', ['Membentuk sel darah merah', 'Membentuk sel darah putih', 'Untuk daya tahan tubuh', 'Untuk pertumbuhan', 'Lain-lain'], 4],
-                    ];
-                    foreach ($pengetahuan as $questionOffset => [$question, $choices, $otherOffset]):
-                        $questionNumber = $questionOffset + 1;
-                    ?>
-                    <fieldset class="mb-4">
-                        <legend class="fs-6 fw-semibold mb-2 text-dark"><?= $questionNumber . '. ' . escape_output($question) ?></legend>
-                        <div class="row g-2">
-                            <?php foreach ($choices as $choiceOffset => $choice):
-                                $choiceValue = chr(ord('a') + $choiceOffset);
-                            ?>
-                            <div class="col-md-6">
-                                <label class="form-check-custom d-flex align-items-center gap-2 m-0 w-100 h-100">
-                                    <input type="checkbox" class="form-check-input mt-0" name="pengetahuan_<?= $questionNumber ?>[]" value="<?= $choiceValue ?>">
-                                    <span><?= escape_output($choice) ?></span>
-                                </label>
-                            </div>
-                            <?php endforeach; ?>
-                        </div>
-                        <?php if ($otherOffset !== null): ?>
-                        <label for="pengetahuan_<?= $questionNumber ?>_other" class="form-label small fw-semibold mt-2 mb-1">Sebutkan jawaban lainnya</label>
-                        <input type="text" class="form-control" id="pengetahuan_<?= $questionNumber ?>_other" name="pengetahuan_<?= $questionNumber ?>_other" maxlength="200" placeholder="Isi jika memilih Lain-lain">
-                        <?php endif; ?>
-                    </fieldset>
-                    <?php endforeach; ?>
-                </div>
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary btn-lg fw-bold">Lihat hasil skrining</button>
             </div>
-            
-            <div class="d-flex justify-content-between">
-                <button type="button" class="btn btn-outline-secondary rounded-pill px-4 btn-prev"><i data-lucide="arrow-left" style="width: 18px;"></i> Kembali</button>
-                <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold shadow-lg" style="background: var(--primary-color);">Simpan Kuesioner <i data-lucide="check-circle" style="width: 18px;" class="ms-1"></i></button>
-            </div>
-        </div>
-
-    </form>
-</div>
+        </form>
+    <?php endif; ?>
+</main>
 
 <script src="/assets/vendor/bootstrap.bundle.min.js"></script>
-<script src="../assets/js/app-init.js?v=20260818"></script>
+<script src="../assets/js/app-init.js?v=20260831-safe-install"></script>
 <script>
-    lucide.createIcons();
+document.querySelectorAll('.symptom-range').forEach(function (range) {
+    const number = range.id.replace('symptom_', '');
+    const output = document.getElementById('symptomValue_' + number);
+    range.addEventListener('input', function () { output.value = range.value; output.textContent = range.value; });
+});
 
-    function setLabRequirement(status) {
-        const labSection = document.getElementById('labSection');
-        const labInputs = labSection.querySelectorAll('input');
-        const hasResult = status === 'tersedia';
+const birthDate = document.getElementById('birthDate');
+if (birthDate) {
+    const ageDisplay = document.getElementById('ageDisplay');
+    const updateAge = function () {
+        if (!birthDate.value) { ageDisplay.textContent = 'Usia akan dihitung otomatis.'; return; }
+        const birth = new Date(birthDate.value + 'T00:00:00');
+        const today = new Date();
+        let age = today.getFullYear() - birth.getFullYear();
+        const monthDelta = today.getMonth() - birth.getMonth();
+        if (monthDelta < 0 || (monthDelta === 0 && today.getDate() < birth.getDate())) age--;
+        ageDisplay.textContent = Number.isFinite(age) ? 'Usia: ' + age + ' tahun' : 'Tanggal lahir tidak valid.';
+    };
+    birthDate.addEventListener('change', updateAge);
+    updateAge();
+}
 
-        labSection.classList.toggle('d-none', !hasResult);
-        labSection.classList.toggle('animate-fade-in-up', hasResult);
-        labInputs.forEach(input => {
-            input.disabled = !hasResult;
-            input.required = hasResult;
-            if (!hasResult) input.value = '';
+const menstruationChoices = document.querySelectorAll('input[name="mens_sudah"]');
+if (menstruationChoices.length) {
+    const details = document.getElementById('menstrualDetails');
+    const detailInputs = details.querySelectorAll('input, select');
+    const updateMenstruation = function () {
+        const selected = document.querySelector('input[name="mens_sudah"]:checked');
+        const started = selected && selected.value === 'ya';
+        details.classList.toggle('d-none', !started);
+        detailInputs.forEach(function (input) {
+            input.disabled = !started;
+            input.required = started && input.classList.contains('menstrual-required');
         });
-        document.querySelectorAll('input[name="lab_status"]').forEach(input => {
-            input.setAttribute('aria-expanded', String(hasResult && input.value === 'tersedia'));
-        });
-    }
+    };
+    menstruationChoices.forEach(function (choice) { choice.addEventListener('change', updateMenstruation); });
+    updateMenstruation();
+}
 
-    document.querySelectorAll('input[name="lab_status"]').forEach(input => {
-        input.addEventListener('change', () => setLabRequirement(input.value));
-    });
-
-    // Multi-step Wizard Logic
-    document.addEventListener('DOMContentLoaded', function() {
-        const form = document.getElementById('kuesionerForm');
-        const steps = document.querySelectorAll('.step-container');
-        const nextBtns = document.querySelectorAll('.btn-next');
-        const prevBtns = document.querySelectorAll('.btn-prev');
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const progressBar = document.getElementById('wizardProgress');
-        let currentStep = 0;
-        let handlingInvalidInput = false;
-
-        function updateWizard() {
-            steps.forEach((step, index) => {
-                if (index === currentStep) {
-                    step.classList.add('active');
-                } else {
-                    step.classList.remove('active');
-                }
-            });
-            
-            const progressPercentage = ((currentStep + 1) / steps.length) * 100;
-            progressBar.style.width = progressPercentage + '%';
-            
-            // Numeric arguments remain compatible with older Android WebViews.
-            window.scrollTo(0, 0);
+document.querySelectorAll('form').forEach(function (form) {
+    form.addEventListener('submit', function () {
+        const button = form.querySelector('button[type="submit"]');
+        if (button && form.checkValidity()) {
+            button.disabled = true;
+            button.textContent = 'Menyimpan...';
         }
-
-        function showInvalidInput(invalidInput) {
-            if (!invalidInput) return;
-
-            let invalidStep = invalidInput.parentElement;
-            while (invalidStep && invalidStep !== form && !invalidStep.classList.contains('step-container')) {
-                invalidStep = invalidStep.parentElement;
-            }
-
-            const invalidStepIndex = Array.prototype.indexOf.call(steps, invalidStep);
-            if (invalidStepIndex >= 0) {
-                currentStep = invalidStepIndex;
-                updateWizard();
-            }
-
-            window.setTimeout(function() {
-                invalidInput.focus();
-                if (typeof invalidInput.reportValidity === 'function') {
-                    invalidInput.reportValidity();
-                }
-            }, 0);
-        }
-
-        nextBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                if(btn.getAttribute('type') === 'submit') return; // let form submit
-                
-                const currentStepEl = steps[currentStep];
-                const invalidInput = currentStepEl.querySelector(':invalid');
-
-                if (invalidInput) {
-                    showInvalidInput(invalidInput);
-                    return;
-                }
-                
-                if (currentStep < steps.length - 1) {
-                    currentStep++;
-                    updateWizard();
-                }
-            });
-        });
-
-        prevBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                if (currentStep > 0) {
-                    currentStep--;
-                    updateWizard();
-                }
-            });
-        });
-
-        form.addEventListener('invalid', function(event) {
-            if (handlingInvalidInput) return;
-
-            handlingInvalidInput = true;
-            showInvalidInput(event.target);
-            window.setTimeout(function() {
-                handlingInvalidInput = false;
-            }, 0);
-        }, true);
-
-        submitBtn.addEventListener('click', function(event) {
-            const invalidInput = form.querySelector(':invalid');
-            if (!invalidInput) return;
-
-            event.preventDefault();
-            showInvalidInput(invalidInput);
-        });
-
-        form.addEventListener('submit', function() {
-            submitBtn.disabled = true;
-            submitBtn.setAttribute('aria-busy', 'true');
-            submitBtn.textContent = 'Menyimpan...';
-        });
-        
-        // Initial setup
-        updateWizard();
     });
+});
+
+if (window.lucide) window.lucide.createIcons();
 </script>
 </body>
 </html>

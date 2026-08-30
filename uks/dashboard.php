@@ -159,7 +159,7 @@ $data_tidak_patuh = $compliance['non_compliant'];
 
 <script src="/assets/vendor/bootstrap.bundle.min.js"></script>
 <script src="/assets/vendor/lucide.min.js"></script>
-<script src="../assets/js/app-init.js?v=20260818"></script>
+<script src="../assets/js/app-init.js?v=20260831-safe-install"></script>
 <script src="../assets/js/main.js?v=20260818"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {

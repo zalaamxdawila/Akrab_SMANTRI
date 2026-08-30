@@ -66,20 +66,20 @@ function renderQuestionnaireResult(array $presentation, array $response): void
             </div>
         </div>
 
-        <?php renderQuestionnaireAnswerCharts($presentation['answer_charts'] ?? []); ?>
-
-        <?php renderQuestionnaireChoiceCharts($presentation['choice_charts'] ?? []); ?>
-
-        <?php renderQuestionnaireAnswerOverview($presentation['answers']); ?>
-
-        <?php renderLogisticRegressionExplanation($presentation['logistic'] ?? null); ?>
-
         <details class="card shadow-sm border-0 mb-4">
             <summary class="card-header bg-white p-3 p-md-4 d-flex flex-column gap-1">
                 <span class="h5 mb-0">Hasil Lengkap</span>
                 <span class="small text-muted">Buka rincian skor, data pendukung, serta pertanyaan dan jawaban.</span>
             </summary>
             <div class="card-body p-4">
+                <?php renderQuestionnaireAnswerCharts($presentation['answer_charts'] ?? []); ?>
+
+                <?php renderQuestionnaireChoiceCharts($presentation['choice_charts'] ?? []); ?>
+
+                <?php renderQuestionnaireAnswerOverview($presentation['answers']); ?>
+
+                <?php renderLogisticRegressionExplanation($presentation['logistic'] ?? null); ?>
+
                 <section aria-labelledby="complete-score-title">
                     <h3 class="h5" id="complete-score-title">Rincian skor per aspek</h3>
                     <?php renderQuestionnaireInsights($presentation['scores'], '', true); ?>
@@ -289,7 +289,12 @@ function renderLogisticRegressionExplanation(?array $model): void
 }
 
 /** @param array<string, list<array<string, mixed>>> $sections */
-function renderQuestionnaireChoiceCharts(array $sections): void
+function renderQuestionnaireChoiceCharts(
+    array $sections,
+    bool $aggregate = false,
+    int $responseCount = 0,
+    string $canvasPrefix = 'questionChoiceChart'
+): void
 {
     if ($sections === []) return;
     $sectionLabels = [
@@ -299,22 +304,28 @@ function renderQuestionnaireChoiceCharts(array $sections): void
         'makan' => ['Pola makan', '#fd7e14'],
     ];
     $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
+    $titleId = $aggregate ? 'aggregate-choice-chart-title' : 'choice-chart-title';
+    $sectionIdPrefix = $aggregate ? 'aggregate-choice-section-' : 'choice-section-';
     ?>
-    <section class="card shadow-sm border-0 mb-4" aria-labelledby="choice-chart-title">
+    <section class="card shadow-sm border-0 mb-4" aria-labelledby="<?= $titleId ?>">
         <div class="card-header bg-white border-bottom p-3 p-md-4">
-            <p class="text-uppercase small fw-semibold text-primary mb-1">Perbandingan pilihan</p>
-            <h2 class="h4 mb-1" id="choice-chart-title">Diagram pilihan setiap pertanyaan</h2>
-            <p class="text-muted mb-0">Batang berwarna menunjukkan pilihan responden; batang abu-abu menunjukkan pilihan yang tidak dipilih.</p>
+            <p class="text-uppercase small fw-semibold text-primary mb-1"><?= $aggregate ? 'Hasil semua pengisian' : 'Perbandingan pilihan' ?></p>
+            <h2 class="h4 mb-1" id="<?= $titleId ?>"><?= $aggregate ? 'Diagram Jawaban Setiap Pertanyaan' : 'Diagram pilihan setiap pertanyaan' ?></h2>
+            <p class="text-muted mb-0">
+                <?= $aggregate
+                    ? 'Distribusi jawaban dari ' . $responseCount . ' pengisian aktif yang memiliki rincian jawaban.'
+                    : 'Batang berwarna menunjukkan pilihan responden; batang abu-abu menunjukkan pilihan yang tidak dipilih.' ?>
+            </p>
         </div>
         <div class="card-body p-3 p-md-4">
             <?php foreach ($sectionLabels as $sectionKey => [$sectionLabel, $color]):
                 if (!isset($sections[$sectionKey])) continue;
                 ?>
-                <section class="<?= $sectionKey !== 'gejala' ? 'mt-5' : '' ?>" aria-labelledby="choice-section-<?= $sectionKey ?>">
-                    <h3 class="h5 mb-3" id="choice-section-<?= $sectionKey ?>"><?= escape_output($sectionLabel) ?></h3>
+                <section class="<?= $sectionKey !== 'gejala' ? 'mt-5' : '' ?>" aria-labelledby="<?= $sectionIdPrefix . $sectionKey ?>">
+                    <h3 class="h5 mb-3" id="<?= $sectionIdPrefix . $sectionKey ?>"><?= escape_output($sectionLabel) ?></h3>
                     <div class="row g-3">
                         <?php foreach ($sections[$sectionKey] as $index => $chart):
-                            $canvasId = 'questionChoiceChart-' . $chart['key'];
+                            $canvasId = $canvasPrefix . '-' . $chart['key'];
                             $selectedText = $chart['selected'] === [] ? 'Tidak ada' : implode(', ', $chart['selected']);
                             $height = max(190, count($chart['labels']) * 42);
                             ?>
@@ -322,7 +333,11 @@ function renderQuestionnaireChoiceCharts(array $sections): void
                                 <article class="border rounded-3 p-3 h-100">
                                     <p class="small text-uppercase text-muted fw-semibold mb-1">Pertanyaan <?= $index + 1 ?></p>
                                     <h4 class="h6 mb-2"><?= escape_output((string) $chart['question']) ?></h4>
-                                    <p class="small mb-3 fw-semibold">Pilihan yang dipilih: <?= escape_output($selectedText) ?></p>
+                                    <p class="small mb-3 fw-semibold">
+                                        <?= $aggregate
+                                            ? $responseCount . ' pengisian dengan rincian jawaban'
+                                            : 'Pilihan yang dipilih: ' . escape_output($selectedText) ?>
+                                    </p>
                                     <div style="height: <?= $height ?>px">
                                         <canvas id="<?= escape_output($canvasId) ?>" role="img" aria-label="Diagram pilihan pertanyaan <?= $index + 1 ?>"></canvas>
                                     </div>
@@ -339,8 +354,8 @@ function renderQuestionnaireChoiceCharts(array $sections): void
                                         labels: <?= json_encode($chart['labels'], $jsonFlags) ?>,
                                         datasets: [{
                                             data: values,
-                                            backgroundColor: values.map(value => value === 1 ? <?= json_encode($color, $jsonFlags) ?> : '#dee2e6'),
-                                            borderColor: values.map(value => value === 1 ? <?= json_encode($color, $jsonFlags) ?> : '#adb5bd'),
+                                            backgroundColor: values.map(value => value > 0 ? <?= json_encode($color, $jsonFlags) ?> : '#dee2e6'),
+                                            borderColor: values.map(value => value > 0 ? <?= json_encode($color, $jsonFlags) ?> : '#adb5bd'),
                                             borderWidth: 1,
                                             borderRadius: 5
                                         }]
@@ -351,10 +366,17 @@ function renderQuestionnaireChoiceCharts(array $sections): void
                                         maintainAspectRatio: false,
                                         plugins: {
                                             legend: { display: false },
-                                            tooltip: { callbacks: { label: context => context.raw === 1 ? 'Dipilih' : 'Tidak dipilih' } }
+                                            tooltip: { callbacks: { label: context => <?= $aggregate ? "context.raw + ' pengisian'" : "context.raw === 1 ? 'Dipilih' : 'Tidak dipilih'" ?> } }
                                         },
                                         scales: {
-                                            x: { beginAtZero: true, max: 1, ticks: { stepSize: 1, callback: value => value === 1 ? 'Dipilih' : 'Tidak dipilih' } },
+                                            x: {
+                                                beginAtZero: true,
+                                                max: <?= $aggregate ? max(1, $responseCount) : 1 ?>,
+                                                ticks: {
+                                                    stepSize: 1,
+                                                    callback: value => <?= $aggregate ? "value + ' respons'" : "value === 1 ? 'Dipilih' : 'Tidak dipilih'" ?>
+                                                }
+                                            },
                                             y: { grid: { display: false } }
                                         }
                                     }
@@ -452,6 +474,56 @@ function renderQuestionnaireAnswerOverview(array $answers): void
 /**
  * @param array<string, array<string, mixed>> $insights
  */
+/**
+ * @param array<string, array<string, mixed>> $insights
+ */
+function renderQuestionnaireAggregateRecap(array $insights, int $totalResponses): void
+{
+    ?>
+    <section aria-labelledby="questionnaire-aggregate-recap-title">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+            <div>
+                <h2 class="h5 mb-1" id="questionnaire-aggregate-recap-title">Rekapitulasi Semua Hasil</h2>
+                <p class="text-muted small mb-0">
+                    Rata-rata dari <?= $totalResponses ?> pengisian aktif.
+                </p>
+            </div>
+            <span class="badge text-bg-light border">
+                <?= $totalResponses ?> pengisian aktif
+            </span>
+        </div>
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <caption class="visually-hidden">Rata-rata hasil seluruh pengisian kuesioner aktif</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Aspek</th>
+                        <th scope="col">Rata-rata skor</th>
+                        <th scope="col">Persentase</th>
+                        <th scope="col">Interpretasi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($insights as $insight): ?>
+                    <?php
+                    $value = rtrim(rtrim(number_format((float) $insight['value'], 1, '.', ''), '0'), '.');
+                    $maximum = rtrim(rtrim(number_format((float) $insight['max'], 1, '.', ''), '0'), '.');
+                    $percentage = rtrim(rtrim(number_format((float) $insight['percentage'], 1, '.', ''), '0'), '.');
+                    ?>
+                    <tr>
+                        <th scope="row"><?= escape_output((string) $insight['label']) ?></th>
+                        <td><?= escape_output($value) ?> / <?= escape_output($maximum) ?></td>
+                        <td><strong><?= escape_output($percentage) ?>%</strong></td>
+                        <td><span class="badge text-bg-<?= escape_output((string) $insight['tone']) ?>"><?= escape_output((string) $insight['level']) ?></span></td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </section>
+    <?php
+}
+
 function renderQuestionnaireInsights(
     array $insights,
     string $disclaimer,
@@ -777,6 +849,61 @@ function renderQuestionnaireAverageChartScript(string $canvasId, array $insights
             chart.options.scales.x.ticks.color = color;
             chart.options.scales.y.ticks.color = color;
             chart.options.scales.y.title.color = color;
+            chart.update();
+        });
+    });
+    </script>
+    <?php
+}
+
+function renderQuestionnaireCompletionChart(
+    string $canvasId,
+    int $respondingStudents,
+    int $notRespondedStudents
+): void {
+    $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
+    ?>
+    <section class="card shadow-sm border-0 mb-4" aria-labelledby="questionnaire-completion-title">
+        <div class="card-body p-3 p-md-4">
+            <h2 class="h5 mb-1" id="questionnaire-completion-title">Status Pengisian Kuesioner</h2>
+            <p class="text-muted small">Perbandingan siswa aktif yang sudah dan belum mengisi.</p>
+            <div class="row align-items-center g-3">
+                <div class="col-12 col-lg-7" style="height: 300px">
+                    <canvas id="<?= escape_output($canvasId) ?>" role="img"
+                            aria-label="<?= $respondingStudents ?> siswa sudah mengisi dan <?= $notRespondedStudents ?> siswa belum mengisi"></canvas>
+                </div>
+                <div class="col-12 col-lg-5">
+                    <dl class="row mb-0">
+                        <dt class="col-8">Sudah Mengisi</dt><dd class="col-4 text-end fw-bold"><?= $respondingStudents ?></dd>
+                        <dt class="col-8">Belum Mengisi</dt><dd class="col-4 text-end fw-bold"><?= $notRespondedStudents ?></dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </section>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const canvas = document.getElementById(<?= json_encode($canvasId, $jsonFlags) ?>);
+        if (!canvas || typeof Chart === 'undefined') return;
+        const chartTextColor = () => document.documentElement.getAttribute('data-bs-theme') === 'dark' ? '#cbd5e1' : '#334155';
+        const chart = new Chart(canvas, {
+            type: 'doughnut',
+            data: {
+                labels: ['Sudah Mengisi', 'Belum Mengisi'],
+                datasets: [{
+                    data: [<?= $respondingStudents ?>,<?= $notRespondedStudents ?>],
+                    backgroundColor: ['#198754', '#adb5bd'],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom', labels: { color: chartTextColor() } } }
+            }
+        });
+        document.addEventListener('akrab:themechange', () => {
+            chart.options.plugins.legend.labels.color = chartTextColor();
             chart.update();
         });
     });

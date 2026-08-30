@@ -13,7 +13,7 @@ final class QuestionnaireExportTest extends TestCase
         $stream = fopen('php://temp', 'w+b');
         self::assertIsResource($stream);
 
-        (new QuestionnaireExport())->writeCsv($stream, [[
+        (new QuestionnaireExport())->writeLegacyCsv($stream, [[
             'student_id' => 7,
             'nama' => '=HYPERLINK("https://example.test")',
             'username' => '0001234567',
@@ -41,6 +41,7 @@ final class QuestionnaireExportTest extends TestCase
         self::assertSame('Kategori Risiko', $headers[array_key_last($headers)]);
         self::assertSame("'=HYPERLINK(\"https://example.test\")", $row[1]);
         self::assertSame("\t0001234567", $row[2]);
+        self::assertCount(51, $headers);
         self::assertSame('', $row[46]);
         self::assertSame('42,5%', $row[49]);
         self::assertSame('SEDANG', $row[50]);
@@ -70,7 +71,7 @@ final class QuestionnaireExportTest extends TestCase
             ],
         ], JSON_THROW_ON_ERROR);
 
-        (new QuestionnaireExport())->writeCsv($stream, [[
+        (new QuestionnaireExport())->writeLegacyCsv($stream, [[
             'student_id' => 8,
             'nama' => 'Siti',
             'username' => '00123',
@@ -107,7 +108,7 @@ final class QuestionnaireExportTest extends TestCase
         $stream = fopen('php://temp', 'w+b');
         self::assertIsResource($stream);
 
-        (new QuestionnaireExport())->writeCsv($stream, [
+        (new QuestionnaireExport())->writeLegacyCsv($stream, [
             ['student_id' => 1, 'answers_snapshot' => null],
             ['student_id' => 2, 'answers_snapshot' => '{invalid-json'],
         ]);
@@ -121,6 +122,107 @@ final class QuestionnaireExportTest extends TestCase
 
         self::assertSame(array_fill(0, 36, ''), array_slice($legacyRow, 5, 36));
         self::assertSame(array_fill(0, 36, ''), array_slice($invalidRow, 5, 36));
+    }
+
+    public function testStagedCsvHasItsOwnProfileAndScreeningColumns(): void
+    {
+        $stream = fopen('php://temp', 'w+b');
+        self::assertIsResource($stream);
+
+        $snapshot = json_encode([
+            'version' => '2026-08-30.staged-v1',
+            'profile' => [
+                'tanggal_lahir' => '2010-05-12',
+                'usia' => 16,
+                'pendidikan' => 'Kelas X',
+                'jenis_kelamin' => 'perempuan',
+            ],
+            'sections' => [
+                'gejala' => ['items' => [
+                    ['key' => 'gejala_1', 'answer' => '5 dari 10'],
+                ]],
+            ],
+        ], JSON_THROW_ON_ERROR);
+
+        (new QuestionnaireExport())->writeStagedCsv($stream, [[
+            'student_id' => 9,
+            'nama' => 'Ayu',
+            'username' => '009',
+            'pendidikan' => 'Kelas X',
+            'tanggal_lahir' => '2010-05-12',
+            'jenis_kelamin' => 'perempuan',
+            'created_at' => '2026-08-30 08:00:00',
+            'versi_screening' => 'staged-v1',
+            'tahap_screening' => 'gejala_selesai',
+            'rerata_gejala' => 4.6,
+            'hasil_screening' => 'gejala_di_bawah_ambang',
+            'answers_snapshot' => $snapshot,
+        ]]);
+
+        rewind($stream);
+        fread($stream, 3);
+        $headers = fgetcsv($stream, null, ',', '"', '');
+        $row = fgetcsv($stream, null, ',', '"', '');
+        fclose($stream);
+
+        self::assertCount(39, $headers);
+        self::assertSame('Kelas Saat Pengisian', $headers[3]);
+        self::assertSame('Tanggal Lahir', $headers[4]);
+        self::assertSame('Usia Saat Pengisian', $headers[5]);
+        self::assertSame('Jenis Kelamin', $headers[6]);
+        self::assertSame('Gejala 1 - Cepat lelah bila beraktivitas', $headers[9]);
+        self::assertSame('Rerata Gejala (0-10)', $headers[35]);
+        self::assertSame('Hasil Skrining', $headers[37]);
+        self::assertSame('Kelas X', $row[3]);
+        self::assertSame('16 tahun', $row[5]);
+        self::assertSame('Perempuan', $row[6]);
+        self::assertSame('TAHAP GEJALA SELESAI', $row[8]);
+        self::assertSame('5', $row[9]);
+        self::assertSame('4.6', $row[35]);
+        self::assertSame('', $row[36]);
+        self::assertSame('GEJALA DI BAWAH AMBANG', $row[37]);
+        self::assertNotContains('Hb (g/dL)', $headers);
+        self::assertNotContains('Skor Pengetahuan (0-48)', $headers);
+    }
+
+    public function testStagedCsvExportsCompletedRiskAnswersAndScore(): void
+    {
+        $stream = fopen('php://temp', 'w+b');
+        self::assertIsResource($stream);
+
+        $snapshot = json_encode([
+            'sections' => [
+                'menstruasi' => ['items' => [
+                    ['key' => 'mens_sudah', 'answer' => 'Sudah'],
+                ]],
+                'makan' => ['items' => [
+                    ['key' => 'tabel_makan_pagi', 'answer' => '=cmd|test'],
+                    ['key' => 'makan_1', 'answer' => 'Selalu'],
+                ]],
+            ],
+        ], JSON_THROW_ON_ERROR);
+
+        (new QuestionnaireExport())->writeStagedCsv($stream, [[
+            'student_id' => 10,
+            'answers_snapshot' => $snapshot,
+            'tahap_screening' => 'selesai',
+            'rerata_gejala' => 6.2,
+            'persentase_faktor_risiko' => 74.9,
+            'hasil_screening' => 'terindikasi_anemia',
+        ]]);
+
+        rewind($stream);
+        fread($stream, 3);
+        fgetcsv($stream, null, ',', '"', '');
+        $row = fgetcsv($stream, null, ',', '"', '');
+        fclose($stream);
+
+        self::assertSame('SKRINING SELESAI', $row[8]);
+        self::assertSame('Sudah', $row[19]);
+        self::assertSame("'=cmd|test", $row[24]);
+        self::assertSame('Selalu', $row[29]);
+        self::assertSame('74.9', $row[36]);
+        self::assertSame('TERINDIKASI RISIKO ANEMIA', $row[37]);
     }
 
     public function testCsvNeutralizesFormulaMarkersAfterLeadingWhitespace(): void
@@ -143,8 +245,14 @@ final class QuestionnaireExportTest extends TestCase
         self::assertStringContainsString('questionnaire.exported', $superadminExport);
         self::assertStringContainsString('QuestionnaireExport', $uksExport);
         self::assertStringContainsString('QuestionnaireExport', $superadminExport);
-        self::assertStringContainsString('latestByStudentForExport', $uksExport);
-        self::assertStringContainsString('latestByStudentForExport', $superadminExport);
+        self::assertStringContainsString('latestStagedByStudentForExport', $uksExport);
+        self::assertStringContainsString('latestLegacyByStudentForExport', $uksExport);
+        self::assertStringContainsString('latestStagedByStudentForExport', $superadminExport);
+        self::assertStringContainsString('latestLegacyByStudentForExport', $superadminExport);
+        self::assertStringContainsString('writeStagedCsv', $uksExport);
+        self::assertStringContainsString('writeLegacyCsv', $uksExport);
+        self::assertStringContainsString('writeStagedCsv', $superadminExport);
+        self::assertStringContainsString('writeLegacyCsv', $superadminExport);
         self::assertStringContainsString(
             'modelExecutionGatePassed()',
             file_get_contents(
@@ -153,11 +261,11 @@ final class QuestionnaireExportTest extends TestCase
         );
         self::assertLessThan(
             strpos($uksExport, 'questionnaire.exported'),
-            strpos($uksExport, 'writeCsv')
+            strpos($uksExport, 'writeStagedCsv')
         );
         self::assertLessThan(
             strpos($superadminExport, 'questionnaire.exported'),
-            strpos($superadminExport, 'writeCsv')
+            strpos($superadminExport, 'writeStagedCsv')
         );
 
         self::assertStringContainsString(
@@ -167,6 +275,31 @@ final class QuestionnaireExportTest extends TestCase
         self::assertStringContainsString(
             'questionnaire_export.php',
             file_get_contents($root . '/superadmin/questionnaire_results.php')
+        );
+
+        $uksResults = file_get_contents($root . '/uks/hasil_kuesioner.php');
+        $superadminResults = file_get_contents(
+            $root . '/superadmin/questionnaire_results.php'
+        );
+        foreach ([$uksResults, $superadminResults] as $resultsPage) {
+            self::assertStringContainsString('Hasil Skrining Baru', $resultsPage);
+            self::assertStringContainsString('Hasil Kuesioner Lama', $resultsPage);
+            self::assertStringContainsString('scope="col"', $resultsPage);
+            self::assertStringContainsString('visually-hidden">Aksi', $resultsPage);
+        }
+        self::assertStringContainsString('type=baru', $uksResults);
+        self::assertStringContainsString('type=lama', $uksResults);
+        self::assertStringContainsString('value="baru"', $superadminResults);
+        self::assertStringContainsString('value="lama"', $superadminResults);
+        self::assertStringContainsString('questionnaire_id=', $uksResults);
+        self::assertStringContainsString('questionnaire_id=', $superadminResults);
+        self::assertStringContainsString(
+            'primaryQuestionnaireForStudent',
+            file_get_contents($root . '/uks/detail_siswa.php')
+        );
+        self::assertStringContainsString(
+            'primaryQuestionnaireForStudent',
+            $superadminResults
         );
 
         $config = file_get_contents($root . '/config.php');

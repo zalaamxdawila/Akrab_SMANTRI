@@ -27,6 +27,20 @@ final class IdentityWorkflowTest extends TestCase
         self::assertStringContainsString('http_response_code(429)', $contents);
     }
 
+    public function testPublicRegistrationPostRequiresCsrfToken(): void
+    {
+        $contents = file_get_contents(dirname(__DIR__, 2) . '/register.php');
+
+        self::assertStringContainsString(
+            'verifyCsrfOrFail(csrfTokenFromRequest($_POST, $_SERVER))',
+            $contents
+        );
+        self::assertLessThan(
+            strpos($contents, '$clientHash = hash_hmac('),
+            strpos($contents, 'verifyCsrfOrFail(')
+        );
+    }
+
     public function testParentDashboardRequiresApprovedDatabaseLink(): void
     {
         $root = dirname(__DIR__, 2);

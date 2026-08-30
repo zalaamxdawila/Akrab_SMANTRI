@@ -8,6 +8,8 @@ $success = isset($_GET['registered'])
     : '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    verifyCsrfOrFail(csrfTokenFromRequest($_POST, $_SERVER));
+
     $clientHash = hash_hmac(
         'sha256',
         (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown'),
@@ -44,8 +46,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $error = 'Jenis akun tidak diizinkan untuk pendaftaran publik.';
     }
 
-    if (!empty($email) && (strlen($email) > 254 || filter_var($email, FILTER_VALIDATE_EMAIL) === false)) {
-        $error = 'Alamat email tidak valid.';
+    if (empty($error)) {
+        if (empty($email)) {
+            $error = 'Email wajib diisi untuk akun baru.';
+        } elseif (strlen($email) > 254 || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+            $error = 'Alamat email tidak valid.';
+        }
     }
 
     if (empty($error) && !empty($nama) && !empty($username) && !empty($password) && !empty($role)) {
@@ -61,11 +67,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
         // If no validation errors, proceed to insert
         if (empty($error)) {
-            // Check if username exists
-            $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
-            $stmt->execute([$username]);
+            // Check identifiers before relying on the database unique constraints.
+            $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
+            $stmt->execute([$username, $email]);
             if ($stmt->fetch()) {
-                $error = "Username/NISN sudah digunakan!";
+                $error = "Username/NISN atau email sudah digunakan!";
             } else {
                 $password_hash = password_hash($password, PASSWORD_DEFAULT);
                 
@@ -75,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         "INSERT INTO users (nama, role, username, email, password_hash, kelas)
                          VALUES (?, ?, ?, ?, ?, ?)"
                     );
-                    $stmt->execute([$nama, $role, $username, $email !== '' ? $email : null, $password_hash, $kelas]);
+                    $stmt->execute([$nama, $role, $username, $email, $password_hash, $kelas]);
                     $newUserId = (int) $pdo->lastInsertId();
 
                     if ($role === 'orangtua') {
@@ -171,8 +177,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <input type="text" class="form-control rounded-3" id="username" name="username" required style="background: var(--surface-muted);">
             </div>
             <div class="mb-3">
-                <label for="email" class="form-label small text-muted fw-semibold">Email <span class="text-muted fw-normal">(Opsional)</span></label>
-                <input type="email" maxlength="254" autocomplete="email" class="form-control rounded-3" id="email" name="email" placeholder="Untuk pemulihan password" style="background: var(--surface-muted);">
+                <label for="email" class="form-label small text-muted fw-semibold">Email <span class="text-danger">*</span></label>
+                <input type="email" maxlength="254" autocomplete="email" class="form-control rounded-3" id="email" name="email" required placeholder="Wajib untuk pemulihan password" style="background: var(--surface-muted);">
             </div>
             <div class="mb-3">
                 <label for="password" class="form-label small text-muted fw-semibold">Password</label>
@@ -235,6 +241,6 @@ lucide.createIcons();
 window.addEventListener('load', toggleFields);
 </script>
 <script src="assets/js/main.js?v=20260818"></script>
-<script src="assets/js/app-init.js?v=20260818"></script>
+<script src="assets/js/app-init.js?v=20260831-safe-install"></script>
 </body>
 </html>

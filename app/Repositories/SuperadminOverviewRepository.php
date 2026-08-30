@@ -63,7 +63,10 @@ final class SuperadminOverviewRepository
                 'ttd_confirmed_today' => (int) $ttd->fetchColumn(),
             ],
             'health' => [
-                'questionnaires' => $this->count('kuesioner'),
+                'questionnaires' => $this->count(
+                    'kuesioner',
+                    'archived_at IS NULL AND history_only_at IS NULL'
+                ),
                 'hb_records' => $this->count('kadar_hb'),
             ],
             'migration_version' => $this->latestMigrationVersion(),

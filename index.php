@@ -13,6 +13,9 @@ $dashboard_url = $is_logged_in
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AKRAB — Aplikasi Kesehatan Remaja Bebas Anemia</title>
     <link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
+    <link rel="manifest" href="/manifest.json?v=20260831-safe-install">
+    <meta name="theme-color" content="#047857">
     <link href="/assets/vendor/bootstrap.min.css" rel="stylesheet">
     <link href="assets/css/style.css?v=20260818" rel="stylesheet">
     <script src="/assets/vendor/lucide.min.js"></script>
@@ -56,9 +59,14 @@ $dashboard_url = $is_logged_in
         <p class="lead mb-5">AKRAB mendampingi sekolah dalam memantau kesehatan siswa, mendeteksi risiko anemia secara dini, dan mengingatkan konsumsi Tablet Tambah Darah (TTD) secara berkala.</p>
 
         <?php if ($is_logged_in): ?>
-            <a href="<?= $dashboard_url ?>" class="btn btn-light btn-lg px-5 rounded-pill shadow fw-bold text-primary">
-                <i data-lucide="layout-dashboard" style="width: 20px;"></i> Buka Dashboard
-            </a>
+            <div class="d-flex flex-wrap justify-content-center gap-3">
+                <a href="<?= $dashboard_url ?>" class="btn btn-light btn-lg px-5 rounded-pill shadow fw-bold text-primary">
+                    <i data-lucide="layout-dashboard" style="width: 20px;"></i> Buka Dashboard
+                </a>
+                <button type="button" class="btn btn-outline-light btn-lg px-4 rounded-pill" data-install-app hidden>
+                    <i data-lucide="download" style="width: 20px;"></i> Pasang Aplikasi
+                </button>
+            </div>
         <?php else: ?>
             <div class="d-flex flex-wrap justify-content-center gap-3">
                 <a href="register.php" class="btn btn-light btn-lg px-5 rounded-pill shadow fw-bold text-primary">
@@ -67,8 +75,25 @@ $dashboard_url = $is_logged_in
                 <a href="login.php" class="btn btn-outline-light btn-lg px-5 rounded-pill">
                     <i data-lucide="log-in" style="width: 20px;"></i> Masuk
                 </a>
+                <button type="button" class="btn btn-outline-light btn-lg px-4 rounded-pill" data-install-app hidden>
+                    <i data-lucide="download" style="width: 20px;"></i> Pasang Aplikasi
+                </button>
             </div>
         <?php endif; ?>
+        <p class="small text-white mt-3 mb-0" data-install-status role="status" aria-live="polite"></p>
+        <aside class="alert alert-light text-start mx-auto mt-3 mb-0" style="max-width: 32rem;" data-install-help hidden aria-labelledby="installHelpTitle">
+            <div class="d-flex justify-content-between gap-3">
+                <div>
+                    <h2 class="h6 fw-bold text-dark" id="installHelpTitle" tabindex="-1">Pasang AKRAB di iPhone atau iPad</h2>
+                    <ol class="small text-dark mb-0 ps-3">
+                        <li>Ketuk tombol <strong>Bagikan</strong> di Safari.</li>
+                        <li>Pilih <strong>Tambahkan ke Layar Utama</strong>.</li>
+                        <li>Ketuk <strong>Tambah</strong> untuk menyelesaikan.</li>
+                    </ol>
+                </div>
+                <button type="button" class="btn-close" data-install-help-close aria-label="Tutup petunjuk instalasi"></button>
+            </div>
+        </aside>
     </div>
 </header>
 
@@ -160,8 +185,8 @@ $dashboard_url = $is_logged_in
                     <div class="feature-icon-wrap">
                         <i data-lucide="brain-circuit" style="width: 36px; height: 36px;"></i>
                     </div>
-                    <h5 class="fw-bold mb-2">Deteksi Dini Cerdas</h5>
-                    <p class="text-muted mb-0 small" style="line-height: 1.7;">Menggunakan algoritma regresi logistik untuk memprediksi risiko anemia berdasarkan pola hidup, gejala klinis, dan data laboratorium siswa.</p>
+                    <h5 class="fw-bold mb-2">Skrining Dini Sederhana</h5>
+                    <p class="text-muted mb-0 small" style="line-height: 1.7;">AKRAB melakukan skrining bertahap berdasarkan gejala dan faktor risiko tanpa mewajibkan pemeriksaan Hb. Hasil merupakan indikasi risiko, bukan diagnosis, dan disertai saran tindak lanjut.</p>
                 </div>
             </div>
             <div class="col-md-4">
@@ -233,7 +258,16 @@ $dashboard_url = $is_logged_in
                 <a href="Panduan_Instalasi_PWA_AKRAB.pdf" target="_blank" class="btn btn-outline-light btn-lg px-4 rounded-pill">
                     <i data-lucide="smartphone" style="width: 20px;"></i> Panduan PWA
                 </a>
+                <a href="/downloads/AKRAB-Android-v1.0.0.apk" download class="btn btn-light btn-lg px-4 rounded-pill fw-bold text-primary shadow" aria-describedby="apkSecurityNote">
+                    <i data-lucide="download" style="width: 20px;"></i> Download APK Android
+                </a>
+                <a href="/downloads/AKRAB-Android-v1.0.0.apk.sha256" download class="btn btn-outline-light btn-lg px-4 rounded-pill">
+                    <i data-lucide="shield-check" style="width: 20px;"></i> Checksum APK
+                </a>
             </div>
+            <p class="small text-white opacity-75 mt-3 mb-0" id="apkSecurityNote" style="position: relative;">
+                APK resmi v1.0.0 ditandatangani dan hanya memuat situs HTTPS AKRAB. Pembaruan isi aplikasi mengikuti website.
+            </p>
         </div>
     </div>
 </section>
@@ -254,6 +288,6 @@ $dashboard_url = $is_logged_in
 
 <script src="/assets/vendor/bootstrap.bundle.min.js"></script>
 <script>lucide.createIcons();</script>
-<script src="assets/js/app-init.js?v=20260818"></script>
+<script src="assets/js/app-init.js?v=20260831-safe-install"></script>
 </body>
 </html>
