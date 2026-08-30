@@ -40,4 +40,17 @@ final class QuestionnaireSourceParityTest extends TestCase
             self::assertStringContainsString($canvasId, $view);
         }
     }
+
+    public function testSuperadminQuestionnaireResultsSeparateLegacyAndStagedViewsByMenu(): void
+    {
+        $route = file_get_contents(dirname(__DIR__, 2) . '/superadmin/questionnaire_results.php');
+
+        self::assertStringContainsString("view'] ?? 'baru'", $route);
+        self::assertStringContainsString('Hasil Skrining Baru', $route);
+        self::assertStringContainsString('Hasil Kuesioner Lama', $route);
+        self::assertStringContainsString('questionnaire-results-menu', $route);
+        self::assertStringContainsString('$activeQuestionnaireView === \'baru\'', $route);
+        self::assertStringContainsString('$activeQuestionnaireView === \'lama\'', $route);
+        self::assertStringNotContainsString('id="questionnaire-results-menu" hidden', $route);
+    }
 }

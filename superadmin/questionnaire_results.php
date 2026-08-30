@@ -112,14 +112,35 @@ recordAuditEvent(
     ['actor_role' => 'superadmin', 'outcome' => 'success']
 );
 
+$activeQuestionnaireView = (string) ($_GET['view'] ?? 'baru');
+if (!in_array($activeQuestionnaireView, ['ringkasan', 'baru', 'lama'], true)) {
+    $activeQuestionnaireView = 'baru';
+}
+
 renderSuperadminHeader('Hasil Kuesioner', 'questionnaires');
 ?>
 <script src="/assets/vendor/chart.umd.min.js"></script>
+
+<nav class="nav nav-pills questionnaire-results-menu mb-4" aria-label="Menu hasil kuesioner">
+    <?php foreach ([
+        'ringkasan' => ['Ringkasan', 'Baru dan lama dalam angka ringkas'],
+        'baru' => ['Hasil Baru', 'Skrining bertahap terbaru'],
+        'lama' => ['Hasil Lama', 'Format kuesioner sebelumnya'],
+    ] as $view => [$label, $description]): ?>
+        <a class="nav-link <?= $activeQuestionnaireView === $view ? 'active' : '' ?>"
+           href="?view=<?= escape_output($view) ?>"
+           <?= $activeQuestionnaireView === $view ? 'aria-current="page"' : '' ?>>
+            <span class="fw-semibold d-block"><?= escape_output($label) ?></span>
+            <small><?= escape_output($description) ?></small>
+        </a>
+    <?php endforeach; ?>
+</nav>
 
 <div class="d-flex justify-content-end mb-3">
     <a class="btn btn-outline-warning me-2" href="lab_requests.php">Permintaan perubahan lab</a>
 </div>
 
+<?php if ($activeQuestionnaireView === 'ringkasan'): ?>
 <section class="row g-3 mb-4" aria-label="Ringkasan hasil kuesioner">
     <?php foreach ([
         ['Semua pengisian', $aggregate['total_responses']],
@@ -196,6 +217,7 @@ renderSuperadminHeader('Hasil Kuesioner', 'questionnaires');
         ); ?>
     <?php endif; ?>
 <?php endif; ?>
+<?php endif; ?>
 
 <?php if ($selectedStudent): ?>
     <section class="master-card p-3 p-lg-4 mb-4" aria-labelledby="individual-title">
@@ -267,6 +289,7 @@ renderSuperadminHeader('Hasil Kuesioner', 'questionnaires');
     </section>
 <?php endif; ?>
 
+<?php if ($activeQuestionnaireView === 'baru'): ?>
 <section class="master-card p-3 p-lg-4 mb-4" aria-labelledby="master-staged-students-title">
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
         <div>
@@ -326,14 +349,16 @@ renderSuperadminHeader('Hasil Kuesioner', 'questionnaires');
                         <?php endif; ?>
                     </td>
                     <td><a class="btn btn-sm btn-outline-primary"
-                           href="?student_id=<?= (int) $student['student_id'] ?>&amp;questionnaire_id=<?= (int) $student['questionnaire_id'] ?>">Lihat hasil</a></td>
+                           href="?view=baru&amp;student_id=<?= (int) $student['student_id'] ?>&amp;questionnaire_id=<?= (int) $student['questionnaire_id'] ?>">Lihat hasil</a></td>
                 </tr>
             <?php endforeach; ?>
             </tbody>
         </table>
     </div>
 </section>
+<?php endif; ?>
 
+<?php if ($activeQuestionnaireView === 'lama'): ?>
 <section class="master-card p-3 p-lg-4" aria-labelledby="master-legacy-students-title">
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
         <div>
@@ -373,15 +398,16 @@ renderSuperadminHeader('Hasil Kuesioner', 'questionnaires');
                     <td><?= (int) $student['skor_makan'] ?>/18</td>
                     <td><?= $student['kadar_hb'] === null ? 'Belum ada' : 'Lengkap' ?></td>
                     <td><a class="btn btn-sm btn-outline-primary"
-                           href="?student_id=<?= (int) $student['student_id'] ?>&amp;questionnaire_id=<?= (int) $student['questionnaire_id'] ?>">Lihat hasil</a></td>
+                           href="?view=lama&amp;student_id=<?= (int) $student['student_id'] ?>&amp;questionnaire_id=<?= (int) $student['questionnaire_id'] ?>">Lihat hasil</a></td>
                 </tr>
             <?php endforeach; ?>
             </tbody>
         </table>
     </div>
 </section>
+<?php endif; ?>
 
-<?php if ($aggregate['legacy_responses'] > 0): ?>
+<?php if ($activeQuestionnaireView === 'ringkasan' && $aggregate['legacy_responses'] > 0): ?>
     <?php renderQuestionnaireAverageChartScript('masterAverageChart', $averageInsights); ?>
 <?php endif; ?>
 <?php if ($selectedHistory && empty($selectedLatest['versi_screening'])): ?>
