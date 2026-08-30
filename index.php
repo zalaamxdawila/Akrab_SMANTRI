@@ -258,16 +258,13 @@ $dashboard_url = $is_logged_in
                 <a href="Panduan_Instalasi_PWA_AKRAB.pdf" target="_blank" class="btn btn-outline-light btn-lg px-4 rounded-pill">
                     <i data-lucide="smartphone" style="width: 20px;"></i> Panduan PWA
                 </a>
-                <a href="/downloads/AKRAB-Android-v1.0.0.apk" download class="btn btn-light btn-lg px-4 rounded-pill fw-bold text-primary shadow" aria-describedby="apkSecurityNote">
+                <a href="/downloads/AKRAB-Android-v1.0.0.apk" download class="btn btn-light btn-lg px-4 rounded-pill fw-bold text-primary shadow">
                     <i data-lucide="download" style="width: 20px;"></i> Download APK Android
                 </a>
                 <a href="/downloads/AKRAB-Android-v1.0.0.apk.sha256" download class="btn btn-outline-light btn-lg px-4 rounded-pill">
                     <i data-lucide="shield-check" style="width: 20px;"></i> Checksum APK
                 </a>
             </div>
-            <p class="small text-white opacity-75 mt-3 mb-0" id="apkSecurityNote" style="position: relative;">
-                APK resmi v1.0.0 ditandatangani dan hanya memuat situs HTTPS AKRAB. Pembaruan isi aplikasi mengikuti website.
-            </p>
         </div>
     </div>
 </section>
