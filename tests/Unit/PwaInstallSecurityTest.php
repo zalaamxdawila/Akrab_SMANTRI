@@ -77,12 +77,32 @@ final class PwaInstallSecurityTest extends TestCase
         self::assertStringNotContainsString("'/superadmin/", $worker);
     }
 
+    public function testStaticAssetsPreferTheNetworkAndReleaseVersionsStayAligned(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $worker = (string) file_get_contents($root . '/service-worker.js');
+        $controller = (string) file_get_contents($root . '/assets/js/app-init.js');
+        $landing = (string) file_get_contents($root . '/index.php');
+
+        self::assertStringContainsString('fetch(request)', $worker);
+        self::assertStringContainsString('return cached', $worker);
+        self::assertLessThan(
+            strpos($worker, 'caches.match(request)'),
+            strpos($worker, 'fetch(request)'),
+            'Static assets must try the network before falling back to cache.'
+        );
+        self::assertStringContainsString('20260831-mobile-header-v1', $worker);
+        self::assertStringContainsString('service-worker.js?v=20260831-mobile-header-v1', $controller);
+        self::assertStringContainsString('style.css?v=20260831-mobile-header-v1', $landing);
+        self::assertStringContainsString('app-init.js?v=20260831-safe-install', $landing);
+    }
+
     public function testServiceWorkerUpdateCannotForceReloadAnInProgressForm(): void
     {
         $script = (string) file_get_contents(dirname(__DIR__, 2) . '/assets/js/app-init.js');
 
         self::assertStringContainsString(
-            "register('/service-worker.js?v=20260831-safe-install'",
+            "register('/service-worker.js?v=20260831-mobile-header-v1'",
             $script
         );
         self::assertStringNotContainsString('controllerchange', $script);

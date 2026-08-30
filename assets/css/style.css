@@ -246,6 +246,35 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 @media (max-width: 991.98px) {
+    .landing-navbar .navbar-collapse {
+        margin-top: 0.75rem;
+        padding: 0.75rem;
+        background: var(--surface);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .landing-navbar .navbar-nav,
+    .landing-navbar .nav-item,
+    .landing-navbar .nav-link,
+    .landing-navbar .btn {
+        width: 100%;
+    }
+
+    .landing-navbar .nav-item {
+        margin-left: 0 !important;
+    }
+
+    .landing-navbar .nav-link {
+        margin: 0.1rem 0;
+        text-align: left;
+    }
+
+    .landing-navbar .btn {
+        margin-top: 0.35rem;
+    }
+
     .profile-nav-item,
     .profile-nav-link {
         width: 100%;
@@ -795,7 +824,7 @@ h1, h2, h3, h4, h5, h6 {
    ============================================ */
 
 @media (max-width: 768px) {
-    .navbar-collapse {
+    .navbar:not(.landing-navbar) .navbar-collapse {
         margin-top: 0.5rem;
         padding: 0.75rem;
         background: var(--surface);

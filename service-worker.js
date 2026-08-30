@@ -1,4 +1,4 @@
-const CACHE_NAME = 'akrab-static-20260831-v3-safe-install';
+const CACHE_NAME = 'akrab-static-20260831-mobile-header-v1';
 const APP_CACHE_PREFIX = 'akrab-static-';
 const PRECACHE_ASSETS = [
   '/offline.html',
@@ -55,16 +55,19 @@ self.addEventListener('fetch', event => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin || !isSafeStaticRequest(request, url)) return;
 
-  const update = fetch(request).then(async response => {
-    if (isCacheableStaticResponse(response)) {
-      const cache = await caches.open(CACHE_NAME);
-      await cache.put(request, response.clone());
-    }
-    return response;
-  });
-
-  event.waitUntil(update.then(() => undefined).catch(() => undefined));
   event.respondWith(
-    caches.match(request).then(cached => cached || update)
+    fetch(request)
+      .then(async response => {
+        if (isCacheableStaticResponse(response)) {
+          const cache = await caches.open(CACHE_NAME);
+          await cache.put(request, response.clone());
+        }
+        return response;
+      })
+      .catch(async error => {
+        const cached = await caches.match(request);
+        if (cached) return cached;
+        throw error;
+      })
   );
 });

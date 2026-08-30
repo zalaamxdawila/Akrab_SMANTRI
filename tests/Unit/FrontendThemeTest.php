@@ -75,4 +75,17 @@ final class FrontendThemeTest extends TestCase
             );
         }
     }
+
+    public function testLandingNavbarUsesBootstrapLargeBreakpointForMobileLayout(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $landing = (string) file_get_contents($root . '/index.php');
+        $css = (string) file_get_contents($root . '/assets/css/style.css');
+
+        self::assertStringContainsString('landing-navbar', $landing);
+        self::assertStringContainsString('@media (max-width: 991.98px)', $css);
+        self::assertStringContainsString('.landing-navbar .navbar-nav', $css);
+        self::assertStringContainsString('.landing-navbar .nav-item', $css);
+        self::assertStringContainsString('.landing-navbar .btn', $css);
+    }
 }

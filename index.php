@@ -17,18 +17,18 @@ $dashboard_url = $is_logged_in
     <link rel="manifest" href="/manifest.json?v=20260831-safe-install">
     <meta name="theme-color" content="#047857">
     <link href="/assets/vendor/bootstrap.min.css" rel="stylesheet">
-    <link href="assets/css/style.css?v=20260818" rel="stylesheet">
+    <link href="assets/css/style.css?v=20260831-mobile-header-v1" rel="stylesheet">
     <script src="/assets/vendor/lucide.min.js"></script>
 </head>
 <body class="bg-light">
 
 <!-- Navbar -->
-<nav class="navbar navbar-expand-lg sticky-top">
+<nav class="navbar navbar-expand-lg sticky-top landing-navbar">
     <div class="container">
         <a class="navbar-brand fw-bold fs-4 d-flex align-items-center gap-2" href="index.php">
             <i data-lucide="heart-pulse" style="width: 24px; height: 24px;"></i> AKRAB
         </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Buka atau tutup menu navigasi">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">

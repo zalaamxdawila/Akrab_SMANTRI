@@ -1,7 +1,7 @@
 // PWA registration. Updates never force-reload a page, so an in-progress form is safe.
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js?v=20260831-safe-install', { updateViaCache: 'none' }).catch(() => {
+        navigator.serviceWorker.register('/service-worker.js?v=20260831-mobile-header-v1', { updateViaCache: 'none' }).catch(() => {
             // The website remains usable when service-worker registration is unavailable.
         });
     });
