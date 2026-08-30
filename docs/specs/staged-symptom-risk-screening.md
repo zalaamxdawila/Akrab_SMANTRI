@@ -184,7 +184,7 @@ memakai versi baru dan persetujuan ahli medis sekolah terkait.
   dokter, red-flag escalation, dan disclaimer non-diagnosis.
 - Faktor risiko `74,9%` masuk hasil terindikasi risiko anemia; `75,0%` tidak,
   sesuai aturan produk dan setelah formula disetujui ahli medis sekolah terkait.
-- UKS/superadmin dapat membedakan hasil `gejala_selesai`,
+- Petugas berwenang dapat membedakan hasil `gejala_selesai`,
   `faktor_risiko_tersedia`, dan `selesai`; data lama tetap tampil.
 - Seluruh unit, integration, authorization, migration, dan browser test lulus.
 

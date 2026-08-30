@@ -211,7 +211,7 @@ tests.
 
 ## Phase 4 — Consumers, Compatibility, and Release
 
-### Task SR8: Adaptasikan laporan UKS, superadmin, siswa, dan parent
+### Task SR8: Adaptasikan laporan petugas, siswa, dan orang tua
 
 **Description:** Tampilkan status tahap dan hasil versioned tanpa mencampur makna
 hasil baru dengan model lab lama.

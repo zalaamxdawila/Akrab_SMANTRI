@@ -13,7 +13,7 @@
 - [x] SR7 — Implementasikan tahap faktor risiko dan hasil akhir.
 - [!] Checkpoint C — Boundary dan rujukan lulus unit; clinical review final tersisa.
 - [x] SR8a — Adaptasikan hasil siswa.
-- [x] SR8b — Adaptasikan detail UKS dan superadmin.
+- [x] SR8b — Adaptasikan detail petugas berwenang.
 - [x] SR8c — Adaptasikan aggregate dan export versioned; format lama dan staged
   dipisahkan, sedangkan field yang tidak ditanyakan diekspor kosong.
 - [!] SR9 — Quality gate dan release produksi selesai; authenticated human-browser

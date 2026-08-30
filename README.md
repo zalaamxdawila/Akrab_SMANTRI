@@ -15,8 +15,8 @@ AKRAB adalah aplikasi web, PWA, dan Android untuk skrining awal risiko anemia se
 - Saran tindak lanjut ke UKS, Puskesmas, atau dokter sesuai hasil dan tanda bahaya.
 - Biodata minimum sebelum skrining: kelas, tanggal lahir/usia, dan gender.
 - Pemantauan konsumsi Tablet Tambah Darah (TTD), menstruasi, edukasi, dan konsultasi siswa–UKS.
-- Dashboard UKS dan Superadmin, audit, serta ekspor data kuesioner baru dan lama secara terpisah.
-- Pengisian ulang kuesioner setelah reset oleh UKS/Superadmin dengan alasan wajib.
+- Dashboard UKS, audit, serta ekspor data kuesioner baru dan lama secara terpisah.
+- Pengisian ulang kuesioner setelah reset oleh petugas UKS berwenang dengan alasan wajib.
 - PWA dan APK Android yang selalu menampilkan konten web produksi terbaru.
 
 ## Alur skrining tanpa Hb
@@ -49,7 +49,7 @@ Data kuesioner dan hasil laboratorium lama tetap dipertahankan sebagai riwayat, 
 - Pendaftaran akun baru mewajibkan email valid.
 - Akun lama yang belum memiliki email tetap dapat login. Dashboard menampilkan bubble pada ikon profil; pengingat dapat ditutup dan email dapat dilengkapi dari profil.
 - Siswa tidak dapat mereset kuesionernya sendiri.
-- UKS atau Superadmin dapat mengaktifkan pengisian ulang dengan alasan reset 5–500 karakter.
+- Petugas UKS berwenang dapat mengaktifkan pengisian ulang dengan alasan reset 5–500 karakter.
 - Hasil sebelumnya dipindahkan menjadi riwayat pribadi dan tidak lagi dihitung sebagai data utama.
 - Hasil baru menjadi data utama berikutnya. Ekspor hasil baru dan hasil lama memakai berkas serta struktur yang berbeda.
 
@@ -61,7 +61,7 @@ Unduh APK resmi dari:
 
 - [AKRAB Android v1.0.0](https://akrab.portodq.com/downloads/AKRAB-Android-v1.0.0.apk)
 - [Checksum SHA-256](https://akrab.portodq.com/downloads/AKRAB-Android-v1.0.0.apk.sha256)
-- [GitHub Release v1.0.0](https://github.com/zalaamxdawila/Akrab_SMANTRI/releases/tag/android-v1.0.0)
+- [Unduh APK langsung dari GitHub](https://github.com/zalaamxdawila/Akrab_SMANTRI/raw/refs/heads/main/downloads/AKRAB-Android-v1.0.0.apk)
 
 Identitas rilis:
 
@@ -161,7 +161,6 @@ Akrab_SMANTRI/
 ├── mobile/               # Sumber wrapper Cordova Android
 ├── orangtua/             # Portal orang tua/wali
 ├── siswa/                # Portal siswa dan alur skrining
-├── superadmin/           # Panel Superadmin
 ├── tests/                # Unit, integration, fixture, dan browser test
 ├── tools/                # Migrasi, lint, preflight, dan utilitas rilis
 └── uks/                  # Portal petugas UKS

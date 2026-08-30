@@ -49,6 +49,7 @@ mobile/plugins/
 mobile/.gradle/
 mobile/.signing/
 downloads/*.apk
+!downloads/AKRAB-Android-v1.0.0.apk
 downloads/*.aab
 downloads/*.bin
 .phpunit.cache/
