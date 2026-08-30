@@ -8,6 +8,11 @@ require_once dirname(__DIR__) . '/views/questionnaire_analytics.php';
 
 check_role('uks');
 
+$activeQuestionnaireView = (string) ($_GET['view'] ?? 'ringkasan');
+if (!in_array($activeQuestionnaireView, ['ringkasan', 'baru', 'lama'], true)) {
+    $activeQuestionnaireView = 'ringkasan';
+}
+
 $repository = new QuestionnaireAnalyticsRepository($pdo);
 $insightService = new QuestionnaireInsights();
 $aggregate = $repository->aggregate();
@@ -78,6 +83,24 @@ recordAuditEvent(
         </div>
     </div>
 
+    <nav id="questionnaire-results-menu" class="mb-4" aria-label="Menu hasil kuesioner">
+        <div class="nav nav-pills flex-wrap gap-2">
+            <?php foreach ([
+                'ringkasan' => ['Ringkasan', 'Statistik keseluruhan'],
+                'baru' => ['Hasil Baru', 'Skrining bertahap'],
+                'lama' => ['Hasil Lama', 'Format historis'],
+            ] as $view => [$label, $description]): ?>
+                <a class="nav-link <?= $activeQuestionnaireView === $view ? 'active' : '' ?>"
+                   <?= $activeQuestionnaireView === $view ? 'aria-current="page"' : '' ?>
+                   href="hasil_kuesioner.php?view=<?= escape_output($view) ?>">
+                    <?= escape_output($label) ?>
+                    <small class="d-block opacity-75"><?= escape_output($description) ?></small>
+                </a>
+            <?php endforeach; ?>
+        </div>
+    </nav>
+
+    <?php if ($activeQuestionnaireView === 'ringkasan'): ?>
     <section class="row g-3 mb-4" aria-label="Ringkasan pengisian">
         <?php foreach ([
             ['Semua pengisian', $aggregate['total_responses']],
@@ -167,7 +190,9 @@ recordAuditEvent(
             ); ?>
         <?php endif; ?>
     <?php endif; ?>
+    <?php endif; ?>
 
+    <?php if ($activeQuestionnaireView === 'baru'): ?>
     <section class="card mb-4" aria-labelledby="staged-result-title">
         <div class="card-body">
             <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
@@ -232,7 +257,9 @@ recordAuditEvent(
             </div>
         </div>
     </section>
+    <?php endif; ?>
 
+    <?php if ($activeQuestionnaireView === 'lama'): ?>
     <section class="card" aria-labelledby="legacy-result-title">
         <div class="card-body">
             <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
@@ -277,11 +304,12 @@ recordAuditEvent(
             </div>
         </div>
     </section>
+    <?php endif; ?>
 </main>
 <script src="/assets/vendor/bootstrap.bundle.min.js"></script>
 <script src="../assets/js/app-init.js?v=20260831-safe-install"></script>
 <script src="../assets/js/main.js?v=20260818"></script>
-<?php if ($aggregate['legacy_responses'] > 0): ?>
+<?php if ($activeQuestionnaireView === 'ringkasan' && $aggregate['legacy_responses'] > 0): ?>
     <?php renderQuestionnaireAverageChartScript('questionnaireAverageChart', $averageInsights); ?>
 <?php endif; ?>
 </body>

@@ -53,4 +53,17 @@ final class QuestionnaireSourceParityTest extends TestCase
         self::assertStringContainsString('$activeQuestionnaireView === \'lama\'', $route);
         self::assertStringNotContainsString('id="questionnaire-results-menu" hidden', $route);
     }
+
+    public function testUksQuestionnaireResultsSeparateLegacyAndStagedViewsByMenu(): void
+    {
+        $route = file_get_contents(dirname(__DIR__, 2) . '/uks/hasil_kuesioner.php');
+
+        self::assertStringContainsString("view'] ?? 'ringkasan'", $route);
+        self::assertStringContainsString('questionnaire-results-menu', $route);
+        self::assertStringContainsString('$activeQuestionnaireView === \'ringkasan\'', $route);
+        self::assertStringContainsString('$activeQuestionnaireView === \'baru\'', $route);
+        self::assertStringContainsString('$activeQuestionnaireView === \'lama\'', $route);
+        self::assertStringContainsString('Hasil Skrining Baru', $route);
+        self::assertStringContainsString('Hasil Kuesioner Lama', $route);
+    }
 }
